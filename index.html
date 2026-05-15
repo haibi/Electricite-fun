@@ -106,6 +106,66 @@ header.topbar {
 .logo small {
   font-weight: 500; font-size: 12px; color: var(--muted); letter-spacing: 1px;
 }
+
+/* App switcher */
+.app-switcher { position: relative; margin-left: 6px; }
+.app-switcher-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 20px; font-weight: 300; line-height: 1;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0;
+  transition: all .2s;
+}
+.app-switcher-btn:hover { border-color: var(--electric); box-shadow: var(--shadow-elec); transform: rotate(90deg); }
+.app-menu {
+  position: absolute; top: calc(100% + 10px); left: 0;
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px;
+  min-width: 260px;
+  display: none;
+  z-index: 100;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,191,255,0.1);
+}
+.app-menu.open { display: block; animation: fadeIn .2s ease; }
+.app-menu-header {
+  font-size: 10px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1.5px;
+  padding: 8px 12px 6px;
+}
+.app-menu-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text); text-decoration: none;
+  cursor: pointer;
+  transition: background .15s;
+}
+.app-menu-item:hover { background: rgba(0,191,255,0.08); }
+.app-menu-item .ico {
+  width: 34px; height: 34px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.app-menu-item .title { font-weight: 700; font-size: 14px; }
+.app-menu-item .sub { font-size: 11px; color: var(--muted); }
+.app-menu-item.current { background: rgba(0,191,255,0.06); cursor: default; }
+.app-menu-item.current::after {
+  content: '✓'; margin-left: auto; color: var(--electric); font-weight: 700;
+}
+.app-menu-item .external {
+  margin-left: auto; color: var(--muted); font-size: 11px;
+}
+.app-menu-item:hover .external { color: var(--electric); }
 .badges-counter {
   display: flex; align-items: center; gap: 8px;
   padding: 8px 14px; background: var(--panel); border: 1px solid var(--border);
@@ -997,6 +1057,27 @@ canvas.chart { width: 100%; height: 200px; display: block; }
       Electrolab
       <div><small>POUR EVAN · 13 ANS</small></div>
     </div>
+    <div class="app-switcher">
+      <button class="app-switcher-btn" id="appSwitcherBtn" title="Autres apps" aria-label="Menu des applications">+</button>
+      <div class="app-menu" id="appMenu">
+        <div class="app-menu-header">Mes apps</div>
+        <div class="app-menu-item current">
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, var(--neon), #b78b00); color:#1a1a1a;">⚡</span>
+          <div>
+            <div class="title">Electrolab</div>
+            <div class="sub">Électricité &amp; circuits</div>
+          </div>
+        </div>
+        <a class="app-menu-item" href="https://haibi.github.io/Systeme-solaire/" target="_blank" rel="noopener noreferrer">
+          <span class="ico">🪐</span>
+          <div>
+            <div class="title">Système Solaire</div>
+            <div class="sub">Planètes &amp; quiz</div>
+          </div>
+          <span class="external">↗</span>
+        </a>
+      </div>
+    </div>
   </div>
   <div style="display:flex; align-items:center;">
     <button class="sound-toggle" id="soundToggle" title="Activer/couper le son">🔊</button>
@@ -1346,6 +1427,17 @@ canvas.chart { width: 100%; height: 200px; display: block; }
   }
   requestAnimationFrame(loop);
 })();
+
+/* ---------- 1b. APP SWITCHER ---------- */
+const appSwitcherBtn = document.getElementById('appSwitcherBtn');
+const appMenu = document.getElementById('appMenu');
+appSwitcherBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  appMenu.classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+  if (!appMenu.contains(e.target) && e.target !== appSwitcherBtn) appMenu.classList.remove('open');
+});
 
 /* ---------- 2. TABS ---------- */
 document.querySelectorAll('.tab').forEach(btn => {
