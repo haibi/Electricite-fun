@@ -493,9 +493,50 @@ h2.section-title {
   border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 .meters .meter:last-child { border-bottom: none; }
-.meters .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.meters .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; display: inline-flex; align-items: center; gap: 6px; }
 .meters .value { font-size: 22px; font-weight: 800; color: var(--electric); font-variant-numeric: tabular-nums; }
 .meters .unit { font-size: 12px; color: var(--muted); margin-left: 4px; }
+.meter-info {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: none; color: var(--muted);
+  font-size: 10px; font-weight: 700;
+  cursor: pointer; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all .2s;
+}
+.meter-info:hover { background: var(--electric); color: white; box-shadow: var(--shadow-elec); }
+
+/* Learning tip below status */
+.tip-row {
+  margin-top: 10px;
+  padding: 12px;
+  background: rgba(138, 43, 226, 0.08);
+  border-left: 3px solid var(--violet);
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  display: none;
+}
+.tip-row.show { display: block; animation: fadeIn .3s ease; }
+.tip-row .tip-title {
+  font-weight: 700; color: var(--violet);
+  margin-bottom: 4px; display: flex; align-items: center; gap: 6px;
+}
+
+/* Sound toggle */
+.sound-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 50%; cursor: pointer;
+  margin-right: 10px;
+  transition: all .2s;
+  font-size: 16px;
+}
+.sound-toggle:hover { border-color: var(--electric); box-shadow: var(--shadow-elec); }
+.sound-toggle.muted { opacity: 0.5; }
 .law-box {
   margin-top: 16px;
   padding: 12px;
@@ -891,10 +932,13 @@ canvas.chart { width: 100%; height: 200px; display: block; }
       <div><small>POUR EVAN · 13 ANS</small></div>
     </div>
   </div>
-  <button class="badges-counter" id="openBadges">
-    <span style="font-size:16px;">🏅</span>
-    <span><span id="badgeCount">0</span>/6 badges</span>
-  </button>
+  <div style="display:flex; align-items:center;">
+    <button class="sound-toggle" id="soundToggle" title="Activer/couper le son">🔊</button>
+    <button class="badges-counter" id="openBadges">
+      <span style="font-size:16px;">🏅</span>
+      <span><span id="badgeCount">0</span>/6 badges</span>
+    </button>
+  </div>
 </header>
 
 <nav class="tabs">
@@ -983,10 +1027,22 @@ canvas.chart { width: 100%; height: 200px; display: block; }
       <!-- METERS -->
       <aside class="panel meters">
         <h3>Mesures</h3>
-        <div class="meter"><span class="label">Tension</span><span><span class="value" id="m-u">0,00</span><span class="unit">V</span></span></div>
-        <div class="meter"><span class="label">Intensité</span><span><span class="value" id="m-i">0,00</span><span class="unit">mA</span></span></div>
-        <div class="meter"><span class="label">Puissance</span><span><span class="value" id="m-p">0,00</span><span class="unit">mW</span></span></div>
-        <div class="meter"><span class="label">Résistance</span><span><span class="value" id="m-r">0,00</span><span class="unit">Ω</span></span></div>
+        <div class="meter">
+          <span class="label">Tension <button class="meter-info" data-meter="U">?</button></span>
+          <span><span class="value" id="m-u">0,00</span><span class="unit">V</span></span>
+        </div>
+        <div class="meter">
+          <span class="label">Intensité <button class="meter-info" data-meter="I">?</button></span>
+          <span><span class="value" id="m-i">0,00</span><span class="unit">mA</span></span>
+        </div>
+        <div class="meter">
+          <span class="label">Puissance <button class="meter-info" data-meter="P">?</button></span>
+          <span><span class="value" id="m-p">0,00</span><span class="unit">mW</span></span>
+        </div>
+        <div class="meter">
+          <span class="label">Résistance <button class="meter-info" data-meter="R">?</button></span>
+          <span><span class="value" id="m-r">0,00</span><span class="unit">Ω</span></span>
+        </div>
 
         <div class="law-box">
           <div class="formula">U = R × I</div>
@@ -994,6 +1050,7 @@ canvas.chart { width: 100%; height: 200px; display: block; }
         </div>
 
         <div class="status-row idle" id="status">Construis ton circuit…</div>
+        <div class="tip-row" id="tipRow"></div>
       </aside>
 
     </div>
@@ -1364,6 +1421,249 @@ document.querySelectorAll('.info-btn').forEach(b => {
   b.addEventListener('click', (e) => { e.stopPropagation(); openFiche(b.dataset.info); });
 });
 
+/* ---------- 5b. EXPLICATION DES MESURES (U, I, P, R) ---------- */
+const METER_INFOS = {
+  U: {
+    icon: '⚡', color: 'var(--neon)',
+    title: 'La tension U (volts)',
+    def: 'La <strong>tension</strong>, c\'est la <strong>force</strong> qui pousse les électrons dans le circuit. Une pile crée une différence de pression entre ses deux bornes : plus (+) et moins (−).',
+    formulaF: 'U se mesure en V',
+    formulaD: 'Avec un voltmètre, en parallèle',
+    anecdote: '<strong>Analogie de l\'eau :</strong> imagine un tuyau. La tension, c\'est la pression de l\'eau. 1,5 V = pile, 230 V = prise murale, 25 000 V = caténaire d\'un TGV ⚡'
+  },
+  I: {
+    icon: '🌊', color: 'var(--electric)',
+    title: 'L\'intensité I (ampères)',
+    def: 'L\'<strong>intensité</strong>, c\'est le <strong>débit</strong> d\'électrons : combien passent dans le fil chaque seconde. Plus elle est grande, plus le fil doit être épais.',
+    formulaF: 'I = U / R',
+    formulaD: 'En ampères (A) ou milliampères (mA)',
+    anecdote: '<strong>Analogie de l\'eau :</strong> la quantité d\'eau qui sort du robinet par seconde. Une LED = 20 mA, un grille-pain = 6 A, la foudre = 30 000 A 😱'
+  },
+  P: {
+    icon: '💪', color: '#ff8c42',
+    title: 'La puissance P (watts)',
+    def: 'La <strong>puissance</strong>, c\'est l\'<strong>énergie consommée chaque seconde</strong>. C\'est ce que tu paies sur ta facture EDF !',
+    formulaF: 'P = U × I',
+    formulaD: 'En watts (W)',
+    anecdote: 'Une ampoule LED moderne = 8 W. Une vieille ampoule à filament = 100 W. Un sèche-cheveux = 2000 W. Un TGV à pleine vitesse = 9 000 000 W 🚄'
+  },
+  R: {
+    icon: 'Ω', color: 'var(--violet)',
+    title: 'La résistance R (ohms)',
+    def: 'La <strong>résistance</strong>, c\'est le <strong>freinage</strong> du courant. Tout matériau résiste plus ou moins au passage des électrons.',
+    formulaF: 'R = U / I',
+    formulaD: 'En ohms (Ω)',
+    anecdote: 'Un fil de cuivre : presque 0 Ω. Le corps humain : 10 000 à 100 000 Ω (mais à 230 V, ça suffit largement pour électrocuter !). Un isolant comme le plastique : des milliards d\'ohms ⚠️'
+  }
+};
+
+document.querySelectorAll('.meter-info').forEach(b => {
+  b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const info = METER_INFOS[b.dataset.meter];
+    if (!info) return;
+    const html = `
+      <h3><span class="icon" style="background:rgba(255,255,255,0.08); color:${info.color};">${info.icon}</span> ${info.title}</h3>
+      <div class="definition">${info.def}</div>
+      <div class="formula-row">
+        <div class="f">${info.formulaF}</div>
+        <div class="desc">${info.formulaD}</div>
+      </div>
+      <div class="anecdote">${info.anecdote}</div>
+    `;
+    openModal(html);
+  });
+});
+
+/* ---------- 5c. SYSTÈME AUDIO (Web Audio API, zéro dépendance) ---------- */
+const Sound = (() => {
+  let ctx = null, master = null;
+  let muted = localStorage.getItem('elec_muted') === '1';
+  let motorOsc = null, motorGain = null, motorFilter = null;
+  let buzzerOsc = null, buzzerGain = null;
+
+  function init() {
+    if (ctx) return;
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain();
+    master.gain.value = muted ? 0 : 0.25;
+    master.connect(ctx.destination);
+  }
+  function unlock() {
+    init();
+    if (ctx.state === 'suspended') ctx.resume();
+  }
+
+  function noiseBuffer(duration = 0.5) {
+    const sr = ctx.sampleRate;
+    const buf = ctx.createBuffer(1, sr * duration, sr);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    return buf;
+  }
+
+  function setMotor(running, intensity) {
+    if (!ctx) return;
+    if (running) {
+      if (!motorOsc) {
+        motorOsc = ctx.createOscillator();
+        motorOsc.type = 'sawtooth';
+        motorFilter = ctx.createBiquadFilter();
+        motorFilter.type = 'lowpass';
+        motorFilter.frequency.value = 400;
+        motorGain = ctx.createGain();
+        motorGain.gain.value = 0;
+        motorOsc.connect(motorFilter).connect(motorGain).connect(master);
+        motorOsc.start();
+      }
+      const freq = 60 + intensity * 150;
+      motorOsc.frequency.setTargetAtTime(freq, ctx.currentTime, 0.1);
+      motorGain.gain.setTargetAtTime(0.18, ctx.currentTime, 0.1);
+    } else if (motorOsc) {
+      motorGain.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
+    }
+  }
+
+  function setBuzzer(active) {
+    if (!ctx) return;
+    if (active) {
+      if (!buzzerOsc) {
+        buzzerOsc = ctx.createOscillator();
+        buzzerOsc.type = 'square';
+        buzzerOsc.frequency.value = 2400;
+        buzzerGain = ctx.createGain();
+        buzzerGain.gain.value = 0;
+        buzzerOsc.connect(buzzerGain).connect(master);
+        buzzerOsc.start();
+      }
+      buzzerGain.gain.setTargetAtTime(0.08, ctx.currentTime, 0.02);
+    } else if (buzzerOsc) {
+      buzzerGain.gain.setTargetAtTime(0, ctx.currentTime, 0.02);
+    }
+  }
+
+  function playPop() {
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator();
+    o.type = 'square';
+    o.frequency.setValueAtTime(800, t);
+    o.frequency.exponentialRampToValueAtTime(60, t + 0.15);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.4, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+    o.connect(g).connect(master);
+    o.start(t); o.stop(t + 0.22);
+
+    const ns = ctx.createBufferSource();
+    ns.buffer = noiseBuffer(0.15);
+    const nf = ctx.createBiquadFilter();
+    nf.type = 'bandpass'; nf.frequency.value = 1200;
+    const ng = ctx.createGain();
+    ng.gain.setValueAtTime(0.35, t);
+    ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    ns.connect(nf).connect(ng).connect(master);
+    ns.start(t);
+  }
+
+  function playSizzle() {
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    const ns = ctx.createBufferSource();
+    ns.buffer = noiseBuffer(0.6);
+    const f = ctx.createBiquadFilter();
+    f.type = 'highpass'; f.frequency.value = 1500;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.25, t);
+    g.gain.linearRampToValueAtTime(0.05, t + 0.3);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+    ns.connect(f).connect(g).connect(master);
+    ns.start(t);
+  }
+
+  function playArc() {
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    for (let i = 0; i < 4; i++) {
+      const ns = ctx.createBufferSource();
+      ns.buffer = noiseBuffer(0.08);
+      const f = ctx.createBiquadFilter();
+      f.type = 'bandpass'; f.frequency.value = 2000 + Math.random() * 1500;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.3, t + i * 0.06);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.06 + 0.08);
+      ns.connect(f).connect(g).connect(master);
+      ns.start(t + i * 0.06);
+    }
+  }
+
+  function setMute(m) {
+    muted = m;
+    localStorage.setItem('elec_muted', m ? '1' : '0');
+    if (master) master.gain.setTargetAtTime(m ? 0 : 0.25, ctx.currentTime, 0.05);
+  }
+  function isMuted() { return muted; }
+
+  return { unlock, setMotor, setBuzzer, playPop, playSizzle, playArc, setMute, isMuted };
+})();
+
+// Sound toggle button
+const soundBtn = document.getElementById('soundToggle');
+function refreshSoundBtn() {
+  soundBtn.textContent = Sound.isMuted() ? '🔇' : '🔊';
+  soundBtn.classList.toggle('muted', Sound.isMuted());
+}
+refreshSoundBtn();
+soundBtn.addEventListener('click', () => {
+  Sound.unlock();
+  Sound.setMute(!Sound.isMuted());
+  refreshSoundBtn();
+});
+// First user interaction unlocks audio
+document.addEventListener('click', () => Sound.unlock(), { once: true });
+
+/* ---------- 5d. TIP PÉDAGOGIQUE (quand ça grille / disjoncte) ---------- */
+const TIPS = {
+  led: {
+    title: '💡 Pourquoi la LED a grillé ?',
+    body: 'Une LED supporte au max <strong>~30 mA</strong>. Au-delà, le filament fond instantanément.<br><strong>Solution :</strong> ajoute une résistance en série (470 Ω marche bien avec une pile 9V).'
+  },
+  lamp: {
+    title: '💡 Pourquoi l\'ampoule a grillé ?',
+    body: 'Le filament a reçu trop de courant et a <strong>fondu</strong> (comme dans la vraie vie quand une ampoule claque !).<br><strong>Solution :</strong> baisse la tension ou ajoute une résistance.'
+  },
+  motor: {
+    title: '🌀 Pourquoi le moteur a cramé ?',
+    body: 'La bobine du moteur a surchauffé et <strong>brûlé son isolant</strong>. Dans la vraie vie, ça sent le plastique chaud 😅<br><strong>Solution :</strong> moins de tension, ou plus de résistance.'
+  },
+  buzzer: {
+    title: '🔊 Pourquoi le buzzer est mort ?',
+    body: 'Le cristal piézoélectrique a été <strong>poussé trop fort</strong>. Au-delà de ~80 mA, il claque.<br><strong>Solution :</strong> limite le courant avec une résistance.'
+  },
+  fuse: {
+    title: '⚡ Le fusible a fait son boulot !',
+    body: 'Le courant a dépassé son <strong>calibre max</strong> : le fil interne a fondu pour <strong>protéger le reste du circuit</strong>. Sans lui, c\'est tout le montage qui aurait grillé !<br><strong>Solution :</strong> reset et trouve pourquoi le courant était si fort.'
+  },
+  short: {
+    title: '💥 Court-circuit !',
+    body: 'Tu as une pile branchée <strong>sans aucun composant pour limiter le courant</strong>. Résultat : I = U / 0 → énorme. La pile chauffe, peut couler, parfois exploser. <strong>Toujours mettre une résistance, une LED ou autre consommateur.</strong>'
+  }
+};
+let currentTipKey = null;
+function showTip(key) {
+  const tip = TIPS[key];
+  const row = document.getElementById('tipRow');
+  if (!tip) { row.classList.remove('show'); currentTipKey = null; return; }
+  if (currentTipKey === key) return;
+  currentTipKey = key;
+  row.innerHTML = `<div class="tip-title">${tip.title}</div><div>${tip.body}</div>`;
+  row.classList.add('show');
+}
+function hideTip() {
+  document.getElementById('tipRow').classList.remove('show');
+  currentTipKey = null;
+}
+
 /* ---------- 6. LABO ---------- */
 const TYPES = {
   battery:  { name: 'Pile',         emoji: '🔋' },
@@ -1380,6 +1680,7 @@ const slots = new Array(6).fill(null);
 let selectedSlot = -1;
 let ohmCalculated = false;
 let firstCircuitDone = false;
+let wasShortCircuit = false;
 
 function defaultOpts(type) {
   if (type === 'battery')  return { emf: 4.5 };
@@ -1660,15 +1961,19 @@ function recompute() {
 
   let I = 0;
   let consumers = placed.filter(p => p.type !== 'battery' && p.type !== 'switch' && p.type !== 'fuse').length;
+  let isShortCircuit = false;
 
   if (!hasBattery) {
     status.textContent = 'Ajoute une pile pour démarrer !';
     status.className = 'status-row idle';
+    hideTip();
   } else if (consumers === 0 && !circuitOpen) {
     status.textContent = '⚠️ COURT-CIRCUIT : la pile va se vider très vite !';
     status.className = 'status-row warn';
     R = Math.max(0.5, R);
     I = V / R;
+    isShortCircuit = true;
+    showTip('short');
   } else if (circuitOpen) {
     status.textContent = 'Circuit ouvert — le courant ne passe pas.';
     status.className = 'status-row idle';
@@ -1676,6 +1981,7 @@ function recompute() {
     I = V / R;
     status.textContent = '✅ Circuit fermé, ça circule !';
     status.className = 'status-row ok';
+    hideTip();
   }
 
   // Composants qui grillent (LED, ampoule, moteur, buzzer)
@@ -1701,8 +2007,13 @@ function recompute() {
   if (burntThisRound.length > 0 || blownThisRound) {
     if (blownThisRound) {
       status.textContent = '💥 Disjoncté ! Le fusible a sauvé le circuit. Reset pour réessayer.';
+      showTip('fuse');
+      Sound.playPop();
     } else if (burntThisRound.length) {
+      const burntType = placed.find(p => p.opts.burnt)?.type;
       status.textContent = '🔥 Composant grillé : ' + burntThisRound.join(', ') + ' — ajoute une résistance !';
+      if (burntType) showTip(burntType);
+      Sound.playSizzle();
     }
     status.className = 'status-row warn';
     I = 0;
@@ -1773,6 +2084,14 @@ function recompute() {
       if (!s.opts.burnt && I >= spec.Imin) buzz.classList.add('ringing');
     }
   });
+
+  // Sons : moteur (rumble), buzzer (square wave), arc en court-circuit
+  const motorOn = placed.some(s => s.type === 'motor' && !s.opts.burnt && I >= DEVICE_SPECS.motor.Imin);
+  const buzzerOn = placed.some(s => s.type === 'buzzer' && !s.opts.burnt && I >= DEVICE_SPECS.buzzer.Imin);
+  Sound.setMotor(motorOn, motorOn ? Math.min(1, I / DEVICE_SPECS.motor.Iopt) : 0);
+  Sound.setBuzzer(buzzerOn);
+  if (isShortCircuit && !wasShortCircuit) Sound.playArc();
+  wasShortCircuit = isShortCircuit;
 
   // Mises à jour mesures
   document.getElementById('m-u').textContent = V.toFixed(2).replace('.', ',');
