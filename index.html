@@ -319,6 +319,15 @@ h2.section-title {
 .slot .placed .val {
   font-size: 11px; color: var(--neon); font-weight: 700;
 }
+.slot .local {
+  position: absolute; bottom: -22px; left: 0; right: 0;
+  text-align: center;
+  font-size: 10px; color: var(--electric); font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Consolas', monospace;
+  pointer-events: none;
+}
+.slots-row { padding-bottom: 22px; }
 .slot .remove {
   position: absolute; top: -8px; right: -8px;
   width: 22px; height: 22px; border-radius: 50%;
@@ -474,6 +483,63 @@ h2.section-title {
 }
 .slot .placed.blown .big { animation: pop .4s ease; color: var(--red); }
 .slot .placed.blown .val { color: var(--red); }
+
+/* Diode rendered as inline SVG */
+.slot .diode-svg { display: block; filter: drop-shadow(0 0 6px rgba(46, 213, 115, 0.6)); }
+.slot .diode-svg.rev { filter: none; opacity: 0.6; }
+
+/* Mission banner */
+.mission-banner {
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(255,215,0,0.10), rgba(138,43,226,0.10));
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--neon);
+  border-radius: 14px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+}
+.mission-banner.done {
+  border-left-color: var(--green);
+  background: linear-gradient(135deg, rgba(46,213,115,0.12), rgba(0,191,255,0.08));
+}
+.mission-banner.ready { animation: missionReady 1.3s ease-in-out infinite; }
+@keyframes missionReady {
+  0%, 100% { box-shadow: 0 0 0 rgba(255, 215, 0, 0); }
+  50%      { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+}
+.mission-header {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 11px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.mission-diff-pill {
+  padding: 2px 8px; border-radius: 12px; font-weight: 700;
+  font-size: 10px;
+}
+.mission-diff-pill.easy   { background: rgba(46,213,115,0.2); color: var(--green); }
+.mission-diff-pill.medium { background: rgba(255,215,0,0.2); color: var(--neon); }
+.mission-diff-pill.hard   { background: rgba(255,71,87,0.2); color: var(--red); }
+.mission-title { font-size: 16px; font-weight: 800; margin: 2px 0; }
+.mission-desc { font-size: 13px; color: #c8d1e0; line-height: 1.5; }
+.mission-hint-box {
+  margin-top: 8px; padding: 8px 12px;
+  background: rgba(255, 215, 0, 0.08);
+  border-radius: 6px; font-size: 12px;
+  color: var(--neon); line-height: 1.5;
+  display: none;
+}
+.mission-hint-box.show { display: block; }
+.mission-actions {
+  display: flex; flex-direction: column; gap: 6px; align-items: stretch;
+}
+.mission-actions button { padding: 8px 12px; font-size: 12px; white-space: nowrap; }
+.mission-nav { display: flex; gap: 4px; }
+.mission-nav button { flex: 1; padding: 6px; font-size: 11px; }
+.done-mark { font-size: 28px; }
 
 /* Overheat effect on wires when current dangerous */
 .loop.overheat .wire {
@@ -954,6 +1020,27 @@ canvas.chart { width: 100%; height: 200px; display: block; }
     <h2 class="section-title">Le labo des circuits</h2>
     <p class="section-sub">Glisse les composants depuis la palette jusqu'au circuit. Clique sur un composant placé pour modifier ses réglages ou ouvrir sa fiche.</p>
 
+    <!-- Mission banner -->
+    <div class="mission-banner" id="missionBanner">
+      <div>
+        <div class="mission-header">
+          <span id="missionNum">Mission 1 / 8</span>
+          <span class="mission-diff-pill easy" id="missionDiffPill">Facile</span>
+        </div>
+        <div class="mission-title" id="missionTitle">—</div>
+        <div class="mission-desc" id="missionDesc">—</div>
+        <div class="mission-hint-box" id="missionHintBox"></div>
+      </div>
+      <div class="mission-actions">
+        <button id="missionHintBtn" title="Montre un indice">💡 Indice</button>
+        <button class="btn-primary" id="missionCheckBtn">✓ Vérifier</button>
+        <div class="mission-nav">
+          <button id="missionPrev">←</button>
+          <button id="missionNext">→</button>
+        </div>
+      </div>
+    </div>
+
     <div class="lab-grid">
       <!-- PALETTE -->
       <aside class="panel palette">
@@ -993,6 +1080,11 @@ canvas.chart { width: 100%; height: 200px; display: block; }
           <div><div class="label">Buzzer</div><div class="sub">émet un son</div></div>
           <button class="info-btn" data-info="buzzer">i</button>
         </div>
+        <div class="palette-item" draggable="true" data-type="diode">
+          <span class="icon" style="color:var(--green);">▶|</span>
+          <div><div class="label">Diode</div><div class="sub">sens unique</div></div>
+          <button class="info-btn" data-info="diode">i</button>
+        </div>
         <div class="palette-item" draggable="true" data-type="fuse">
           <span class="icon" style="color:var(--neon);">⚡</span>
           <div><div class="label">Fusible</div><div class="sub">protège le circuit</div></div>
@@ -1026,23 +1118,14 @@ canvas.chart { width: 100%; height: 200px; display: block; }
 
       <!-- METERS -->
       <aside class="panel meters">
-        <h3>Mesures</h3>
-        <div class="meter">
-          <span class="label">Tension <button class="meter-info" data-meter="U">?</button></span>
-          <span><span class="value" id="m-u">0,00</span><span class="unit">V</span></span>
-        </div>
-        <div class="meter">
-          <span class="label">Intensité <button class="meter-info" data-meter="I">?</button></span>
-          <span><span class="value" id="m-i">0,00</span><span class="unit">mA</span></span>
-        </div>
-        <div class="meter">
-          <span class="label">Puissance <button class="meter-info" data-meter="P">?</button></span>
-          <span><span class="value" id="m-p">0,00</span><span class="unit">mW</span></span>
-        </div>
-        <div class="meter">
-          <span class="label">Résistance <button class="meter-info" data-meter="R">?</button></span>
-          <span><span class="value" id="m-r">0,00</span><span class="unit">Ω</span></span>
-        </div>
+        <h3 style="display:flex; justify-content:space-between; align-items:center;">
+          <span>Mesures</span>
+          <button class="meter-info" id="mAllInfo" title="Comprendre les mesures">?</button>
+        </h3>
+        <div class="meter"><span class="label">Tension</span><span><span class="value" id="m-u">0,00</span><span class="unit">V</span></span></div>
+        <div class="meter"><span class="label">Intensité</span><span><span class="value" id="m-i">0,00</span><span class="unit">mA</span></span></div>
+        <div class="meter"><span class="label">Puissance</span><span><span class="value" id="m-p">0,00</span><span class="unit">mW</span></span></div>
+        <div class="meter"><span class="label">Résistance</span><span><span class="value" id="m-r">0,00</span><span class="unit">Ω</span></span></div>
 
         <div class="law-box">
           <div class="formula">U = R × I</div>
@@ -1399,6 +1482,13 @@ const FICHES = {
     def: 'Un buzzer émet un son quand le courant le traverse. À l\'intérieur, un petit disque <strong>piézoélectrique</strong> vibre à très grande vitesse et fait vibrer l\'air : ça produit un son.',
     formulaF: 'f ≈ 2–4 kHz', formulaD: 'Fréquence du son émis',
     anecdote: 'L\'effet piézoélectrique a été découvert par les frères Curie en 1880. On l\'utilise partout : briquets, alarmes, montres à quartz, capteurs… Et la même technologie marche à l\'envers : tape sur un piézo, ça produit du courant !'
+  },
+  diode: {
+    icon: '▶|', color: 'var(--green)',
+    title: 'La diode',
+    def: 'Une diode est une <strong>porte à sens unique</strong> pour le courant. Elle ne laisse passer les électrons que dans une direction (la flèche). À l\'envers : circuit ouvert.',
+    formulaF: 'V_seuil ≈ 0,7 V', formulaD: 'Chute de tension à ses bornes',
+    anecdote: 'Les diodes sont partout dans l\'électronique. La LED est <em>elle-même</em> une diode : si tu la branches à l\'envers, elle ne s\'allume pas ! D\'ailleurs LED = Light-<strong>Emitting Diode</strong>.'
   }
 };
 
@@ -1457,22 +1547,23 @@ const METER_INFOS = {
   }
 };
 
-document.querySelectorAll('.meter-info').forEach(b => {
-  b.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const info = METER_INFOS[b.dataset.meter];
-    if (!info) return;
-    const html = `
-      <h3><span class="icon" style="background:rgba(255,255,255,0.08); color:${info.color};">${info.icon}</span> ${info.title}</h3>
-      <div class="definition">${info.def}</div>
-      <div class="formula-row">
-        <div class="f">${info.formulaF}</div>
-        <div class="desc">${info.formulaD}</div>
-      </div>
-      <div class="anecdote">${info.anecdote}</div>
-    `;
-    openModal(html);
-  });
+document.getElementById('mAllInfo').addEventListener('click', (e) => {
+  e.stopPropagation();
+  let html = `<h3><span class="icon" style="background:rgba(255,255,255,0.08); color:var(--electric);">📏</span> Comprendre les mesures</h3>`;
+  html += '<div class="definition" style="margin:14px 0 8px;">Quatre grandeurs essentielles à connaître :</div>';
+  for (const [k, info] of Object.entries(METER_INFOS)) {
+    html += `
+      <div style="margin-bottom:14px; padding:12px; background:rgba(0,0,0,0.2); border-radius:10px; border-left:3px solid ${info.color};">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+          <span style="font-size:20px; color:${info.color};">${info.icon}</span>
+          <strong>${info.title}</strong>
+        </div>
+        <div style="font-size:13px; line-height:1.5; color:#c8d1e0;">${info.def}</div>
+        <div style="margin-top:8px; font-size:12px; color:var(--neon); font-family:'Cambria Math', Georgia, serif;">${info.formulaF} <span style="color:var(--muted);">— ${info.formulaD}</span></div>
+        <div style="margin-top:6px; font-size:12px; color:var(--violet); line-height:1.5;">${info.anecdote}</div>
+      </div>`;
+  }
+  openModal(html);
 });
 
 /* ---------- 5c. SYSTÈME AUDIO (Web Audio API, zéro dépendance) ---------- */
@@ -1672,6 +1763,7 @@ const TYPES = {
   lamp:     { name: 'Ampoule',      emoji: '💡' },
   motor:    { name: 'Ventilateur',  emoji: '🌀' },
   buzzer:   { name: 'Buzzer',       emoji: '🔊' },
+  diode:    { name: 'Diode',        emoji: '▶|' },
   switch:   { name: 'Interrupteur', emoji: '⎉'  },
   fuse:     { name: 'Fusible',      emoji: '⚡' }
 };
@@ -1681,6 +1773,7 @@ let selectedSlot = -1;
 let ohmCalculated = false;
 let firstCircuitDone = false;
 let wasShortCircuit = false;
+let lastState = { V: 0, R: 0, I: 0, isShort: false, ledsOn: 0, lampsOn: 0, motorsRunning: 0, buzzersRinging: 0, distinct: 0, burntCount: 0, blownCount: 0, hasDiodeFwd: false, hasFuseOk: false };
 
 function defaultOpts(type) {
   if (type === 'battery')  return { emf: 4.5 };
@@ -1689,6 +1782,7 @@ function defaultOpts(type) {
   if (type === 'lamp')     return { burnt: false };
   if (type === 'motor')    return { burnt: false };
   if (type === 'buzzer')   return { burnt: false };
+  if (type === 'diode')    return { dir: 'fwd' };
   if (type === 'switch')   return { state: 'closed' };
   if (type === 'fuse')     return { Imax: 0.5, blown: false };
   return {};
@@ -1758,6 +1852,15 @@ function renderSlot(idx) {
     buzz.className = 'buzzer';
     buzz.textContent = '🔊';
     cont.appendChild(buzz);
+  } else if (type === 'diode') {
+    const isRev = opts.dir === 'rev';
+    const color = isRev ? '#555' : '#2ed573';
+    const svgStr = isRev
+      ? `<svg class="diode-svg rev" width="40" height="28" viewBox="0 0 40 28"><rect x="3" y="0" width="3" height="28" fill="${color}"/><polygon points="6,4 6,24 30,14" fill="${color}"/></svg>`
+      : `<svg class="diode-svg" width="40" height="28" viewBox="0 0 40 28"><polygon points="6,4 6,24 30,14" fill="${color}"/><rect x="30" y="0" width="3" height="28" fill="${color}"/></svg>`;
+    const wrap = document.createElement('div');
+    wrap.innerHTML = svgStr;
+    cont.appendChild(wrap.firstChild);
   } else {
     const big = document.createElement('div');
     big.className = 'big';
@@ -1797,6 +1900,7 @@ function labelFor(type, opts) {
   if (type === 'lamp')     return opts.burnt ? 'grillée !' : '60Ω · 500mA';
   if (type === 'motor')    return opts.burnt ? 'cramé !' : '15Ω · 1A';
   if (type === 'buzzer')   return opts.burnt ? 'mort !' : '40Ω · 80mA';
+  if (type === 'diode')    return opts.dir === 'fwd' ? '▶| passante' : '|◀ bloquée';
   if (type === 'switch')   return opts.state === 'closed' ? 'fermé' : 'ouvert';
   if (type === 'fuse')     return opts.blown ? 'sauté !' : (opts.Imax * 1000) + ' mA max';
   return '';
@@ -1861,6 +1965,14 @@ function openProps(idx, slotEl) {
         renderSlot(idx); recompute();
       });
     });
+  } else if (type === 'diode') {
+    propsBody.querySelectorAll('.opt-chip').forEach(c => {
+      c.addEventListener('click', () => {
+        opts.dir = c.dataset.v;
+        propsBody.querySelectorAll('.opt-chip').forEach(x => x.classList.toggle('selected', x === c));
+        renderSlot(idx); recompute();
+      });
+    });
   }
 
   const rect = slotEl.getBoundingClientRect();
@@ -1897,6 +2009,12 @@ function renderProps(type, opts) {
       ${[0.1, 0.2, 0.5, 1].map(v => `<div class="opt-chip ${opts.Imax===v?'selected':''}" data-v="${v}">${v*1000} mA</div>`).join('')}
     </div>
     ${opts.blown ? '<div style="margin-top:10px; color:var(--red); font-size:12px; font-weight:700;">⚠️ Fusible grillé — change-le ou reset.</div>' : ''}`;
+  }
+  if (type === 'diode') {
+    return `<label>Sens</label><div class="opt-chips">
+      <div class="opt-chip ${opts.dir==='fwd'?'selected':''}" data-v="fwd">▶| passante</div>
+      <div class="opt-chip ${opts.dir==='rev'?'selected':''}" data-v="rev">|◀ bloquée</div>
+    </div>`;
   }
   return '';
 }
@@ -1952,6 +2070,9 @@ function recompute() {
     } else if (DEVICE_SPECS[s.type]) {
       if (s.opts.burnt) circuitOpen = true; // composant grillé = circuit ouvert
       else R += DEVICE_SPECS[s.type].R;
+    } else if (s.type === 'diode') {
+      if (s.opts.dir === 'rev') circuitOpen = true;
+      else R += 5; // chute de tension simplifiée
     } else if (s.type === 'switch') {
       if (s.opts.state === 'open') circuitOpen = true;
     } else if (s.type === 'fuse') {
@@ -2085,6 +2206,27 @@ function recompute() {
     }
   });
 
+  // Mesures locales : U aux bornes de chaque composant placé
+  document.querySelectorAll('.slot').forEach((slotEl, i) => {
+    const s = slots[i];
+    if (!s) return;
+    let oldLocal = slotEl.querySelector('.local');
+    if (oldLocal) oldLocal.remove();
+    if (I <= 0.0001 || circuitOpen || s.opts.burnt || s.opts.blown) return;
+    let Rlocal = 0;
+    if (s.type === 'battery')    Rlocal = -s.opts.emf / Math.max(0.001, I); // tension de générateur (négative)
+    else if (s.type === 'resistor') Rlocal = s.opts.R;
+    else if (DEVICE_SPECS[s.type]) Rlocal = DEVICE_SPECS[s.type].R;
+    else if (s.type === 'diode') Rlocal = 5;
+    let Ulocal;
+    if (s.type === 'battery') Ulocal = s.opts.emf;
+    else Ulocal = Rlocal * I;
+    const local = document.createElement('div');
+    local.className = 'local';
+    local.textContent = `${Ulocal.toFixed(2).replace('.', ',')} V`;
+    slotEl.appendChild(local);
+  });
+
   // Sons : moteur (rumble), buzzer (square wave), arc en court-circuit
   const motorOn = placed.some(s => s.type === 'motor' && !s.opts.burnt && I >= DEVICE_SPECS.motor.Imin);
   const buzzerOn = placed.some(s => s.type === 'buzzer' && !s.opts.burnt && I >= DEVICE_SPECS.buzzer.Imin);
@@ -2128,6 +2270,23 @@ function recompute() {
   }
   const distinct = new Set(placed.map(s => s.type));
   if (distinct.size >= 5) unlockBadge('macgyver');
+
+  // Mémorise l'état pour les missions
+  lastState = {
+    V, R, I,
+    isShort: isShortCircuit,
+    ledsOn: placed.filter(s => s.type === 'led' && !s.opts.burnt && I >= DEVICE_SPECS.led.Imin && I <= DEVICE_SPECS.led.Imax).length,
+    lampsOn: placed.filter(s => s.type === 'lamp' && !s.opts.burnt && I >= DEVICE_SPECS.lamp.Imin).length,
+    motorsRunning: placed.filter(s => s.type === 'motor' && !s.opts.burnt && I >= DEVICE_SPECS.motor.Imin).length,
+    buzzersRinging: placed.filter(s => s.type === 'buzzer' && !s.opts.burnt && I >= DEVICE_SPECS.buzzer.Imin).length,
+    distinct: distinct.size,
+    burntCount: placed.filter(s => s.opts && s.opts.burnt).length,
+    blownCount: placed.filter(s => s.type === 'fuse' && s.opts.blown).length,
+    hasDiodeFwd: placed.some(s => s.type === 'diode' && s.opts.dir === 'fwd'),
+    hasFuseOk: placed.some(s => s.type === 'fuse' && !s.opts.blown)
+  };
+  // Auto-pulse mission banner si objectif atteint
+  if (typeof checkMissionReady === 'function') checkMissionReady();
 }
 
 function renderAll() {
@@ -2561,6 +2720,160 @@ function renderQuizEnd() {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+
+/* ---------- 9. MISSIONS ---------- */
+const MISSIONS = [
+  {
+    id: 'first-led',
+    title: 'Allume une LED',
+    desc: 'Monte ton premier circuit qui fait briller une LED, sans la griller.',
+    hint: '3 composants : Pile (4,5V) + Résistance (~470Ω) + LED. Sans résistance, la LED grille instantanément !',
+    diff: 'easy',
+    check: () => lastState.ledsOn >= 1 && lastState.burntCount === 0
+  },
+  {
+    id: 'spin-motor',
+    title: 'Fais tourner le ventilateur',
+    desc: 'Mets le moteur en marche sans rien griller dans le circuit.',
+    hint: 'Le moteur démarre à 60 mA. Une pile 4,5V avec très peu de résistance fait l\'affaire, mais attention à pas dépasser 1 A !',
+    diff: 'easy',
+    check: () => lastState.motorsRunning >= 1 && lastState.burntCount === 0
+  },
+  {
+    id: 'protected',
+    title: 'Protège ton circuit',
+    desc: 'Construis un circuit qui marche, avec un fusible toujours intact.',
+    hint: 'Choisis un fusible avec un calibre adapté (500 mA convient pour la plupart des cas).',
+    diff: 'easy',
+    check: () => lastState.hasFuseOk && lastState.I > 0.001 && lastState.burntCount === 0
+  },
+  {
+    id: 'exact-current',
+    title: 'Calibre l\'intensité à 20 mA',
+    desc: 'Atteins exactement 20 mA (± 2) dans ton circuit.',
+    hint: 'I = U/R. Avec une pile 9V, il te faut R ≈ 450Ω. Joue avec le slider de la résistance !',
+    diff: 'medium',
+    check: () => lastState.I * 1000 >= 18 && lastState.I * 1000 <= 22
+  },
+  {
+    id: 'two-lamps',
+    title: 'Allume 2 ampoules en même temps',
+    desc: 'Fais briller deux ampoules simultanément sans qu\'aucune ne grille.',
+    hint: 'En série, la même intensité traverse les deux ampoules. Avec une pile 9V et une résistance modeste, ça marche.',
+    diff: 'medium',
+    check: () => lastState.lampsOn >= 2 && lastState.burntCount === 0
+  },
+  {
+    id: 'led-buzz',
+    title: 'Lumière + son',
+    desc: 'Allume une LED ET fais sonner un buzzer en même temps.',
+    hint: 'Mets les deux en série avec une résistance bien dosée. Pile 9V + résistance 100Ω + LED + buzzer fonctionne.',
+    diff: 'medium',
+    check: () => lastState.ledsOn >= 1 && lastState.buzzersRinging >= 1 && lastState.burntCount === 0
+  },
+  {
+    id: 'diode-forward',
+    title: 'Le sens de la diode',
+    desc: 'Place une diode dans le bon sens (passante) et fais circuler du courant.',
+    hint: 'La diode est comme une porte à sens unique. Si elle est à contre-sens, rien ne passe. Clique dessus pour changer le sens.',
+    diff: 'hard',
+    check: () => lastState.hasDiodeFwd && lastState.I > 0.001
+  },
+  {
+    id: 'macgyver-mission',
+    title: 'Le MacGyver',
+    desc: 'Utilise 5 types de composants différents simultanément, et que ça marche !',
+    hint: 'Pile + Résistance + LED + Interrupteur fermé + Fusible = 5 types. Le courant doit circuler sans rien griller.',
+    diff: 'hard',
+    check: () => lastState.distinct >= 5 && lastState.I > 0.001 && lastState.burntCount === 0 && lastState.blownCount === 0
+  }
+];
+
+let missionIdx = 0;
+let missionsDone = JSON.parse(localStorage.getItem('elec_missions') || '[]');
+
+const missionBanner   = document.getElementById('missionBanner');
+const missionNum      = document.getElementById('missionNum');
+const missionDiffPill = document.getElementById('missionDiffPill');
+const missionTitle    = document.getElementById('missionTitle');
+const missionDesc     = document.getElementById('missionDesc');
+const missionHintBox  = document.getElementById('missionHintBox');
+
+// Démarre sur la 1ère mission non faite
+for (let i = 0; i < MISSIONS.length; i++) {
+  if (!missionsDone.includes(MISSIONS[i].id)) { missionIdx = i; break; }
+  if (i === MISSIONS.length - 1) missionIdx = i;
+}
+
+function renderMission() {
+  const m = MISSIONS[missionIdx];
+  const done = missionsDone.includes(m.id);
+  const diffLabel = { easy: 'Facile', medium: 'Moyen', hard: 'Difficile' }[m.diff];
+  missionNum.textContent = `Mission ${missionIdx + 1} / ${MISSIONS.length}`;
+  missionDiffPill.className = 'mission-diff-pill ' + m.diff;
+  missionDiffPill.textContent = diffLabel;
+  missionTitle.innerHTML = (done ? '<span class="done-mark" style="color:var(--green);">✓</span> ' : '') + escapeHtml(m.title);
+  missionDesc.textContent = m.desc;
+  missionHintBox.classList.remove('show');
+  missionHintBox.textContent = m.hint;
+  missionBanner.classList.toggle('done', done);
+  missionBanner.classList.remove('ready');
+  checkMissionReady();
+}
+
+function checkMissionReady() {
+  const m = MISSIONS[missionIdx];
+  if (!m || missionsDone.includes(m.id)) {
+    missionBanner.classList.remove('ready');
+    return;
+  }
+  try {
+    if (m.check()) missionBanner.classList.add('ready');
+    else missionBanner.classList.remove('ready');
+  } catch (e) { /* ignore */ }
+}
+
+document.getElementById('missionHintBtn').addEventListener('click', () => {
+  missionHintBox.classList.toggle('show');
+});
+document.getElementById('missionPrev').addEventListener('click', () => {
+  missionIdx = (missionIdx - 1 + MISSIONS.length) % MISSIONS.length;
+  renderMission();
+});
+document.getElementById('missionNext').addEventListener('click', () => {
+  missionIdx = (missionIdx + 1) % MISSIONS.length;
+  renderMission();
+});
+document.getElementById('missionCheckBtn').addEventListener('click', () => {
+  const m = MISSIONS[missionIdx];
+  if (!m) return;
+  if (missionsDone.includes(m.id)) {
+    showToast('✓', 'Déjà accomplie');
+    return;
+  }
+  if (m.check()) {
+    missionsDone.push(m.id);
+    localStorage.setItem('elec_missions', JSON.stringify(missionsDone));
+    showToast('🎯', 'Mission accomplie : ' + m.title);
+    Sound.playPop(); // petit son de succès (réuse du pop)
+    renderMission();
+    // Passe à la prochaine non-faite
+    setTimeout(() => {
+      for (let i = 0; i < MISSIONS.length; i++) {
+        const next = (missionIdx + 1 + i) % MISSIONS.length;
+        if (!missionsDone.includes(MISSIONS[next].id)) { missionIdx = next; renderMission(); return; }
+      }
+    }, 1200);
+  } else {
+    // Petit feedback "pas encore"
+    missionBanner.animate(
+      [{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'translateX(0)' }],
+      { duration: 250 }
+    );
+  }
+});
+
+renderMission();
 </script>
 </body>
 </html>
