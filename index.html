@@ -1,0 +1,2247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>⚡ Electrolab – Evan</title>
+<style>
+:root {
+  --bg: #0a0a1a;
+  --bg-deep: #050510;
+  --panel: rgba(20, 28, 56, 0.72);
+  --panel-solid: #131a33;
+  --border: rgba(0, 191, 255, 0.25);
+  --electric: #00BFFF;
+  --neon: #FFD700;
+  --violet: #8A2BE2;
+  --red: #ff4757;
+  --green: #2ed573;
+  --text: #e8eef9;
+  --muted: #8892b0;
+  --shadow-elec: 0 0 18px rgba(0, 191, 255, 0.45);
+  --shadow-neon: 0 0 18px rgba(255, 215, 0, 0.55);
+  --shadow-violet: 0 0 18px rgba(138, 43, 226, 0.5);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow-x: hidden;
+}
+
+#stars {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  display: block;
+}
+
+a, button { font-family: inherit; }
+
+button {
+  background: linear-gradient(135deg, rgba(0,191,255,0.15), rgba(138,43,226,0.15));
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  transition: all .2s ease;
+}
+button:hover {
+  border-color: var(--electric);
+  box-shadow: var(--shadow-elec);
+  transform: translateY(-1px);
+}
+button:active { transform: translateY(0); }
+button:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--electric), var(--violet));
+  border-color: transparent;
+  color: #fff;
+}
+.btn-primary:hover { box-shadow: var(--shadow-elec), var(--shadow-violet); border-color: transparent; }
+.btn-neon {
+  background: linear-gradient(135deg, var(--neon), #ffb700);
+  color: #1a1a1a;
+  border-color: transparent;
+}
+.btn-neon:hover { box-shadow: var(--shadow-neon); }
+
+header.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  background: linear-gradient(180deg, rgba(10,10,26,0.92), rgba(10,10,26,0.55));
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+.logo {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 20px; font-weight: 800; letter-spacing: 0.5px;
+}
+.logo .bolt {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 10px;
+  background: radial-gradient(circle at 30% 30%, var(--neon), #b78b00);
+  box-shadow: var(--shadow-neon);
+  font-size: 22px;
+  animation: boltPulse 2.4s ease-in-out infinite;
+}
+@keyframes boltPulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(255,215,0,0.5); }
+  50%      { box-shadow: 0 0 26px rgba(255,215,0,0.9); }
+}
+.logo small {
+  font-weight: 500; font-size: 12px; color: var(--muted); letter-spacing: 1px;
+}
+.badges-counter {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px; background: var(--panel); border: 1px solid var(--border);
+  border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 600;
+}
+.badges-counter:hover { border-color: var(--neon); box-shadow: var(--shadow-neon); }
+
+nav.tabs {
+  display: flex; gap: 8px; padding: 16px 24px 0;
+  max-width: 1400px; margin: 0 auto;
+}
+.tab {
+  background: transparent; border: 1px solid transparent;
+  padding: 10px 22px; border-radius: 12px 12px 0 0;
+  color: var(--muted); cursor: pointer; font-weight: 600; font-size: 14px;
+  border-bottom: 1px solid var(--border);
+  transition: all .2s;
+}
+.tab:hover { color: var(--text); transform: none; box-shadow: none; }
+.tab.active {
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-bottom-color: transparent;
+}
+
+main {
+  padding: 0 24px 80px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.view { display: none; }
+.view.active { display: block; animation: fadeIn .35s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  backdrop-filter: blur(8px);
+}
+
+h2.section-title {
+  font-size: 22px; font-weight: 800; margin-bottom: 4px;
+  background: linear-gradient(90deg, var(--electric), var(--neon));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.section-sub { color: var(--muted); margin-bottom: 18px; font-size: 14px; }
+
+/* =====================  LABO  ===================== */
+.lab-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr 280px;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 1100px) {
+  .lab-grid { grid-template-columns: 1fr; }
+}
+
+.palette h3, .meters h3 {
+  font-size: 13px; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--muted); margin-bottom: 10px;
+}
+.palette-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; margin-bottom: 8px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: grab;
+  transition: all .2s;
+}
+.palette-item:hover {
+  border-color: var(--electric); box-shadow: var(--shadow-elec);
+  transform: translateX(4px);
+}
+.palette-item:active { cursor: grabbing; }
+.palette-item.dragging { opacity: .4; }
+.palette-item .icon {
+  width: 36px; height: 36px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.palette-item .label { font-weight: 600; font-size: 14px; }
+.palette-item .sub { font-size: 11px; color: var(--muted); }
+.palette-item .info-btn {
+  margin-left: auto;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(255,255,255,0.08); color: var(--muted);
+  border: none; cursor: pointer; font-size: 11px; font-weight: 700;
+  padding: 0; flex-shrink: 0;
+}
+.palette-item .info-btn:hover { background: var(--violet); color: white; box-shadow: var(--shadow-violet); }
+
+/* Circuit board */
+.circuit-board {
+  position: relative;
+  background:
+    linear-gradient(rgba(0,191,255,0.04) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(90deg, rgba(0,191,255,0.04) 1px, transparent 1px) 0 0 / 28px 28px,
+    radial-gradient(circle at center, rgba(0,191,255,0.05), transparent 70%);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 30px;
+  min-height: 460px;
+}
+.circuit-board .hint {
+  position: absolute; top: 10px; left: 14px;
+  color: var(--muted); font-size: 11px; letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+/* Rectangular loop wire */
+.loop {
+  position: relative;
+  margin: 36px auto 0;
+  max-width: 720px;
+  height: 320px;
+}
+
+.wire {
+  position: absolute;
+  background: linear-gradient(180deg, #2a3450, #1a2240);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.wire.h { height: 6px; }
+.wire.v { width: 6px; }
+.wire.top    { top: 0; left: 0; right: 0; }
+.wire.bottom { bottom: 0; left: 0; right: 0; }
+.wire.left   { left: 0; top: 0; bottom: 0; }
+.wire.right  { right: 0; top: 0; bottom: 0; }
+
+/* Particles in the wire */
+.wire .particle {
+  position: absolute;
+  width: 14px; height: 100%;
+  background: linear-gradient(90deg, transparent, var(--neon), transparent);
+  filter: blur(1px);
+  opacity: 0;
+}
+.wire.v .particle {
+  width: 100%; height: 14px;
+  background: linear-gradient(180deg, transparent, var(--neon), transparent);
+}
+.flow .wire .particle { opacity: 1; }
+.flow .wire.top    .particle { animation: flowRight var(--flow-speed, 2s) linear infinite; }
+.flow .wire.right  .particle { animation: flowDown  var(--flow-speed, 2s) linear infinite; }
+.flow .wire.bottom .particle { animation: flowLeft  var(--flow-speed, 2s) linear infinite; }
+.flow .wire.left   .particle { animation: flowUp    var(--flow-speed, 2s) linear infinite; }
+
+@keyframes flowRight { from { left: -14px; } to { left: 100%; } }
+@keyframes flowLeft  { from { right: -14px; } to { right: 100%; } }
+@keyframes flowDown  { from { top: -14px; } to { top: 100%; } }
+@keyframes flowUp    { from { bottom: -14px; } to { bottom: 100%; } }
+
+/* Slot row on top wire */
+.slots-row {
+  position: absolute;
+  top: 24px;
+  left: 50px;
+  right: 50px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.slot {
+  flex: 1;
+  height: 92px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 2px dashed rgba(0, 191, 255, 0.25);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all .2s;
+  cursor: pointer;
+}
+.slot.drag-over {
+  border-color: var(--neon);
+  background: rgba(255, 215, 0, 0.1);
+  box-shadow: var(--shadow-neon);
+}
+.slot.filled {
+  border-style: solid;
+  border-color: var(--electric);
+  background: rgba(0, 191, 255, 0.08);
+  cursor: pointer;
+}
+.slot.selected {
+  outline: 2px solid var(--neon);
+  outline-offset: 3px;
+}
+.slot .placed {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  pointer-events: none;
+}
+.slot .placed .big {
+  font-size: 26px;
+}
+.slot .placed .name {
+  font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px;
+}
+.slot .placed .val {
+  font-size: 11px; color: var(--neon); font-weight: 700;
+}
+.slot .remove {
+  position: absolute; top: -8px; right: -8px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--red); color: white; border: none;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  display: none; padding: 0;
+  z-index: 5;
+}
+.slot.filled:hover .remove { display: flex; align-items: center; justify-content: center; }
+.slot .remove:hover { transform: scale(1.15); box-shadow: 0 0 10px var(--red); }
+
+/* LED : luminosité variable via --b (0 = off, 1 = full) */
+.slot .led-bulb {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: #222;
+  border: 1px solid #444;
+  transition: all .15s;
+  --b: 0;
+}
+.slot .led-bulb.on-red {
+  background: radial-gradient(circle at 35% 35%, #ffd0d0, #ff2020 55%, #800000);
+  border-color: #ff2020;
+  box-shadow:
+    0 0 calc(8px + 14px * var(--b)) rgba(255, 30, 30, calc(0.4 + 0.6 * var(--b))),
+    0 0 calc(16px + 26px * var(--b)) rgba(255, 30, 30, calc(0.2 + 0.6 * var(--b)));
+}
+.slot .led-bulb.on-green {
+  background: radial-gradient(circle at 35% 35%, #d0ffd0, #00ff44 55%, #007722);
+  border-color: #00ff44;
+  box-shadow:
+    0 0 calc(8px + 14px * var(--b)) rgba(0, 255, 68, calc(0.4 + 0.6 * var(--b))),
+    0 0 calc(16px + 26px * var(--b)) rgba(0, 255, 68, calc(0.2 + 0.6 * var(--b)));
+}
+.slot .led-bulb.on-blue {
+  background: radial-gradient(circle at 35% 35%, #d0ecff, #00BFFF 55%, #003366);
+  border-color: #00BFFF;
+  box-shadow:
+    0 0 calc(8px + 14px * var(--b)) rgba(0, 191, 255, calc(0.4 + 0.6 * var(--b))),
+    0 0 calc(16px + 26px * var(--b)) rgba(0, 191, 255, calc(0.2 + 0.6 * var(--b)));
+}
+.slot .led-bulb.burnt {
+  background: #1a1a1a; border-color: #2a2a2a; box-shadow: none;
+}
+
+/* Ampoule (filament) */
+.slot .lamp {
+  width: 32px; height: 32px;
+  border-radius: 50% 50% 50% 50% / 45% 45% 55% 55%;
+  background: #2a2a3a;
+  border: 2px solid #444;
+  position: relative;
+  transition: all .15s;
+  --b: 0;
+}
+.slot .lamp::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,220,120, var(--b)) 0%, rgba(255,180,40, calc(var(--b) * 0.6)) 50%, transparent 80%);
+}
+.slot .lamp.on {
+  background: radial-gradient(circle at 50% 60%, #fff4b0, #ffd34d 60%, #b07a00);
+  border-color: #ffd34d;
+  box-shadow:
+    0 0 calc(10px + 18px * var(--b)) rgba(255, 200, 60, calc(0.5 + 0.5 * var(--b))),
+    0 0 calc(20px + 32px * var(--b)) rgba(255, 180, 40, calc(0.25 + 0.5 * var(--b)));
+}
+.slot .lamp.burnt {
+  background: #1a1a1a; border-color: #2a2a2a; box-shadow: none;
+}
+
+/* Moteur / ventilateur */
+.slot .motor {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #2a334a, #0a0f1f);
+  border: 2px solid #4a5570;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.slot .motor .blades {
+  font-size: 22px;
+  display: inline-block;
+  animation: spin var(--spin-speed, 1s) linear infinite;
+  animation-play-state: paused;
+  color: var(--electric);
+  text-shadow: 0 0 6px rgba(0, 191, 255, 0.6);
+}
+.slot .motor.running .blades { animation-play-state: running; }
+.slot .motor.burnt { background: #1a1a1a; border-color: #2a2a2a; }
+.slot .motor.burnt .blades { animation: none; color: #555; text-shadow: none; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Buzzer */
+.slot .buzzer {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #3a2a4a, #1a0f2a);
+  border: 2px solid #6a4a8a;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  position: relative;
+}
+.slot .buzzer.ringing::before,
+.slot .buzzer.ringing::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--violet);
+  animation: wave 1s ease-out infinite;
+}
+.slot .buzzer.ringing::after { animation-delay: 0.5s; }
+@keyframes wave {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* Smoke for blown components */
+.slot .smoke {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  pointer-events: none;
+  width: 0;
+}
+.slot .smoke span {
+  position: absolute;
+  bottom: 0;
+  left: -5px;
+  width: 10px; height: 10px;
+  background: radial-gradient(circle, rgba(200,200,200,0.7), rgba(200,200,200,0));
+  border-radius: 50%;
+  animation: rise 1.8s ease-out infinite;
+  opacity: 0;
+}
+.slot .smoke span:nth-child(2) { animation-delay: 0.4s; left: 0; }
+.slot .smoke span:nth-child(3) { animation-delay: 0.8s; left: -10px; }
+@keyframes rise {
+  0%   { transform: translateY(0)    scale(0.6); opacity: 0; }
+  20%  { opacity: 0.8; }
+  100% { transform: translateY(-30px) scale(1.4); opacity: 0; }
+}
+
+/* Fuse blown animation */
+@keyframes pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); filter: brightness(2); }
+  100% { transform: scale(1); }
+}
+.slot .placed.blown .big { animation: pop .4s ease; color: var(--red); }
+.slot .placed.blown .val { color: var(--red); }
+
+/* Overheat effect on wires when current dangerous */
+.loop.overheat .wire {
+  background: linear-gradient(180deg, #aa3322, #661010);
+  box-shadow: 0 0 8px rgba(255, 60, 30, 0.6);
+  animation: pulseHeat 0.4s ease-in-out infinite alternate;
+}
+@keyframes pulseHeat {
+  from { box-shadow: 0 0 8px rgba(255, 60, 30, 0.5); }
+  to   { box-shadow: 0 0 18px rgba(255, 100, 30, 0.95); }
+}
+
+/* Meters panel */
+.meters .meter {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.meters .meter:last-child { border-bottom: none; }
+.meters .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.meters .value { font-size: 22px; font-weight: 800; color: var(--electric); font-variant-numeric: tabular-nums; }
+.meters .unit { font-size: 12px; color: var(--muted); margin-left: 4px; }
+.law-box {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(255, 215, 0, 0.06);
+  border: 1px dashed var(--neon);
+  border-radius: 10px;
+  text-align: center;
+}
+.law-box .formula {
+  font-size: 18px; font-weight: 800; color: var(--neon); letter-spacing: 1px;
+  font-family: 'Cambria Math', Georgia, serif;
+}
+.law-box .formula-sub {
+  font-size: 11px; color: var(--muted); margin-top: 4px;
+}
+.status-row {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
+  font-weight: 600;
+}
+.status-row.ok { background: rgba(46, 213, 115, 0.12); color: var(--green); border: 1px solid var(--green); }
+.status-row.warn { background: rgba(255, 71, 87, 0.12); color: var(--red); border: 1px solid var(--red); }
+.status-row.idle { background: rgba(136, 146, 176, 0.1); color: var(--muted); border: 1px solid var(--muted); }
+
+/* Slot properties popover */
+.props-popover {
+  position: fixed;
+  background: var(--panel-solid);
+  border: 1px solid var(--electric);
+  border-radius: 12px;
+  padding: 14px;
+  width: 260px;
+  z-index: 200;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), var(--shadow-elec);
+  display: none;
+}
+.props-popover.open { display: block; }
+.props-popover h4 { font-size: 14px; margin-bottom: 10px; color: var(--electric); }
+.props-popover label {
+  display: block; font-size: 11px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .5px; margin: 8px 0 4px;
+}
+.props-popover input[type=range] { width: 100%; }
+.props-popover .opt-chips {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.opt-chip {
+  padding: 6px 12px; font-size: 12px; border-radius: 20px;
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+  cursor: pointer; transition: all .2s;
+}
+.opt-chip.selected { background: var(--electric); color: white; border-color: var(--electric); box-shadow: var(--shadow-elec); }
+.props-popover .pop-row { display: flex; gap: 6px; margin-top: 12px; }
+.props-popover .pop-row button { padding: 6px 12px; font-size: 12px; flex: 1; }
+
+/* =====================  COMPARATEUR  ===================== */
+.cmp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 900px) { .cmp-grid { grid-template-columns: 1fr; } }
+
+.cmp-card { padding: 20px; }
+.cmp-card h3 {
+  font-size: 16px;
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.cmp-card h3 .badge-type {
+  font-size: 10px; padding: 3px 8px; border-radius: 10px;
+  background: var(--electric); color: white; letter-spacing: 1px;
+}
+.cmp-card.parallel h3 .badge-type { background: var(--violet); }
+
+.cmp-svg {
+  width: 100%; height: 180px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+.cmp-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px; margin-top: 10px;
+}
+.cmp-stat {
+  background: rgba(0,0,0,0.25);
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+}
+.cmp-stat .l { font-size: 10px; color: var(--muted); text-transform: uppercase; }
+.cmp-stat .v { font-size: 16px; font-weight: 700; color: var(--electric); }
+.cmp-card.parallel .cmp-stat .v { color: var(--violet); }
+.cmp-explain {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.04);
+  border-left: 3px solid var(--neon);
+  border-radius: 6px;
+  font-size: 13px;
+  color: #c8d1e0;
+  line-height: 1.5;
+}
+
+.controls {
+  padding: 18px; margin-bottom: 16px;
+}
+.controls .row {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 12px;
+}
+.controls .row:last-child { margin-bottom: 0; }
+.controls label {
+  min-width: 90px; font-size: 13px; color: var(--muted);
+}
+.controls input[type=range] { flex: 1; }
+.controls .value-display {
+  min-width: 80px; text-align: right;
+  font-weight: 700; color: var(--neon); font-variant-numeric: tabular-nums;
+}
+
+.chart-card {
+  margin-top: 16px; padding: 18px;
+}
+.chart-card h3 {
+  font-size: 14px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+canvas.chart { width: 100%; height: 200px; display: block; }
+
+/* =====================  QUIZ  ===================== */
+.quiz-home { text-align: center; padding: 28px 16px; }
+.quiz-home h2 { font-size: 28px; margin-bottom: 8px; }
+.quiz-home .subtitle { color: var(--muted); margin-bottom: 28px; }
+.diff-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px; max-width: 800px; margin: 0 auto;
+}
+.diff-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px 18px;
+  cursor: pointer;
+  text-align: center;
+  transition: all .25s ease;
+}
+.diff-card:hover { transform: translateY(-4px); border-color: var(--electric); box-shadow: var(--shadow-elec); }
+.diff-card.medium:hover { border-color: var(--neon); box-shadow: var(--shadow-neon); }
+.diff-card.hard:hover { border-color: var(--violet); box-shadow: var(--shadow-violet); }
+.diff-card .ico { font-size: 36px; margin-bottom: 8px; }
+.diff-card h3 { font-size: 18px; margin-bottom: 4px; }
+.diff-card .diff-sub { font-size: 12px; color: var(--muted); }
+
+.quiz-stage { max-width: 720px; margin: 16px auto; }
+.quiz-progress {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.bar {
+  flex: 1; height: 6px; background: rgba(255,255,255,0.08);
+  border-radius: 3px; margin: 0 14px; overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--electric), var(--neon));
+  transition: width .35s ease;
+  width: 0;
+}
+.score-display { font-weight: 700; color: var(--neon); }
+
+.q-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.q-text { font-size: 17px; font-weight: 600; margin-bottom: 18px; line-height: 1.5; }
+.choices { display: grid; gap: 10px; }
+.choice {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: left;
+  transition: all .2s;
+  display: flex; align-items: center; gap: 12px;
+}
+.choice:hover { border-color: var(--electric); transform: translateX(4px); }
+.choice .ck {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid var(--border);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  flex-shrink: 0;
+}
+.choice.right { border-color: var(--green); background: rgba(46,213,115,0.12); }
+.choice.right .ck { background: var(--green); color: white; border-color: var(--green); }
+.choice.wrong { border-color: var(--red); background: rgba(255,71,87,0.12); }
+.choice.wrong .ck { background: var(--red); color: white; border-color: var(--red); }
+.choice:disabled, .choice.locked { cursor: default; transform: none; }
+
+.feedback {
+  margin-top: 14px; padding: 12px 14px;
+  border-radius: 10px; font-size: 14px; line-height: 1.5;
+  display: none;
+}
+.feedback.show { display: block; animation: fadeIn .3s ease; }
+.feedback.right { background: rgba(46,213,115,0.1); border: 1px solid var(--green); }
+.feedback.wrong { background: rgba(255,71,87,0.1); border: 1px solid var(--red); }
+
+/* Arc / short circuit flash overlays */
+.flash {
+  position: fixed; inset: 0; pointer-events: none; z-index: 999;
+  opacity: 0;
+}
+.flash.arc { background: radial-gradient(circle, rgba(46,213,115,0.55), transparent 60%); }
+.flash.short { background: radial-gradient(circle, rgba(255,71,87,0.55), transparent 60%); }
+.flash.show { animation: flashAnim .55s ease; }
+@keyframes flashAnim {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.quiz-end {
+  text-align: center; padding: 40px 20px;
+}
+.quiz-end .big-score {
+  font-size: 56px; font-weight: 800;
+  background: linear-gradient(90deg, var(--electric), var(--neon));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.quiz-end .verdict { font-size: 20px; margin: 10px 0; }
+.quiz-end .badges-won { margin: 20px 0; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* =====================  MODAL  ===================== */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-backdrop.open { display: flex; animation: fadeIn .25s ease; }
+.modal {
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  max-width: 480px;
+  width: 100%;
+  padding: 28px;
+  position: relative;
+}
+.modal h3 {
+  font-size: 22px; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 12px;
+}
+.modal h3 .icon {
+  width: 44px; height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 12px; font-size: 22px;
+}
+.modal .definition {
+  margin: 16px 0;
+  font-size: 14px; line-height: 1.6; color: #c8d1e0;
+}
+.modal .formula-row {
+  margin: 14px 0;
+  padding: 14px;
+  background: rgba(255, 215, 0, 0.08);
+  border-radius: 10px;
+  text-align: center;
+}
+.modal .formula-row .f {
+  font-size: 22px; font-weight: 800; color: var(--neon);
+  font-family: 'Cambria Math', Georgia, serif; letter-spacing: 1px;
+}
+.modal .formula-row .desc { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.modal .anecdote {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: rgba(138, 43, 226, 0.1);
+  border-left: 3px solid var(--violet);
+  border-radius: 6px;
+  font-size: 13px; line-height: 1.6;
+}
+.modal .anecdote strong { color: var(--violet); }
+.modal .close-x {
+  position: absolute; top: 12px; right: 12px;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,0.06); border: none;
+  color: var(--text); font-size: 18px; cursor: pointer;
+  padding: 0;
+}
+.modal .close-x:hover { background: var(--red); }
+
+.badges-modal-list {
+  display: grid; grid-template-columns: 1fr; gap: 10px;
+  margin-top: 14px; max-height: 50vh; overflow-y: auto;
+}
+.badge-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.badge-row.locked { opacity: 0.4; filter: grayscale(0.7); }
+.badge-row .b-icon {
+  width: 40px; height: 40px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  background: radial-gradient(circle at 30% 30%, var(--neon), #b78b00);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.badge-row.locked .b-icon { background: #2a2a3a; }
+.badge-row .b-name { font-weight: 700; font-size: 14px; }
+.badge-row .b-desc { font-size: 12px; color: var(--muted); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 30px; left: 50%;
+  transform: translateX(-50%) translateY(120px);
+  background: var(--panel-solid);
+  border: 1px solid var(--neon);
+  box-shadow: var(--shadow-neon);
+  border-radius: 14px;
+  padding: 14px 20px;
+  display: flex; align-items: center; gap: 14px;
+  z-index: 500;
+  transition: transform .35s cubic-bezier(.2,.9,.3,1.2);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast .b-icon {
+  width: 42px; height: 42px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  background: radial-gradient(circle at 30% 30%, var(--neon), #b78b00);
+  border-radius: 12px;
+}
+.toast .t-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.toast .t-name { font-weight: 700; font-size: 15px; }
+
+/* API key modal extras */
+.api-input {
+  width: 100%; padding: 12px 14px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text); font-size: 14px;
+  font-family: 'Consolas', monospace;
+  margin: 10px 0;
+}
+.api-input:focus { outline: none; border-color: var(--electric); box-shadow: var(--shadow-elec); }
+.api-hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+.loader {
+  display: inline-block;
+  width: 28px; height: 28px;
+  border: 3px solid rgba(0, 191, 255, 0.18);
+  border-top-color: var(--electric);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.center-loader { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px; }
+.center-loader .lt { color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+
+<header class="topbar">
+  <div class="logo">
+    <span class="bolt">⚡</span>
+    <div>
+      Electrolab
+      <div><small>POUR EVAN · 13 ANS</small></div>
+    </div>
+  </div>
+  <button class="badges-counter" id="openBadges">
+    <span style="font-size:16px;">🏅</span>
+    <span><span id="badgeCount">0</span>/6 badges</span>
+  </button>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-view="lab">🔧 Labo</button>
+  <button class="tab" data-view="cmp">📊 Comparateur</button>
+  <button class="tab" data-view="quiz">🎯 Quiz</button>
+</nav>
+
+<main>
+
+  <!-- ===================== LAB ===================== -->
+  <section class="view active" id="view-lab">
+    <h2 class="section-title">Le labo des circuits</h2>
+    <p class="section-sub">Glisse les composants depuis la palette jusqu'au circuit. Clique sur un composant placé pour modifier ses réglages ou ouvrir sa fiche.</p>
+
+    <div class="lab-grid">
+      <!-- PALETTE -->
+      <aside class="panel palette">
+        <h3>Composants</h3>
+        <div class="palette-item" draggable="true" data-type="battery">
+          <span class="icon" style="background:radial-gradient(circle at 30% 30%, var(--neon), #b78b00); color:#1a1a1a;">🔋</span>
+          <div><div class="label">Pile</div><div class="sub">1,5 / 4,5 / 9 V</div></div>
+          <button class="info-btn" data-info="battery">i</button>
+        </div>
+        <div class="palette-item" draggable="true" data-type="resistor">
+          <span class="icon" style="color:#ff8c42;">Ω</span>
+          <div><div class="label">Résistance</div><div class="sub">1 à 1000 Ω</div></div>
+          <button class="info-btn" data-info="resistor">i</button>
+        </div>
+        <div class="palette-item" draggable="true" data-type="led">
+          <span class="icon" style="background:radial-gradient(circle at 35% 35%, #ff8080, #ff0000); box-shadow:0 0 10px rgba(255,0,0,.6);"></span>
+          <div><div class="label">LED</div><div class="sub">rouge / vert / bleu</div></div>
+          <button class="info-btn" data-info="led">i</button>
+        </div>
+        <div class="palette-item" draggable="true" data-type="switch">
+          <span class="icon">⎉</span>
+          <div><div class="label">Interrupteur</div><div class="sub">ouvert / fermé</div></div>
+          <button class="info-btn" data-info="switch">i</button>
+        </div>
+        <div class="palette-item" draggable="true" data-type="lamp">
+          <span class="icon" style="background:radial-gradient(circle, #ffd34d, #b07a00); box-shadow:0 0 8px rgba(255,200,60,.7);">💡</span>
+          <div><div class="label">Ampoule</div><div class="sub">filament classique</div></div>
+          <button class="info-btn" data-info="lamp">i</button>
+        </div>
+        <div class="palette-item" draggable="true" data-type="motor">
+          <span class="icon" style="color:var(--electric);">🌀</span>
+          <div><div class="label">Ventilateur</div><div class="sub">moteur électrique</div></div>
+          <button class="info-btn" data-info="motor">i</button>
+        </div>
+        <div class="palette-item" draggable="true" data-type="buzzer">
+          <span class="icon" style="color:var(--violet);">🔊</span>
+          <div><div class="label">Buzzer</div><div class="sub">émet un son</div></div>
+          <button class="info-btn" data-info="buzzer">i</button>
+        </div>
+        <div class="palette-item" draggable="true" data-type="fuse">
+          <span class="icon" style="color:var(--neon);">⚡</span>
+          <div><div class="label">Fusible</div><div class="sub">protège le circuit</div></div>
+          <button class="info-btn" data-info="fuse">i</button>
+        </div>
+
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border); display:flex; gap:8px;">
+          <button id="resetCircuit" style="flex:1;">↺ Reset</button>
+        </div>
+      </aside>
+
+      <!-- CIRCUIT BOARD -->
+      <div class="circuit-board" id="board">
+        <div class="hint">PLAQUE DE MONTAGE · CIRCUIT EN SÉRIE</div>
+        <div class="loop" id="loop">
+          <div class="wire h top"><div class="particle"></div></div>
+          <div class="wire v right"><div class="particle"></div></div>
+          <div class="wire h bottom"><div class="particle"></div></div>
+          <div class="wire v left"><div class="particle"></div></div>
+
+          <div class="slots-row" id="slotsRow">
+            <div class="slot" data-slot="0"></div>
+            <div class="slot" data-slot="1"></div>
+            <div class="slot" data-slot="2"></div>
+            <div class="slot" data-slot="3"></div>
+            <div class="slot" data-slot="4"></div>
+            <div class="slot" data-slot="5"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- METERS -->
+      <aside class="panel meters">
+        <h3>Mesures</h3>
+        <div class="meter"><span class="label">Tension</span><span><span class="value" id="m-u">0,00</span><span class="unit">V</span></span></div>
+        <div class="meter"><span class="label">Intensité</span><span><span class="value" id="m-i">0,00</span><span class="unit">mA</span></span></div>
+        <div class="meter"><span class="label">Puissance</span><span><span class="value" id="m-p">0,00</span><span class="unit">mW</span></span></div>
+        <div class="meter"><span class="label">Résistance</span><span><span class="value" id="m-r">0,00</span><span class="unit">Ω</span></span></div>
+
+        <div class="law-box">
+          <div class="formula">U = R × I</div>
+          <div class="formula-sub">Loi d'Ohm · P = U × I</div>
+        </div>
+
+        <div class="status-row idle" id="status">Construis ton circuit…</div>
+      </aside>
+
+    </div>
+  </section>
+
+  <!-- ===================== COMPARATEUR ===================== -->
+  <section class="view" id="view-cmp">
+    <h2 class="section-title">Série vs Parallèle</h2>
+    <p class="section-sub">Compare deux montages avec les mêmes résistances. Joue avec les valeurs et regarde ce qui change !</p>
+
+    <div class="panel controls">
+      <div class="row">
+        <label>Tension U</label>
+        <input type="range" id="cmpU" min="1" max="12" step="0.5" value="9">
+        <div class="value-display" id="cmpUval">9 V</div>
+      </div>
+      <div class="row">
+        <label>R₁</label>
+        <input type="range" id="cmpR1" min="10" max="500" step="10" value="100">
+        <div class="value-display" id="cmpR1val">100 Ω</div>
+      </div>
+      <div class="row">
+        <label>R₂</label>
+        <input type="range" id="cmpR2" min="10" max="500" step="10" value="220">
+        <div class="value-display" id="cmpR2val">220 Ω</div>
+      </div>
+    </div>
+
+    <div class="cmp-grid">
+      <div class="panel cmp-card series">
+        <h3>🔗 Circuit Série <span class="badge-type">SÉRIE</span></h3>
+        <svg class="cmp-svg" viewBox="0 0 400 160" id="svgSeries"></svg>
+        <div class="cmp-stats">
+          <div class="cmp-stat"><div class="l">R totale</div><div class="v" id="sR">—</div></div>
+          <div class="cmp-stat"><div class="l">I dans tout</div><div class="v" id="sI">—</div></div>
+          <div class="cmp-stat"><div class="l">P totale</div><div class="v" id="sP">—</div></div>
+        </div>
+        <div class="cmp-explain">
+          🔗 En série, le courant traverse <strong>tous les composants un par un</strong>. Les résistances s'<strong>additionnent</strong> : R = R₁ + R₂. Si un seul élément claque, tout s'éteint (comme une vieille guirlande de Noël !).
+        </div>
+      </div>
+
+      <div class="panel cmp-card parallel">
+        <h3>🌿 Circuit Parallèle <span class="badge-type">PARALLÈLE</span></h3>
+        <svg class="cmp-svg" viewBox="0 0 400 160" id="svgParallel"></svg>
+        <div class="cmp-stats">
+          <div class="cmp-stat"><div class="l">R totale</div><div class="v" id="pR">—</div></div>
+          <div class="cmp-stat"><div class="l">I₁ / I₂</div><div class="v" id="pI">—</div></div>
+          <div class="cmp-stat"><div class="l">P totale</div><div class="v" id="pP">—</div></div>
+        </div>
+        <div class="cmp-explain">
+          🌿 En parallèle, chaque branche reçoit la <strong>même tension</strong> et le courant <strong>se partage</strong>. La résistance totale est plus petite que la plus petite des deux ! C'est comme ça que sont câblées les prises de ta maison.
+        </div>
+      </div>
+    </div>
+
+    <div class="panel chart-card">
+      <h3>Intensité dans chaque branche</h3>
+      <canvas class="chart" id="cmpChart"></canvas>
+    </div>
+  </section>
+
+  <!-- ===================== QUIZ ===================== -->
+  <section class="view" id="view-quiz">
+    <div id="quizHome" class="quiz-home">
+      <h2>🎯 Quiz Électricité</h2>
+      <p class="subtitle">Choisis ta difficulté et montre ce que tu as retenu !</p>
+      <div class="diff-grid">
+        <div class="diff-card easy" data-diff="facile">
+          <div class="ico">🟢</div>
+          <h3>Facile</h3>
+          <div class="diff-sub">6 questions · base</div>
+        </div>
+        <div class="diff-card medium" data-diff="moyen">
+          <div class="ico">🟡</div>
+          <h3>Moyen</h3>
+          <div class="diff-sub">8 questions · série / parallèle</div>
+        </div>
+        <div class="diff-card hard" data-diff="difficile">
+          <div class="ico">🔴</div>
+          <h3>Difficile</h3>
+          <div class="diff-sub">10 questions · expert</div>
+        </div>
+      </div>
+      <p class="api-hint" style="margin-top:24px; max-width:520px; margin-left:auto; margin-right:auto;">
+        24 questions disponibles, tirées au sort à chaque partie. Bonne chance !
+      </p>
+    </div>
+
+    <div id="quizStage" class="quiz-stage" style="display:none;"></div>
+
+  </section>
+
+</main>
+
+<!-- ===================== MODALS ===================== -->
+
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <button class="close-x" data-close>×</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Slot props popover -->
+<div class="props-popover" id="propsPop">
+  <h4 id="propsTitle">Réglages</h4>
+  <div id="propsBody"></div>
+  <div class="pop-row">
+    <button id="propsFiche">📘 Fiche</button>
+    <button id="propsRemove" style="background:rgba(255,71,87,0.15); border-color:var(--red); color:var(--red);">Retirer</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="b-icon" id="toastIcon">🏅</div>
+  <div>
+    <div class="t-title">Badge débloqué</div>
+    <div class="t-name" id="toastName">—</div>
+  </div>
+</div>
+
+<!-- Flash overlays -->
+<div class="flash arc" id="flashArc"></div>
+<div class="flash short" id="flashShort"></div>
+
+<script>
+/* ============================================================
+   ELECTROLAB — Site éducatif sur l'électricité pour Evan
+   ============================================================ */
+
+/* ---------- 1. FOND ÉTOILÉ ANIMÉ ---------- */
+(function starfield() {
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  let stars = [], shooters = [];
+  let w = 0, h = 0;
+
+  function resize() {
+    w = canvas.width = window.innerWidth * devicePixelRatio;
+    h = canvas.height = window.innerHeight * devicePixelRatio;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    stars = [];
+    const count = Math.floor((w * h) / 8000);
+    for (let i = 0; i < count; i++) {
+      stars.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: Math.random() * 1.3 + 0.2,
+        a: Math.random() * 0.7 + 0.3,
+        tw: Math.random() * Math.PI * 2,
+        speed: 0.5 + Math.random() * 0.8
+      });
+    }
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function spawnShooter() {
+    shooters.push({
+      x: Math.random() * w * 0.7,
+      y: Math.random() * h * 0.4,
+      vx: 6 + Math.random() * 4,
+      vy: 2 + Math.random() * 2,
+      life: 1
+    });
+  }
+
+  let lastShooter = 0;
+  function loop(t) {
+    ctx.clearRect(0, 0, w, h);
+
+    const g = ctx.createRadialGradient(w * 0.7, h * 0.2, 0, w * 0.7, h * 0.2, Math.max(w, h));
+    g.addColorStop(0, 'rgba(20, 40, 90, 0.18)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+
+    for (const s of stars) {
+      s.tw += 0.03 * s.speed;
+      const a = s.a * (0.55 + 0.45 * Math.sin(s.tw));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r * devicePixelRatio, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(220, 235, 255, ${a})`;
+      ctx.fill();
+    }
+
+    if (t - lastShooter > 4500 && Math.random() < 0.4) {
+      spawnShooter();
+      lastShooter = t;
+    }
+    for (let i = shooters.length - 1; i >= 0; i--) {
+      const sh = shooters[i];
+      sh.x += sh.vx * devicePixelRatio;
+      sh.y += sh.vy * devicePixelRatio;
+      sh.life -= 0.012;
+      if (sh.life <= 0 || sh.x > w || sh.y > h) { shooters.splice(i, 1); continue; }
+      const tailX = sh.x - sh.vx * 12 * devicePixelRatio;
+      const tailY = sh.y - sh.vy * 12 * devicePixelRatio;
+      const grad = ctx.createLinearGradient(tailX, tailY, sh.x, sh.y);
+      grad.addColorStop(0, 'rgba(0, 191, 255, 0)');
+      grad.addColorStop(1, `rgba(255, 215, 0, ${sh.life})`);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 1.6 * devicePixelRatio;
+      ctx.beginPath(); ctx.moveTo(tailX, tailY); ctx.lineTo(sh.x, sh.y); ctx.stroke();
+    }
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+
+/* ---------- 2. TABS ---------- */
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-' + btn.dataset.view).classList.add('active');
+    closeProps();
+  });
+});
+
+/* ---------- 3. BADGES ---------- */
+const BADGES = {
+  'first-circuit': { name: 'Premier circuit',     icon: '⚡', desc: 'Tu as monté ton tout premier circuit qui fonctionne !' },
+  'ohm-my-god':    { name: 'Ohm my god',          icon: '📐', desc: 'Tu as appliqué la loi d\'Ohm pour la première fois.' },
+  'quiz-easy':     { name: 'Quiz Facile validé',  icon: '🟢', desc: 'Tu as réussi le quiz facile.' },
+  'gold-medium':   { name: 'Or Moyen',            icon: '🥇', desc: 'Score parfait au quiz moyen ! Très solide.' },
+  'expert-elec':   { name: 'Expert Électricien',  icon: '🎓', desc: 'Tu as terminé le quiz difficile, chapeau !' },
+  'macgyver':      { name: 'MacGyver',            icon: '🛠️', desc: '5 composants différents dans le même circuit.' }
+};
+
+let unlocked = JSON.parse(localStorage.getItem('elec_badges') || '[]');
+
+function refreshBadgeCount() {
+  document.getElementById('badgeCount').textContent = unlocked.length;
+}
+refreshBadgeCount();
+
+function unlockBadge(id) {
+  if (unlocked.includes(id)) return;
+  unlocked.push(id);
+  localStorage.setItem('elec_badges', JSON.stringify(unlocked));
+  refreshBadgeCount();
+  const b = BADGES[id];
+  showToast(b.icon, b.name);
+}
+
+function showToast(icon, name) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastIcon').textContent = icon;
+  document.getElementById('toastName').textContent = name;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+document.getElementById('openBadges').addEventListener('click', () => {
+  let html = '<h3><span class="icon" style="background:radial-gradient(circle at 30% 30%, var(--neon), #b78b00);">🏅</span> Tes badges</h3>';
+  html += '<p class="definition">Débloque-les en explorant l\'app !</p>';
+  html += '<div class="badges-modal-list">';
+  for (const [id, b] of Object.entries(BADGES)) {
+    const got = unlocked.includes(id);
+    html += `<div class="badge-row ${got ? '' : 'locked'}">
+      <div class="b-icon">${b.icon}</div>
+      <div>
+        <div class="b-name">${b.name}</div>
+        <div class="b-desc">${b.desc}</div>
+      </div>
+    </div>`;
+  }
+  html += '</div>';
+  openModal(html);
+});
+
+/* ---------- 4. MODAL ---------- */
+const modal = document.getElementById('modal');
+const modalBody = document.getElementById('modalBody');
+
+function openModal(html) {
+  modalBody.innerHTML = html;
+  modal.classList.add('open');
+}
+function closeModal() { modal.classList.remove('open'); }
+
+modal.addEventListener('click', (e) => {
+  if (e.target === modal || e.target.matches('[data-close]')) closeModal();
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(); closeProps(); }});
+
+/* ---------- 5. FICHES PÉDAGOGIQUES ---------- */
+const FICHES = {
+  battery: {
+    icon: '🔋', color: 'var(--neon)',
+    title: 'La pile',
+    def: 'Une pile transforme de l\'énergie <strong>chimique</strong> en énergie <strong>électrique</strong>. Elle pousse les électrons dans le circuit grâce à sa tension (en volts).',
+    formulaF: 'U (V)', formulaD: 'Tension aux bornes de la pile',
+    anecdote: '<strong>Le savais-tu ?</strong> La toute première pile a été inventée par Alessandro Volta en 1800. C\'est en son honneur qu\'on a appelé l\'unité de tension le <em>volt</em> !'
+  },
+  resistor: {
+    icon: 'Ω', color: '#ff8c42',
+    title: 'La résistance',
+    def: 'Une résistance <strong>freine</strong> les électrons. Plus sa valeur est grande (en ohms Ω), moins le courant passe — comme un tuyau plus étroit ralentit l\'eau.',
+    formulaF: 'U = R × I', formulaD: 'La loi d\'Ohm en personne',
+    anecdote: '<strong>Edison vs Tesla :</strong> à la fin du 19ᵉ siècle, ces deux génies se sont opposés sur le courant continu (Edison) vs alternatif (Tesla). Tesla a gagné : c\'est le courant alternatif qui arrive aujourd\'hui dans nos prises !'
+  },
+  led: {
+    icon: '💡', color: '#ff0000',
+    title: 'La LED',
+    def: 'Une LED (<em>Light-Emitting Diode</em>) est une diode qui s\'allume quand le courant passe dans le bon sens. Elle consomme <strong>très peu d\'énergie</strong> par rapport à une ampoule classique.',
+    formulaF: 'I_LED ≈ 5 à 30 mA', formulaD: 'Au-delà, la LED grille',
+    anecdote: 'La LED a été inventée en 1962 par Nick Holonyak. Au début, elles n\'existaient qu\'en rouge ! La LED bleue est arrivée seulement en 1993 et a valu le prix Nobel de physique à ses inventeurs en 2014.'
+  },
+  switch: {
+    icon: '⎉', color: 'var(--electric)',
+    title: 'L\'interrupteur',
+    def: 'Un interrupteur permet d\'ouvrir ou de fermer le circuit. <strong>Fermé</strong> = le courant passe. <strong>Ouvert</strong> = circuit coupé.',
+    formulaF: 'R = 0 ou R = ∞', formulaD: 'Suivant son état',
+    anecdote: 'Le tout premier interrupteur électrique moderne a été inventé en 1884 par John Henry Holmes. Son astuce ? Le mécanisme « à action brusque » qui empêche les étincelles à l\'ouverture.'
+  },
+  fuse: {
+    icon: '⚡', color: 'var(--neon)',
+    title: 'Le fusible',
+    def: 'Le fusible est un <strong>protecteur</strong>. Si le courant devient trop fort (court-circuit, surcharge), un petit fil à l\'intérieur fond et coupe tout. Il se sacrifie pour sauver le reste !',
+    formulaF: 'I_max (A)', formulaD: 'Au-delà : il saute',
+    anecdote: 'Thomas Edison a déposé le brevet du fusible électrique en 1890. Aujourd\'hui, dans ta maison, les fusibles sont souvent remplacés par des <em>disjoncteurs</em>, qu\'on peut réenclencher sans changer la pièce.'
+  },
+  lamp: {
+    icon: '💡', color: '#ffd34d',
+    title: 'L\'ampoule à filament',
+    def: 'Une ampoule classique fait passer le courant dans un fil très fin (le <strong>filament</strong>). Ce fil chauffe énormément et devient incandescent : il émet de la lumière… et beaucoup de chaleur perdue !',
+    formulaF: 'P = U × I', formulaD: 'Plus la puissance est grande, plus elle éclaire',
+    anecdote: 'L\'ampoule à filament fonctionne à environ <strong>2500 °C</strong> ! C\'est pour ça qu\'elle a été interdite en Europe en 2009 — 95% de l\'énergie part en chaleur. Une LED fait pareil avec 10 fois moins !'
+  },
+  motor: {
+    icon: '🌀', color: 'var(--electric)',
+    title: 'Le moteur / ventilateur',
+    def: 'Un moteur électrique transforme l\'énergie électrique en <strong>mouvement</strong>. Il utilise un aimant et une bobine : quand le courant passe, ça crée une force qui fait tourner l\'axe.',
+    formulaF: 'Couple ∝ I', formulaD: 'Plus de courant = plus de force',
+    anecdote: 'Le premier moteur électrique a été inventé par Michael Faraday en 1821. Aujourd\'hui, ta brosse à dents, ton frigo, ta trottinette électrique, ton sèche-cheveux… tout ça contient un moteur électrique !'
+  },
+  buzzer: {
+    icon: '🔊', color: 'var(--violet)',
+    title: 'Le buzzer',
+    def: 'Un buzzer émet un son quand le courant le traverse. À l\'intérieur, un petit disque <strong>piézoélectrique</strong> vibre à très grande vitesse et fait vibrer l\'air : ça produit un son.',
+    formulaF: 'f ≈ 2–4 kHz', formulaD: 'Fréquence du son émis',
+    anecdote: 'L\'effet piézoélectrique a été découvert par les frères Curie en 1880. On l\'utilise partout : briquets, alarmes, montres à quartz, capteurs… Et la même technologie marche à l\'envers : tape sur un piézo, ça produit du courant !'
+  }
+};
+
+function openFiche(type) {
+  const f = FICHES[type];
+  if (!f) return;
+  const html = `
+    <h3><span class="icon" style="background:rgba(255,255,255,0.08); color:${f.color};">${f.icon}</span> ${f.title}</h3>
+    <div class="definition">${f.def}</div>
+    <div class="formula-row">
+      <div class="f">${f.formulaF}</div>
+      <div class="desc">${f.formulaD}</div>
+    </div>
+    <div class="anecdote">${f.anecdote}</div>
+  `;
+  openModal(html);
+}
+
+document.querySelectorAll('.info-btn').forEach(b => {
+  b.addEventListener('click', (e) => { e.stopPropagation(); openFiche(b.dataset.info); });
+});
+
+/* ---------- 6. LABO ---------- */
+const TYPES = {
+  battery:  { name: 'Pile',         emoji: '🔋' },
+  resistor: { name: 'Résistance',   emoji: 'Ω'  },
+  led:      { name: 'LED',          emoji: '💡' },
+  lamp:     { name: 'Ampoule',      emoji: '💡' },
+  motor:    { name: 'Ventilateur',  emoji: '🌀' },
+  buzzer:   { name: 'Buzzer',       emoji: '🔊' },
+  switch:   { name: 'Interrupteur', emoji: '⎉'  },
+  fuse:     { name: 'Fusible',      emoji: '⚡' }
+};
+
+const slots = new Array(6).fill(null);
+let selectedSlot = -1;
+let ohmCalculated = false;
+let firstCircuitDone = false;
+
+function defaultOpts(type) {
+  if (type === 'battery')  return { emf: 4.5 };
+  if (type === 'resistor') return { R: 470 };
+  if (type === 'led')      return { color: 'red', burnt: false };
+  if (type === 'lamp')     return { burnt: false };
+  if (type === 'motor')    return { burnt: false };
+  if (type === 'buzzer')   return { burnt: false };
+  if (type === 'switch')   return { state: 'closed' };
+  if (type === 'fuse')     return { Imax: 0.5, blown: false };
+  return {};
+}
+
+document.querySelectorAll('.palette-item').forEach(item => {
+  item.addEventListener('dragstart', (e) => {
+    e.dataTransfer.setData('text/plain', item.dataset.type);
+    item.classList.add('dragging');
+  });
+  item.addEventListener('dragend', () => item.classList.remove('dragging'));
+});
+
+document.querySelectorAll('.slot').forEach(slot => {
+  slot.addEventListener('dragover', (e) => { e.preventDefault(); slot.classList.add('drag-over'); });
+  slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
+  slot.addEventListener('drop', (e) => {
+    e.preventDefault();
+    slot.classList.remove('drag-over');
+    const type = e.dataTransfer.getData('text/plain');
+    if (!type) return;
+    const idx = +slot.dataset.slot;
+    slots[idx] = { type, opts: defaultOpts(type) };
+    renderSlot(idx);
+    recompute();
+  });
+
+  slot.addEventListener('click', (e) => {
+    if (e.target.matches('.remove')) return;
+    const idx = +slot.dataset.slot;
+    if (!slots[idx]) return;
+    openProps(idx, slot);
+  });
+});
+
+function renderSlot(idx) {
+  const slot = document.querySelector(`.slot[data-slot="${idx}"]`);
+  slot.innerHTML = '';
+  slot.classList.remove('selected');
+
+  if (!slots[idx]) {
+    slot.classList.remove('filled');
+    return;
+  }
+  slot.classList.add('filled');
+
+  const { type, opts } = slots[idx];
+  const cont = document.createElement('div');
+  cont.className = 'placed';
+
+  if (type === 'led') {
+    const bulb = document.createElement('div');
+    bulb.className = 'led-bulb';
+    bulb.dataset.color = opts.color;
+    cont.appendChild(bulb);
+  } else if (type === 'lamp') {
+    const lamp = document.createElement('div');
+    lamp.className = 'lamp';
+    cont.appendChild(lamp);
+  } else if (type === 'motor') {
+    const motor = document.createElement('div');
+    motor.className = 'motor';
+    motor.innerHTML = '<span class="blades">✦</span>';
+    cont.appendChild(motor);
+  } else if (type === 'buzzer') {
+    const buzz = document.createElement('div');
+    buzz.className = 'buzzer';
+    buzz.textContent = '🔊';
+    cont.appendChild(buzz);
+  } else {
+    const big = document.createElement('div');
+    big.className = 'big';
+    big.textContent = TYPES[type].emoji;
+    cont.appendChild(big);
+  }
+
+  const name = document.createElement('div');
+  name.className = 'name';
+  name.textContent = TYPES[type].name;
+  cont.appendChild(name);
+
+  const val = document.createElement('div');
+  val.className = 'val';
+  val.textContent = labelFor(type, opts);
+  cont.appendChild(val);
+
+  slot.appendChild(cont);
+
+  const rm = document.createElement('button');
+  rm.className = 'remove';
+  rm.textContent = '×';
+  rm.addEventListener('click', (e) => {
+    e.stopPropagation();
+    slots[idx] = null;
+    renderSlot(idx);
+    closeProps();
+    recompute();
+  });
+  slot.appendChild(rm);
+}
+
+function labelFor(type, opts) {
+  if (type === 'battery')  return opts.emf + ' V';
+  if (type === 'resistor') return opts.R + ' Ω';
+  if (type === 'led')      return opts.burnt ? 'grillée !' : ({red:'rouge', green:'verte', blue:'bleue'})[opts.color];
+  if (type === 'lamp')     return opts.burnt ? 'grillée !' : '60Ω · 500mA';
+  if (type === 'motor')    return opts.burnt ? 'cramé !' : '15Ω · 1A';
+  if (type === 'buzzer')   return opts.burnt ? 'mort !' : '40Ω · 80mA';
+  if (type === 'switch')   return opts.state === 'closed' ? 'fermé' : 'ouvert';
+  if (type === 'fuse')     return opts.blown ? 'sauté !' : (opts.Imax * 1000) + ' mA max';
+  return '';
+}
+
+document.getElementById('resetCircuit').addEventListener('click', () => {
+  for (let i = 0; i < 6; i++) { slots[i] = null; renderSlot(i); }
+  closeProps();
+  recompute();
+});
+
+const propsPop = document.getElementById('propsPop');
+const propsTitle = document.getElementById('propsTitle');
+const propsBody = document.getElementById('propsBody');
+
+function openProps(idx, slotEl) {
+  selectedSlot = idx;
+  const { type, opts } = slots[idx];
+  document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+  slotEl.classList.add('selected');
+
+  propsTitle.textContent = TYPES[type].name + ' — réglages';
+  propsBody.innerHTML = renderProps(type, opts);
+
+  if (type === 'battery') {
+    propsBody.querySelectorAll('.opt-chip').forEach(c => {
+      c.addEventListener('click', () => {
+        opts.emf = parseFloat(c.dataset.v);
+        propsBody.querySelectorAll('.opt-chip').forEach(x => x.classList.toggle('selected', x === c));
+        renderSlot(idx); recompute();
+      });
+    });
+  } else if (type === 'resistor') {
+    const r = propsBody.querySelector('#optR');
+    const out = propsBody.querySelector('#optRout');
+    r.addEventListener('input', () => {
+      opts.R = +r.value; out.textContent = r.value + ' Ω';
+      renderSlot(idx); recompute();
+    });
+  } else if (type === 'led') {
+    propsBody.querySelectorAll('.opt-chip').forEach(c => {
+      c.addEventListener('click', () => {
+        opts.color = c.dataset.v;
+        propsBody.querySelectorAll('.opt-chip').forEach(x => x.classList.toggle('selected', x === c));
+        renderSlot(idx); recompute();
+      });
+    });
+  } else if (type === 'switch') {
+    propsBody.querySelectorAll('.opt-chip').forEach(c => {
+      c.addEventListener('click', () => {
+        opts.state = c.dataset.v;
+        propsBody.querySelectorAll('.opt-chip').forEach(x => x.classList.toggle('selected', x === c));
+        renderSlot(idx); recompute();
+      });
+    });
+  } else if (type === 'fuse') {
+    propsBody.querySelectorAll('.opt-chip').forEach(c => {
+      c.addEventListener('click', () => {
+        opts.Imax = parseFloat(c.dataset.v);
+        opts.blown = false;
+        propsBody.querySelectorAll('.opt-chip').forEach(x => x.classList.toggle('selected', x === c));
+        renderSlot(idx); recompute();
+      });
+    });
+  }
+
+  const rect = slotEl.getBoundingClientRect();
+  propsPop.style.left = Math.min(window.innerWidth - 280, rect.left) + 'px';
+  propsPop.style.top  = (rect.bottom + 8) + 'px';
+  propsPop.classList.add('open');
+}
+
+function renderProps(type, opts) {
+  if (type === 'battery') {
+    return `<label>Tension</label><div class="opt-chips">
+      ${[1.5, 4.5, 9].map(v => `<div class="opt-chip ${opts.emf===v?'selected':''}" data-v="${v}">${v} V</div>`).join('')}
+    </div>`;
+  }
+  if (type === 'resistor') {
+    return `<label>Valeur : <span id="optRout">${opts.R} Ω</span></label>
+      <input type="range" id="optR" min="1" max="1000" step="1" value="${opts.R}">`;
+  }
+  if (type === 'led') {
+    return `<label>Couleur</label><div class="opt-chips">
+      <div class="opt-chip ${opts.color==='red'?'selected':''}"   data-v="red">🔴 Rouge</div>
+      <div class="opt-chip ${opts.color==='green'?'selected':''}" data-v="green">🟢 Verte</div>
+      <div class="opt-chip ${opts.color==='blue'?'selected':''}"  data-v="blue">🔵 Bleue</div>
+    </div>`;
+  }
+  if (type === 'switch') {
+    return `<label>État</label><div class="opt-chips">
+      <div class="opt-chip ${opts.state==='closed'?'selected':''}" data-v="closed">Fermé</div>
+      <div class="opt-chip ${opts.state==='open'?'selected':''}"   data-v="open">Ouvert</div>
+    </div>`;
+  }
+  if (type === 'fuse') {
+    return `<label>Calibre</label><div class="opt-chips">
+      ${[0.1, 0.2, 0.5, 1].map(v => `<div class="opt-chip ${opts.Imax===v?'selected':''}" data-v="${v}">${v*1000} mA</div>`).join('')}
+    </div>
+    ${opts.blown ? '<div style="margin-top:10px; color:var(--red); font-size:12px; font-weight:700;">⚠️ Fusible grillé — change-le ou reset.</div>' : ''}`;
+  }
+  return '';
+}
+
+document.getElementById('propsRemove').addEventListener('click', () => {
+  if (selectedSlot < 0) return;
+  slots[selectedSlot] = null;
+  renderSlot(selectedSlot);
+  closeProps();
+  recompute();
+});
+document.getElementById('propsFiche').addEventListener('click', () => {
+  if (selectedSlot < 0) return;
+  openFiche(slots[selectedSlot].type);
+});
+
+function closeProps() {
+  propsPop.classList.remove('open');
+  document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+  selectedSlot = -1;
+}
+
+document.addEventListener('click', (e) => {
+  if (!propsPop.contains(e.target) && !e.target.closest('.slot.filled')) closeProps();
+});
+
+// Spécifs physiques des composants actifs
+// R : résistance en Ω · Imax : courant qui les grille · Imin : courant minimal pour visiblement fonctionner
+const DEVICE_SPECS = {
+  led:    { R: 80,  Imin: 0.002, Iopt: 0.018, Imax: 0.040, label: 'LED' },
+  lamp:   { R: 60,  Imin: 0.030, Iopt: 0.250, Imax: 0.500, label: 'Ampoule' },
+  motor:  { R: 15,  Imin: 0.060, Iopt: 0.400, Imax: 1.000, label: 'Ventilateur' },
+  buzzer: { R: 40,  Imin: 0.010, Iopt: 0.040, Imax: 0.080, label: 'Buzzer' }
+};
+
+function recompute() {
+  const placed = slots.filter(s => s);
+  const status = document.getElementById('status');
+  const loop = document.getElementById('loop');
+
+  let V = 0;
+  let R = 0;
+  let circuitOpen = false;
+  let hasBattery = false;
+
+  for (const s of placed) {
+    if (s.type === 'battery') {
+      V += s.opts.emf;
+      R += 0.5;
+      hasBattery = true;
+    } else if (s.type === 'resistor') {
+      R += s.opts.R;
+    } else if (DEVICE_SPECS[s.type]) {
+      if (s.opts.burnt) circuitOpen = true; // composant grillé = circuit ouvert
+      else R += DEVICE_SPECS[s.type].R;
+    } else if (s.type === 'switch') {
+      if (s.opts.state === 'open') circuitOpen = true;
+    } else if (s.type === 'fuse') {
+      if (s.opts.blown) circuitOpen = true;
+    }
+  }
+
+  let I = 0;
+  let consumers = placed.filter(p => p.type !== 'battery' && p.type !== 'switch' && p.type !== 'fuse').length;
+
+  if (!hasBattery) {
+    status.textContent = 'Ajoute une pile pour démarrer !';
+    status.className = 'status-row idle';
+  } else if (consumers === 0 && !circuitOpen) {
+    status.textContent = '⚠️ COURT-CIRCUIT : la pile va se vider très vite !';
+    status.className = 'status-row warn';
+    R = Math.max(0.5, R);
+    I = V / R;
+  } else if (circuitOpen) {
+    status.textContent = 'Circuit ouvert — le courant ne passe pas.';
+    status.className = 'status-row idle';
+  } else if (R > 0) {
+    I = V / R;
+    status.textContent = '✅ Circuit fermé, ça circule !';
+    status.className = 'status-row ok';
+  }
+
+  // Composants qui grillent (LED, ampoule, moteur, buzzer)
+  let burntThisRound = [];
+  for (const s of placed) {
+    const spec = DEVICE_SPECS[s.type];
+    if (spec && !s.opts.burnt && I > spec.Imax) {
+      s.opts.burnt = true;
+      burntThisRound.push(spec.label);
+    }
+  }
+
+  // Fusible saute si I > Imax
+  let blownThisRound = false;
+  for (const s of placed) {
+    if (s.type === 'fuse' && !s.opts.blown && I > s.opts.Imax) {
+      s.opts.blown = true;
+      blownThisRound = true;
+    }
+  }
+
+  // Re-calcul si quelque chose vient de griller / disjoncter
+  if (burntThisRound.length > 0 || blownThisRound) {
+    if (blownThisRound) {
+      status.textContent = '💥 Disjoncté ! Le fusible a sauvé le circuit. Reset pour réessayer.';
+    } else if (burntThisRound.length) {
+      status.textContent = '🔥 Composant grillé : ' + burntThisRound.join(', ') + ' — ajoute une résistance !';
+    }
+    status.className = 'status-row warn';
+    I = 0;
+    circuitOpen = true;
+  }
+
+  // Visuels : LEDs, ampoule, moteur, buzzer
+  document.querySelectorAll('.slot').forEach((slotEl, i) => {
+    const s = slots[i];
+    if (!s) return;
+    const placedEl = slotEl.querySelector('.placed');
+
+    // Toggle smoke for any burnt device
+    if (placedEl) {
+      const isBurnt = !!(s.opts.burnt || s.opts.blown);
+      placedEl.classList.toggle('blown', isBurnt);
+      let smoke = slotEl.querySelector('.smoke');
+      if (isBurnt && !smoke) {
+        smoke = document.createElement('div');
+        smoke.className = 'smoke';
+        smoke.innerHTML = '<span></span><span></span><span></span>';
+        slotEl.appendChild(smoke);
+      } else if (!isBurnt && smoke) {
+        smoke.remove();
+      }
+    }
+
+    if (s.type === 'led') {
+      const bulb = slotEl.querySelector('.led-bulb');
+      if (!bulb) return;
+      bulb.className = 'led-bulb';
+      bulb.style.removeProperty('--b');
+      if (s.opts.burnt) { bulb.classList.add('burnt'); return; }
+      const spec = DEVICE_SPECS.led;
+      if (I >= spec.Imin) {
+        const b = Math.min(1, I / spec.Iopt);
+        bulb.classList.add('on-' + s.opts.color);
+        bulb.style.setProperty('--b', b.toFixed(2));
+      }
+    } else if (s.type === 'lamp') {
+      const lamp = slotEl.querySelector('.lamp');
+      if (!lamp) return;
+      lamp.className = 'lamp';
+      lamp.style.removeProperty('--b');
+      if (s.opts.burnt) { lamp.classList.add('burnt'); return; }
+      const spec = DEVICE_SPECS.lamp;
+      if (I >= spec.Imin) {
+        const b = Math.min(1, I / spec.Iopt);
+        lamp.classList.add('on');
+        lamp.style.setProperty('--b', b.toFixed(2));
+      }
+    } else if (s.type === 'motor') {
+      const motor = slotEl.querySelector('.motor');
+      if (!motor) return;
+      motor.className = 'motor';
+      if (s.opts.burnt) { motor.classList.add('burnt'); return; }
+      const spec = DEVICE_SPECS.motor;
+      if (I >= spec.Imin) {
+        motor.classList.add('running');
+        const speed = Math.max(0.15, 0.8 - (I / spec.Iopt) * 0.6);
+        motor.style.setProperty('--spin-speed', speed + 's');
+      }
+    } else if (s.type === 'buzzer') {
+      const buzz = slotEl.querySelector('.buzzer');
+      if (!buzz) return;
+      buzz.classList.remove('ringing');
+      const spec = DEVICE_SPECS.buzzer;
+      if (!s.opts.burnt && I >= spec.Imin) buzz.classList.add('ringing');
+    }
+  });
+
+  // Mises à jour mesures
+  document.getElementById('m-u').textContent = V.toFixed(2).replace('.', ',');
+  document.getElementById('m-i').textContent = (I * 1000).toFixed(2).replace('.', ',');
+  document.getElementById('m-p').textContent = (V * I * 1000).toFixed(2).replace('.', ',');
+  document.getElementById('m-r').textContent = (R || 0).toFixed(1).replace('.', ',');
+
+  // Flux de particules + surchauffe
+  if (I > 0.001) {
+    const speed = Math.max(0.25, Math.min(3, 1.5 / Math.max(0.01, I * 30)));
+    loop.style.setProperty('--flow-speed', speed + 's');
+    loop.classList.add('flow');
+    loop.classList.toggle('overheat', I > 0.5);
+  } else {
+    loop.classList.remove('flow');
+    loop.classList.remove('overheat');
+  }
+
+  // Re-render labels après grillage/disjonction
+  if (burntThisRound.length || blownThisRound) {
+    setTimeout(() => {
+      for (let k = 0; k < 6; k++) renderSlot(k);
+    }, 30);
+  }
+
+  // Badges
+  if (I > 0.001 && hasBattery && !firstCircuitDone) {
+    firstCircuitDone = true;
+    unlockBadge('first-circuit');
+  }
+  if (I > 0 && R > 1 && hasBattery && !ohmCalculated) {
+    ohmCalculated = true;
+    unlockBadge('ohm-my-god');
+  }
+  const distinct = new Set(placed.map(s => s.type));
+  if (distinct.size >= 5) unlockBadge('macgyver');
+}
+
+function renderAll() {
+  for (let i = 0; i < 6; i++) renderSlot(i);
+  recompute();
+}
+
+renderAll();
+
+/* ---------- 7. COMPARATEUR ---------- */
+const cmpU  = document.getElementById('cmpU');
+const cmpR1 = document.getElementById('cmpR1');
+const cmpR2 = document.getElementById('cmpR2');
+const cmpUv = document.getElementById('cmpUval');
+const cmpR1v = document.getElementById('cmpR1val');
+const cmpR2v = document.getElementById('cmpR2val');
+
+[cmpU, cmpR1, cmpR2].forEach(el => el.addEventListener('input', updateCompare));
+
+function drawSeriesSvg() {
+  const el = document.getElementById('svgSeries');
+  el.innerHTML = `
+    <defs>
+      <linearGradient id="wireGradS" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#00BFFF"/>
+        <stop offset="100%" stop-color="#FFD700"/>
+      </linearGradient>
+    </defs>
+    <rect x="30" y="30" width="340" height="100" rx="6" fill="none" stroke="url(#wireGradS)" stroke-width="3"/>
+    <g fill="#FFD700"><circle cx="60" cy="80" r="3"/><circle cx="340" cy="80" r="3"/></g>
+    <g transform="translate(40,70)">
+      <rect x="0" y="0" width="40" height="20" rx="3" fill="rgba(255,215,0,0.15)" stroke="#FFD700" stroke-width="1.5"/>
+      <text x="20" y="14" font-size="11" text-anchor="middle" fill="#FFD700" font-weight="bold">U</text>
+    </g>
+    <g transform="translate(150,72)">
+      <rect x="0" y="0" width="50" height="16" rx="2" fill="rgba(0,191,255,0.18)" stroke="#00BFFF" stroke-width="1.5"/>
+      <text x="25" y="12" font-size="10" text-anchor="middle" fill="#00BFFF" font-weight="bold">R₁</text>
+    </g>
+    <g transform="translate(230,72)">
+      <rect x="0" y="0" width="50" height="16" rx="2" fill="rgba(0,191,255,0.18)" stroke="#00BFFF" stroke-width="1.5"/>
+      <text x="25" y="12" font-size="10" text-anchor="middle" fill="#00BFFF" font-weight="bold">R₂</text>
+    </g>
+    <text x="200" y="150" font-size="11" text-anchor="middle" fill="#8892b0">Une seule boucle, courant identique partout</text>
+  `;
+}
+
+function drawParallelSvg() {
+  const el = document.getElementById('svgParallel');
+  el.innerHTML = `
+    <defs>
+      <linearGradient id="wireGradP" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#8A2BE2"/>
+        <stop offset="100%" stop-color="#FFD700"/>
+      </linearGradient>
+    </defs>
+    <path d="M 50 80 L 110 80 M 110 50 L 110 110 M 110 50 L 290 50 M 110 110 L 290 110 M 290 50 L 290 110 M 290 80 L 350 80"
+          fill="none" stroke="url(#wireGradP)" stroke-width="3"/>
+    <g transform="translate(60,70)">
+      <rect x="0" y="0" width="40" height="20" rx="3" fill="rgba(255,215,0,0.15)" stroke="#FFD700" stroke-width="1.5"/>
+      <text x="20" y="14" font-size="11" text-anchor="middle" fill="#FFD700" font-weight="bold">U</text>
+    </g>
+    <g transform="translate(175,42)">
+      <rect x="0" y="0" width="50" height="16" rx="2" fill="rgba(138,43,226,0.2)" stroke="#8A2BE2" stroke-width="1.5"/>
+      <text x="25" y="12" font-size="10" text-anchor="middle" fill="#8A2BE2" font-weight="bold">R₁</text>
+    </g>
+    <g transform="translate(175,102)">
+      <rect x="0" y="0" width="50" height="16" rx="2" fill="rgba(138,43,226,0.2)" stroke="#8A2BE2" stroke-width="1.5"/>
+      <text x="25" y="12" font-size="10" text-anchor="middle" fill="#8A2BE2" font-weight="bold">R₂</text>
+    </g>
+    <text x="200" y="150" font-size="11" text-anchor="middle" fill="#8892b0">Deux chemins en parallèle, tension identique</text>
+  `;
+}
+
+let cmpChartHistory = [];
+
+function updateCompare() {
+  const U  = +cmpU.value;
+  const R1 = +cmpR1.value;
+  const R2 = +cmpR2.value;
+  cmpUv.textContent  = U + ' V';
+  cmpR1v.textContent = R1 + ' Ω';
+  cmpR2v.textContent = R2 + ' Ω';
+
+  const Rs = R1 + R2;
+  const Is = U / Rs;
+  const Ps = U * Is;
+  document.getElementById('sR').textContent = Rs.toFixed(0) + ' Ω';
+  document.getElementById('sI').textContent = (Is * 1000).toFixed(1) + ' mA';
+  document.getElementById('sP').textContent = (Ps * 1000).toFixed(0) + ' mW';
+
+  const Rp = (R1 * R2) / (R1 + R2);
+  const I1 = U / R1;
+  const I2 = U / R2;
+  const It = I1 + I2;
+  const Pp = U * It;
+  document.getElementById('pR').textContent = Rp.toFixed(1) + ' Ω';
+  document.getElementById('pI').textContent = (I1 * 1000).toFixed(0) + ' / ' + (I2 * 1000).toFixed(0) + ' mA';
+  document.getElementById('pP').textContent = (Pp * 1000).toFixed(0) + ' mW';
+
+  cmpChartHistory.push({ Is, It });
+  if (cmpChartHistory.length > 60) cmpChartHistory.shift();
+
+  drawChart();
+}
+
+function drawChart() {
+  const c = document.getElementById('cmpChart');
+  const dpr = devicePixelRatio || 1;
+  const W = c.clientWidth * dpr, H = c.clientHeight * dpr;
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = (H / 4) * i;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  const maxI = Math.max(0.05, ...cmpChartHistory.flatMap(d => [d.Is, d.It]));
+  const padding = 24 * dpr;
+  const drawLine = (key, color) => {
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5 * dpr;
+    ctx.beginPath();
+    cmpChartHistory.forEach((d, i) => {
+      const x = padding + (W - padding * 2) * (i / Math.max(1, cmpChartHistory.length - 1));
+      const y = H - padding - (H - padding * 2) * (d[key] / maxI);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  };
+  drawLine('Is', '#00BFFF');
+  drawLine('It', '#8A2BE2');
+
+  ctx.fillStyle = '#8892b0';
+  ctx.font = (11 * dpr) + 'px Inter, sans-serif';
+  ctx.fillText('I série (bleu) · I parallèle total (violet) — ' + (maxI * 1000).toFixed(0) + ' mA max', 8 * dpr, 14 * dpr);
+}
+
+drawSeriesSvg();
+drawParallelSvg();
+updateCompare();
+window.addEventListener('resize', drawChart);
+
+/* ---------- 8. QUIZ (questions locales) ---------- */
+const QUESTIONS = [
+  // ============ FACILE (6) ============
+  { level: 'facile',
+    question: "Quelle est l'unité de la tension électrique ?",
+    choices: ["Le volt (V)", "L'ampère (A)", "L'ohm (Ω)", "Le watt (W)"],
+    correct: 0,
+    explanation: "Le volt, en hommage à Alessandro Volta qui a inventé la première pile en 1800 ⚡" },
+  { level: 'facile',
+    question: "Que mesure-t-on en ampères ?",
+    choices: ["La tension", "L'intensité (le courant)", "La résistance", "La puissance"],
+    correct: 1,
+    explanation: "Les ampères mesurent la quantité d'électrons qui circulent par seconde 🌊" },
+  { level: 'facile',
+    question: "Que se passe-t-il quand on ouvre un interrupteur ?",
+    choices: ["Le courant passe plus vite", "Le courant s'arrête", "La tension augmente", "Rien du tout"],
+    correct: 1,
+    explanation: "Interrupteur ouvert = circuit coupé = plus de courant. C'est comme une porte fermée pour les électrons 🚪" },
+  { level: 'facile',
+    question: "À quoi sert une pile dans un circuit ?",
+    choices: ["À mesurer le courant", "À fournir l'énergie", "À couper le circuit", "À éclairer"],
+    correct: 1,
+    explanation: "La pile pousse les électrons dans le circuit, comme une pompe pousse l'eau 🔋" },
+  { level: 'facile',
+    question: "Quel est le rôle d'une résistance ?",
+    choices: ["Accélérer le courant", "Freiner le courant", "Stocker l'énergie", "Produire de la lumière"],
+    correct: 1,
+    explanation: "La résistance freine les électrons. Plus elle est grande, moins le courant passe 🛑" },
+  { level: 'facile',
+    question: "Comment s'appelle ce symbole : Ω ?",
+    choices: ["Oméga, unité de l'ohm", "Volt", "Ampère", "Coulomb"],
+    correct: 0,
+    explanation: "C'est la lettre grecque oméga, utilisée pour l'ohm (unité de résistance) Ω" },
+
+  // ============ MOYEN (8) ============
+  { level: 'moyen',
+    question: "En série, deux résistances de 100 Ω et 200 Ω donnent une résistance totale de…",
+    choices: ["100 Ω", "150 Ω", "300 Ω", "66 Ω"],
+    correct: 2,
+    explanation: "En série, on additionne : 100 + 200 = 300 Ω. Facile 😎" },
+  { level: 'moyen',
+    question: "En parallèle, deux résistances identiques de 100 Ω donnent…",
+    choices: ["50 Ω", "100 Ω", "200 Ω", "10 Ω"],
+    correct: 0,
+    explanation: "En parallèle de 2 R égales, R totale = R/2. Plus de chemins = moins de résistance ✨" },
+  { level: 'moyen',
+    question: "La loi d'Ohm s'écrit comment ?",
+    choices: ["U = R + I", "U = R × I", "U = R / I", "U = R − I"],
+    correct: 1,
+    explanation: "U = R × I : la tension est égale à la résistance fois l'intensité. La formule magique ⚗️" },
+  { level: 'moyen',
+    question: "Pile 9 V, résistance 300 Ω : quelle intensité ?",
+    choices: ["3 A", "0,3 A", "0,03 A (30 mA)", "270 A"],
+    correct: 2,
+    explanation: "I = U / R = 9 / 300 = 0,03 A, donc 30 mA. Parfait pour une LED 💡" },
+  { level: 'moyen',
+    question: "Pourquoi met-on une résistance en série avec une LED ?",
+    choices: ["Pour limiter le courant et éviter qu'elle grille", "Pour la rendre plus brillante", "Pour économiser la pile", "Aucune raison, c'est inutile"],
+    correct: 0,
+    explanation: "Sans résistance, la LED reçoit trop de courant et crame en une seconde 🔥" },
+  { level: 'moyen',
+    question: "Si une ampoule grille dans un montage en série, que se passe-t-il ?",
+    choices: ["Les autres s'allument plus fort", "Tout s'éteint", "Rien ne change", "Le fusible saute"],
+    correct: 1,
+    explanation: "En série, si un maillon casse, le circuit est ouvert : tout s'éteint. Comme une vieille guirlande de Noël 🎄" },
+  { level: 'moyen',
+    question: "Dans une maison, les prises sont câblées en…",
+    choices: ["Série", "Parallèle", "Diagonal", "Triangle"],
+    correct: 1,
+    explanation: "En parallèle, chaque prise reçoit 230 V indépendamment. Sinon ton frigo dépendrait de ta lampe 🏠" },
+  { level: 'moyen',
+    question: "Que mesure un voltmètre ?",
+    choices: ["L'intensité", "La résistance", "La tension entre deux points", "La puissance"],
+    correct: 2,
+    explanation: "Voltmètre = volts = tension. Il se branche en parallèle, sans couper le circuit 📏" },
+
+  // ============ DIFFICILE (10) ============
+  { level: 'difficile',
+    question: "La puissance électrique se calcule avec…",
+    choices: ["P = U + I", "P = U × I", "P = U / I", "P = R × I"],
+    correct: 1,
+    explanation: "P = U × I, en watts. Pile 9 V × 0,1 A = 0,9 W ⚡" },
+  { level: 'difficile',
+    question: "Un appareil sous 12 V consomme 0,5 A. Sa puissance est…",
+    choices: ["12 W", "6 W", "24 W", "0,5 W"],
+    correct: 1,
+    explanation: "P = U × I = 12 × 0,5 = 6 W 🔢" },
+  { level: 'difficile',
+    question: "Si on double la résistance d'un circuit (U constant), l'intensité…",
+    choices: ["Double", "Reste pareille", "Est divisée par 2", "Devient nulle"],
+    correct: 2,
+    explanation: "I = U/R : si R double, I est divisée par 2. La proportionnalité inverse en action 🔁" },
+  { level: 'difficile',
+    question: "Un court-circuit, c'est…",
+    choices: ["Pas assez de courant", "Une résistance très grande", "Un courant énorme à cause d'une résistance quasi nulle", "Un circuit trop court physiquement"],
+    correct: 2,
+    explanation: "I = U/R : si R → 0, I → ∞. Ça fait chauffer, fondre, parfois exploser 💥" },
+  { level: 'difficile',
+    question: "Trois résistances de 30 Ω en parallèle donnent une résistance totale de…",
+    choices: ["90 Ω", "30 Ω", "10 Ω", "3 Ω"],
+    correct: 2,
+    explanation: "Pour n résistances égales R en parallèle : R_total = R/n = 30/3 = 10 Ω 🧮" },
+  { level: 'difficile',
+    question: "Une ampoule de 100 W reste allumée 2 heures. Énergie consommée ?",
+    choices: ["100 Wh", "200 Wh", "50 Wh", "2 kWh"],
+    correct: 1,
+    explanation: "Énergie = Puissance × temps = 100 × 2 = 200 Wh. Ça compte sur la facture ⚡💸" },
+  { level: 'difficile',
+    question: "En série : R₁ = 200 Ω, R₂ = 100 Ω, U = 6 V. Tension aux bornes de R₁ ?",
+    choices: ["2 V", "3 V", "4 V", "6 V"],
+    correct: 2,
+    explanation: "I = 6/300 = 0,02 A. U_R1 = R₁ × I = 200 × 0,02 = 4 V. La tension se répartit proportionnellement aux R 📐" },
+  { level: 'difficile',
+    question: "En parallèle : R₁ = 6 Ω, R₂ = 4 Ω sous 12 V. Courant total ?",
+    choices: ["1,2 A", "2 A", "5 A", "10 A"],
+    correct: 2,
+    explanation: "I₁ = 12/6 = 2 A, I₂ = 12/4 = 3 A, I_total = 2 + 3 = 5 A. Les courants s'additionnent en parallèle 🌿" },
+  { level: 'difficile',
+    question: "Quel composant protège un circuit contre les surcharges ?",
+    choices: ["La diode", "Le condensateur", "Le fusible / disjoncteur", "La résistance"],
+    correct: 2,
+    explanation: "Le fusible fond (et le disjoncteur saute) quand I dépasse un seuil. Sacrifice héroïque 🛡️" },
+  { level: 'difficile',
+    question: "Une LED rouge consomme typiquement quel courant en fonctionnement normal ?",
+    choices: ["1 A", "100 mA", "10 à 20 mA", "1 µA"],
+    correct: 2,
+    explanation: "Une LED standard fonctionne entre 10 et 20 mA. Au-delà de 30 mA elle grille 💡🔥" }
+];
+
+let currentQuiz = null;
+let currentDifficulty = null;
+let currentQuestionIdx = 0;
+let currentScore = 0;
+let answeredLocked = false;
+
+document.querySelectorAll('.diff-card').forEach(card => {
+  card.addEventListener('click', () => startQuiz(card.dataset.diff));
+});
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz(difficulty) {
+  currentDifficulty = difficulty;
+  currentQuestionIdx = 0;
+  currentScore = 0;
+
+  const N = ({facile: 6, moyen: 8, difficile: 10})[difficulty];
+  const pool = QUESTIONS.filter(q => q.level === difficulty);
+  const picked = shuffle(pool).slice(0, N);
+  currentQuiz = { questions: picked };
+
+  document.getElementById('quizHome').style.display = 'none';
+  const stage = document.getElementById('quizStage');
+  stage.style.display = 'block';
+  renderQuestion();
+}
+
+window.backToQuizHome = function() {
+  document.getElementById('quizStage').style.display = 'none';
+  document.getElementById('quizHome').style.display = 'block';
+};
+
+function renderQuestion() {
+  const total = currentQuiz.questions.length;
+  if (currentQuestionIdx >= total) { renderQuizEnd(); return; }
+
+  const q = currentQuiz.questions[currentQuestionIdx];
+  const stage = document.getElementById('quizStage');
+  const pct = (currentQuestionIdx / total) * 100;
+  answeredLocked = false;
+
+  stage.innerHTML = `
+    <div class="quiz-progress">
+      <span style="font-size:13px; color:var(--muted);">Question ${currentQuestionIdx + 1} / ${total}</span>
+      <div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <span class="score-display">${currentScore} pts</span>
+    </div>
+    <div class="q-card">
+      <div class="q-text">${escapeHtml(q.question)}</div>
+      <div class="choices">
+        ${q.choices.map((c, i) => `
+          <button class="choice" data-idx="${i}">
+            <span class="ck">${'ABCD'[i]}</span>
+            <span>${escapeHtml(c)}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+    <div style="text-align:right;">
+      <button id="nextQ" style="display:none;">Suivante →</button>
+    </div>
+  `;
+  stage.querySelectorAll('.choice').forEach(btn => {
+    btn.addEventListener('click', () => answerQuestion(+btn.dataset.idx));
+  });
+  document.getElementById('nextQ').addEventListener('click', () => {
+    currentQuestionIdx++;
+    renderQuestion();
+  });
+}
+
+function answerQuestion(idx) {
+  if (answeredLocked) return;
+  answeredLocked = true;
+  const q = currentQuiz.questions[currentQuestionIdx];
+  const correct = q.correct;
+  const buttons = document.querySelectorAll('.choice');
+  buttons.forEach(b => {
+    b.classList.add('locked');
+    const i = +b.dataset.idx;
+    if (i === correct) b.classList.add('right');
+    if (i === idx && idx !== correct) b.classList.add('wrong');
+  });
+  const isRight = (idx === correct);
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback show ' + (isRight ? 'right' : 'wrong');
+  fb.innerHTML = (isRight ? '✅ <strong>Bonne réponse !</strong> ' : '❌ <strong>Pas tout à fait.</strong> ') + escapeHtml(q.explanation || '');
+
+  if (isRight) {
+    currentScore++;
+    flash('arc');
+  } else {
+    flash('short');
+  }
+  document.getElementById('nextQ').style.display = 'inline-block';
+}
+
+function flash(type) {
+  const el = document.getElementById('flash' + (type === 'arc' ? 'Arc' : 'Short'));
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+}
+
+function renderQuizEnd() {
+  const total = currentQuiz.questions.length;
+  const pct = Math.round((currentScore / total) * 100);
+  const stage = document.getElementById('quizStage');
+
+  const newBadges = [];
+  if (currentDifficulty === 'facile' && currentScore >= Math.ceil(total * 0.7)) {
+    if (!unlocked.includes('quiz-easy')) newBadges.push('quiz-easy');
+    unlockBadge('quiz-easy');
+  }
+  if (currentDifficulty === 'moyen' && currentScore === total) {
+    if (!unlocked.includes('gold-medium')) newBadges.push('gold-medium');
+    unlockBadge('gold-medium');
+  }
+  if (currentDifficulty === 'difficile') {
+    if (!unlocked.includes('expert-elec')) newBadges.push('expert-elec');
+    unlockBadge('expert-elec');
+  }
+
+  let verdict = 'Tu peux mieux faire — relance-toi !';
+  if (pct === 100) verdict = '🏆 PARFAIT ! Tu es un vrai pro de l\'électricité.';
+  else if (pct >= 75) verdict = '🔥 Excellent score !';
+  else if (pct >= 50) verdict = '👍 Pas mal, encore un effort !';
+
+  stage.innerHTML = `
+    <div class="quiz-end">
+      <div class="big-score">${currentScore} / ${total}</div>
+      <div class="verdict">${verdict}</div>
+      <div class="badges-won">
+        ${newBadges.map(id => {
+          const b = BADGES[id];
+          return `<div style="display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--neon); padding:8px 14px; border-radius:30px;">
+            <span style="font-size:18px;">${b.icon}</span>
+            <strong>${b.name}</strong>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+        <button class="btn-primary" onclick="backToQuizHome()">↺ Rejouer</button>
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+</script>
+</body>
+</html>
