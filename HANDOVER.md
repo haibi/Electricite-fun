@@ -1,8 +1,9 @@
-# HANDOVER — Electrolab
+# HANDOVER — Electrolab + Mécanik + Système Solaire
 
-Document de passation pour le projet **Electrolab** (site éducatif sur l'électricité et la mécanique pour Evan, 13 ans).
+Document de passation pour le portail éducatif d'Evan (13 ans).
+3 apps indépendantes dans un seul repo, navigation via le menu `+`.
 
-Dernière mise à jour : 2026-05-16
+Dernière mise à jour : 2026-05-20
 
 ---
 
