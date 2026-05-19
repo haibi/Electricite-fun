@@ -792,8 +792,8 @@ canvas.mini-chart {
 
         <div id="mecaWallControls" style="display:none; margin-top:10px;">
           <div class="slider-row">
-            <label>Distance du mur <span class="v" id="mecaWallDistVal">100 m</span></label>
-            <input type="range" id="mecaWallDistSlider" min="20" max="300" step="5" value="100">
+            <label>Distance du mur <span class="v" id="mecaWallDistVal">30 m</span></label>
+            <input type="range" id="mecaWallDistSlider" min="10" max="200" step="2" value="30">
           </div>
           <button id="mecaWallReset" style="width:100%; font-size:12px; padding:6px;">↺ Reconstruire le mur</button>
         </div>
@@ -811,7 +811,7 @@ canvas.mini-chart {
         <div class="stat"><span class="stat-label">Portée</span><span><span class="stat-value" id="mecaStatR">0</span><span class="stat-unit">m</span></span></div>
         <div class="stat"><span class="stat-label">Durée</span><span><span class="stat-value" id="mecaStatT">0</span><span class="stat-unit">s</span></span></div>
         <div class="stat"><span class="stat-label">Vitesse</span><span><span class="stat-value" id="mecaStatV">0</span><span class="stat-unit">m/s</span></span></div>
-        <div class="stat" id="mecaStatWallRow" style="display:none;"><span class="stat-label">Briques</span><span><span class="stat-value" id="mecaStatBricks">0</span><span class="stat-unit">/ 24</span></span></div>
+        <div class="stat" id="mecaStatWallRow" style="display:none;"><span class="stat-label">Briques</span><span><span class="stat-value" id="mecaStatBricks">0</span><span class="stat-unit"> / 100</span></span></div>
         <div class="stat" id="mecaStatEcRow" style="display:none;"><span class="stat-label">E_c impact</span><span><span class="stat-value" id="mecaStatEc">0</span><span class="stat-unit">J</span></span></div>
 
         <div class="v-orbit-info" id="mecaVOrbitInfo" title="Cliquez pour comprendre">
@@ -1312,7 +1312,8 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
     car:        { name: 'Voiture',    icon: '🚗', color: '#ff3030', size: 36, trail: 'rgba(255,80,80,0.7)',   mass: 1200 }
   };
   const BRICK_ENERGY = 150; // J par brique
-  const WALL_COLS = 4, WALL_ROWS = 6;
+  const WALL_COLS = 4, WALL_ROWS = 25;
+  const BRICK_W = 0.6, BRICK_H = 0.5; // mètres → tour 2,4m × 12,5m
   const ORBIT_SCALE = 1000;
   function vOrbit(p) { return Math.sqrt(p.g * p.R * 1000 / ORBIT_SCALE); }
 
@@ -1379,7 +1380,7 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
     ghostTrajectory: null, ghostPlanet: null, compareMode: false,
     maxH: 0, range: 0, t: 0, vinst: 0,
     // Mur
-    wallEnabled: false, wallDist: 100,
+    wallEnabled: false, wallDist: 30,
     wallBricks: [],    // chaque brique : {col, row, alive, vx, vy, px, py, rot}
     wallDebris: [],    // briques en chute
     bricksBroken: 0,
@@ -1568,10 +1569,17 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
     const groundY = H * 0.85;
     let scale;
     if (pred.isOrbit) scale = 0.5 * dpr;
-    else {
-      // Le mur peut être plus loin que la portée prédite → garder visible
-      const wallExtra = launchState.wallEnabled ? launchState.wallDist + 5 : 0;
-      const maxX = Math.max(50, pred.range, wallExtra), maxY = Math.max(10, pred.hMax);
+    else if (launchState.wallEnabled) {
+      // Mode mur : cadrage serré pour voir la tour bien grande
+      const wallExtraX = launchState.wallDist + WALL_COLS * BRICK_W + 5;
+      const wallExtraY = WALL_ROWS * BRICK_H + 2;
+      const maxX = Math.max(40, wallExtraX);
+      // On limite la hauteur affichée à ~1.4× la tour pour pas écraser visuellement
+      const maxY = Math.max(10, Math.min(pred.hMax, wallExtraY * 1.4));
+      const sx = (W - launcherX - 40 * dpr) / maxX, sy = (groundY - 40 * dpr) / maxY;
+      scale = Math.min(sx, sy);
+    } else {
+      const maxX = Math.max(50, pred.range), maxY = Math.max(10, pred.hMax);
       const sx = (W - launcherX - 40 * dpr) / maxX, sy = (groundY - 40 * dpr) / maxY;
       scale = Math.min(sx, sy);
     }
@@ -1579,15 +1587,16 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
 
     // === MUR ===
     if (launchState.wallEnabled) {
-      const brickW_m = 0.4, brickH_m = 0.2; // mètres
-      const bw = brickW_m * scale, bh = brickH_m * scale;
+      
+      const bw = BRICK_W * scale, bh = BRICK_H * scale;
       const wallX0 = launcherX + launchState.wallDist * scale;
       for (const b of launchState.wallBricks) {
         if (!b.alive) continue;
         const px = wallX0 + b.col * bw;
         const py = groundY - (b.row + 1) * bh;
-        const hue = 6 + (b.row * 4); // dégradé léger
-        lctx.fillStyle = `hsl(${hue}, 60%, ${40 + b.col * 3}%)`;
+        // Brun-rouge brique avec variation de luminosité (jamais vert!)
+        const light = 32 + ((b.row + b.col) % 5) * 4;
+        lctx.fillStyle = `hsl(14, 55%, ${light}%)`;
         lctx.strokeStyle = 'rgba(0,0,0,0.4)';
         lctx.lineWidth = 1 * dpr;
         lctx.fillRect(px, py, bw, bh);
@@ -1603,8 +1612,8 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
 
     // === DEBRIS ===
     if (launchState.wallDebris.length > 0) {
-      const brickW_m = 0.4, brickH_m = 0.2;
-      const bw = brickW_m * scale, bh = brickH_m * scale;
+      
+      const bw = BRICK_W * scale, bh = BRICK_H * scale;
       for (const d of launchState.wallDebris) {
         if (d.life <= 0) continue;
         const [px, py] = toCanvas(d.x, d.y);
@@ -1728,14 +1737,14 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
 
         // === COLLISION AVEC LE MUR ===
         if (launchState.wallEnabled && x >= launchState.wallDist) {
-          const brickW_m = 0.4, brickH_m = 0.2;
-          const wallW = WALL_COLS * brickW_m;
-          const wallTop = WALL_ROWS * brickH_m;
+          
+          const wallW = WALL_COLS * BRICK_W;
+          const wallTop = WALL_ROWS * BRICK_H;
           // L'objet est-il dans la zone du mur ?
           if (x <= launchState.wallDist + wallW && y >= 0 && y <= wallTop) {
             const yImpact = y;
-            const impactRow = Math.max(0, Math.min(WALL_ROWS - 1, Math.floor(yImpact / brickH_m)));
-            const impactCol = Math.max(0, Math.min(WALL_COLS - 1, Math.floor((x - launchState.wallDist) / brickW_m)));
+            const impactRow = Math.max(0, Math.min(WALL_ROWS - 1, Math.floor(yImpact / BRICK_H)));
+            const impactCol = Math.max(0, Math.min(WALL_COLS - 1, Math.floor((x - launchState.wallDist) / BRICK_W)));
             // Énergie cinétique réelle
             const mass = OBJECTS[launchState.object].mass;
             const Ec = 0.5 * mass * launchState.vinst * launchState.vinst;
@@ -1757,8 +1766,8 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
               launchState.bricksBroken++;
               energyLeft -= BRICK_ENERGY;
               // Spawn débris à la position de la brique
-              const dx = launchState.wallDist + (col + 0.5) * brickW_m;
-              const dy = (row + 0.5) * brickH_m;
+              const dx = launchState.wallDist + (col + 0.5) * BRICK_W;
+              const dy = (row + 0.5) * BRICK_H;
               const dirAng = (Math.random() - 0.3) * Math.PI;
               newDebris.push({
                 x: dx, y: dy,
@@ -1822,7 +1831,7 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
   /* Briques sans support (toutes les briques en dessous cassées) tombent.
      Logique simple : pour chaque brique vivante, si aucune brique vivante n'existe juste en dessous ET row > 0, elle tombe en débris. */
   function collapseUnsupported() {
-    const brickW_m = 0.4, brickH_m = 0.2;
+    
     let changed = true;
     while (changed) {
       changed = false;
@@ -1833,8 +1842,8 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
           b.alive = false;
           launchState.bricksBroken++;
           launchState.wallDebris.push({
-            x: launchState.wallDist + (b.col + 0.5) * brickW_m,
-            y: (b.row + 0.5) * brickH_m,
+            x: launchState.wallDist + (b.col + 0.5) * BRICK_W,
+            y: (b.row + 0.5) * BRICK_H,
             vx: (Math.random() - 0.5) * 2,
             vy: 0.5,
             rot: 0,
