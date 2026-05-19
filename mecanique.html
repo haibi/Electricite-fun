@@ -739,7 +739,7 @@ canvas.mini-chart {
     <button class="sound-toggle" id="soundToggle" title="Activer/couper le son">🔊</button>
     <button class="badges-counter" id="openBadges">
       <span style="font-size:16px;">🏅</span>
-      <span><span id="badgeCount">0</span>/8 badges</span>
+      <span><span id="badgeCount">0</span>/10 badges</span>
     </button>
   </div>
 </header>
@@ -784,6 +784,19 @@ canvas.mini-chart {
           <input type="checkbox" id="mecaCompareCheck">
           <label for="mecaCompareCheck" style="cursor:pointer;">Mode comparaison (superpose 2 trajectoires)</label>
         </div>
+
+        <div class="compare-toggle" id="mecaWallToggle" style="margin-top:8px;">
+          <input type="checkbox" id="mecaWallCheck">
+          <label for="mecaWallCheck" style="cursor:pointer;">🧱 Mur à casser</label>
+        </div>
+
+        <div id="mecaWallControls" style="display:none; margin-top:10px;">
+          <div class="slider-row">
+            <label>Distance du mur <span class="v" id="mecaWallDistVal">100 m</span></label>
+            <input type="range" id="mecaWallDistSlider" min="20" max="300" step="5" value="100">
+          </div>
+          <button id="mecaWallReset" style="width:100%; font-size:12px; padding:6px;">↺ Reconstruire le mur</button>
+        </div>
       </aside>
 
       <div class="launcher-stage">
@@ -798,6 +811,8 @@ canvas.mini-chart {
         <div class="stat"><span class="stat-label">Portée</span><span><span class="stat-value" id="mecaStatR">0</span><span class="stat-unit">m</span></span></div>
         <div class="stat"><span class="stat-label">Durée</span><span><span class="stat-value" id="mecaStatT">0</span><span class="stat-unit">s</span></span></div>
         <div class="stat"><span class="stat-label">Vitesse</span><span><span class="stat-value" id="mecaStatV">0</span><span class="stat-unit">m/s</span></span></div>
+        <div class="stat" id="mecaStatWallRow" style="display:none;"><span class="stat-label">Briques</span><span><span class="stat-value" id="mecaStatBricks">0</span><span class="stat-unit">/ 24</span></span></div>
+        <div class="stat" id="mecaStatEcRow" style="display:none;"><span class="stat-label">E_c impact</span><span><span class="stat-value" id="mecaStatEc">0</span><span class="stat-unit">J</span></span></div>
 
         <div class="v-orbit-info" id="mecaVOrbitInfo" title="Cliquez pour comprendre">
           <strong>v_orbite ≈ <span id="mecaVOrbitVal">—</span> m/s</strong>
@@ -1069,7 +1084,9 @@ const BADGES = {
   'calculator':    { name: 'Calculateur',        icon: '🧮', desc: 'Score parfait au quiz moyen.' },
   'expert-meca':   { name: 'Physicien expert',   icon: '🎯', desc: 'Tu as terminé le quiz difficile.' },
   'spring-breaker':{ name: 'Casseur de ressort', icon: '💥', desc: 'Tu as dépassé la limite élastique.' },
-  'explorer':      { name: 'Explorateur',        icon: '🧭', desc: 'Tu as lancé sur les 6 astres.' }
+  'explorer':      { name: 'Explorateur',        icon: '🧭', desc: 'Tu as lancé sur les 6 astres.' },
+  'wall-breaker':  { name: 'Briseur de mur',     icon: '🧱', desc: 'Tu as cassé au moins 1 brique du mur.' },
+  'demolisher':    { name: 'Démolisseur',        icon: '🏆', desc: 'Mur pulvérisé en un seul tir !' }
 };
 
 let unlocked = JSON.parse(localStorage.getItem('meca_badges') || '[]');
@@ -1289,11 +1306,13 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
     soleil:  { name: 'Soleil',  g: 274,   R: 696340, sky: '#1a0a00', ground1: '#ffaa00', ground2: '#aa3300' }
   };
   const OBJECTS = {
-    ball:       { name: 'Balle',      icon: '⚾', color: '#ffffff', size: 14, trail: 'rgba(255,255,255,0.5)' },
-    cannonball: { name: 'Boulet',     icon: '⚫', color: '#666666', size: 22, trail: 'rgba(80,80,80,0.8)' },
-    astronaut:  { name: 'Astronaute', icon: '👨‍🚀', color: '#dddddd', size: 30, trail: 'rgba(180,200,255,0.6)' },
-    car:        { name: 'Voiture',    icon: '🚗', color: '#ff3030', size: 36, trail: 'rgba(255,80,80,0.7)' }
+    ball:       { name: 'Balle',      icon: '⚾', color: '#ffffff', size: 14, trail: 'rgba(255,255,255,0.5)',  mass: 0.15 },
+    cannonball: { name: 'Boulet',     icon: '⚫', color: '#666666', size: 22, trail: 'rgba(80,80,80,0.8)',     mass: 5 },
+    astronaut:  { name: 'Astronaute', icon: '👨‍🚀', color: '#dddddd', size: 30, trail: 'rgba(180,200,255,0.6)', mass: 100 },
+    car:        { name: 'Voiture',    icon: '🚗', color: '#ff3030', size: 36, trail: 'rgba(255,80,80,0.7)',   mass: 1200 }
   };
+  const BRICK_ENERGY = 150; // J par brique
+  const WALL_COLS = 4, WALL_ROWS = 6;
   const ORBIT_SCALE = 1000;
   function vOrbit(p) { return Math.sqrt(p.g * p.R * 1000 / ORBIT_SCALE); }
 
@@ -1358,9 +1377,28 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
     planet: 'terre', angle: 45, v0: 50, object: 'ball',
     flying: false, inOrbit: false, trajectory: [],
     ghostTrajectory: null, ghostPlanet: null, compareMode: false,
-    maxH: 0, range: 0, t: 0, vinst: 0
+    maxH: 0, range: 0, t: 0, vinst: 0,
+    // Mur
+    wallEnabled: false, wallDist: 100,
+    wallBricks: [],    // chaque brique : {col, row, alive, vx, vy, px, py, rot}
+    wallDebris: [],    // briques en chute
+    bricksBroken: 0,
+    impactEc: 0
   };
   let astresUsed = JSON.parse(localStorage.getItem('meca_astres') || '[]');
+
+  function buildWall() {
+    launchState.wallBricks = [];
+    launchState.wallDebris = [];
+    launchState.bricksBroken = 0;
+    launchState.impactEc = 0;
+    for (let r = 0; r < WALL_ROWS; r++) {
+      for (let c = 0; c < WALL_COLS; c++) {
+        launchState.wallBricks.push({ col: c, row: r, alive: true });
+      }
+    }
+  }
+  buildWall();
 
   function renderPlanetCards(target, onSelect, activeKey, idPrefix) {
     target.innerHTML = '';
@@ -1441,6 +1479,41 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
     }
   });
 
+  const wallCheck = document.getElementById('mecaWallCheck');
+  const wallToggle = document.getElementById('mecaWallToggle');
+  const wallControls = document.getElementById('mecaWallControls');
+  const wallDistSlider = document.getElementById('mecaWallDistSlider');
+  const wallDistVal = document.getElementById('mecaWallDistVal');
+  const wallResetBtn = document.getElementById('mecaWallReset');
+  const statWallRow = document.getElementById('mecaStatWallRow');
+  const statEcRow = document.getElementById('mecaStatEcRow');
+
+  function refreshWallUI() {
+    const on = launchState.wallEnabled;
+    wallToggle.classList.toggle('active', on);
+    wallControls.style.display = on ? 'block' : 'none';
+    statWallRow.style.display = on ? 'flex' : 'none';
+    statEcRow.style.display = on ? 'flex' : 'none';
+    document.getElementById('mecaStatBricks').textContent = launchState.bricksBroken;
+    document.getElementById('mecaStatEc').textContent = launchState.impactEc.toFixed(0);
+  }
+  wallCheck.addEventListener('change', () => {
+    launchState.wallEnabled = wallCheck.checked;
+    if (launchState.wallEnabled) buildWall();
+    refreshWallUI();
+    drawLauncher();
+  });
+  wallDistSlider.addEventListener('input', () => {
+    launchState.wallDist = +wallDistSlider.value;
+    wallDistVal.textContent = launchState.wallDist + ' m';
+    drawLauncher();
+  });
+  wallResetBtn.addEventListener('click', () => {
+    buildWall();
+    refreshWallUI();
+    drawLauncher();
+  });
+
   function updateVOrbitDisplay() {
     document.getElementById('mecaVOrbitVal').textContent = vOrbit(PLANETS[launchState.planet]).toFixed(0);
   }
@@ -1496,11 +1569,57 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
     let scale;
     if (pred.isOrbit) scale = 0.5 * dpr;
     else {
-      const maxX = Math.max(50, pred.range), maxY = Math.max(10, pred.hMax);
+      // Le mur peut être plus loin que la portée prédite → garder visible
+      const wallExtra = launchState.wallEnabled ? launchState.wallDist + 5 : 0;
+      const maxX = Math.max(50, pred.range, wallExtra), maxY = Math.max(10, pred.hMax);
       const sx = (W - launcherX - 40 * dpr) / maxX, sy = (groundY - 40 * dpr) / maxY;
       scale = Math.min(sx, sy);
     }
     const toCanvas = (xm, ym) => [launcherX + xm * scale, groundY - ym * scale];
+
+    // === MUR ===
+    if (launchState.wallEnabled) {
+      const brickW_m = 0.4, brickH_m = 0.2; // mètres
+      const bw = brickW_m * scale, bh = brickH_m * scale;
+      const wallX0 = launcherX + launchState.wallDist * scale;
+      for (const b of launchState.wallBricks) {
+        if (!b.alive) continue;
+        const px = wallX0 + b.col * bw;
+        const py = groundY - (b.row + 1) * bh;
+        const hue = 6 + (b.row * 4); // dégradé léger
+        lctx.fillStyle = `hsl(${hue}, 60%, ${40 + b.col * 3}%)`;
+        lctx.strokeStyle = 'rgba(0,0,0,0.4)';
+        lctx.lineWidth = 1 * dpr;
+        lctx.fillRect(px, py, bw, bh);
+        lctx.strokeRect(px, py, bw, bh);
+        // joints mortier
+        lctx.fillStyle = 'rgba(255,255,255,0.07)';
+        lctx.fillRect(px, py, bw, 1.5 * dpr);
+      }
+      // Sol marqué
+      lctx.fillStyle = 'rgba(255,255,255,0.25)';
+      lctx.fillRect(wallX0, groundY - 2 * dpr, WALL_COLS * bw, 2 * dpr);
+    }
+
+    // === DEBRIS ===
+    if (launchState.wallDebris.length > 0) {
+      const brickW_m = 0.4, brickH_m = 0.2;
+      const bw = brickW_m * scale, bh = brickH_m * scale;
+      for (const d of launchState.wallDebris) {
+        if (d.life <= 0) continue;
+        const [px, py] = toCanvas(d.x, d.y);
+        lctx.save();
+        lctx.translate(px, py);
+        lctx.rotate(d.rot || 0);
+        lctx.globalAlpha = Math.max(0, Math.min(1, d.life));
+        lctx.fillStyle = '#a23a1c';
+        lctx.strokeStyle = 'rgba(0,0,0,0.4)';
+        lctx.fillRect(-bw / 2, -bh / 2, bw, bh);
+        lctx.strokeRect(-bw / 2, -bh / 2, bw, bh);
+        lctx.restore();
+        lctx.globalAlpha = 1;
+      }
+    }
 
     if (launchState.ghostTrajectory) {
       lctx.strokeStyle = 'rgba(0, 201, 255, 0.55)'; lctx.lineWidth = 2 * dpr;
@@ -1566,6 +1685,11 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
 
     launchState.flying = true; launchState.trajectory = []; launchState.inOrbit = isOrbit;
     launchState.maxH = 0; launchState.range = 0; launchState.t = 0; launchState.vinst = v0;
+    // Si le mur est activé : reconstruire à chaque tir (sinon l'utilisateur doit cliquer reset)
+    if (launchState.wallEnabled) {
+      buildWall();
+      refreshWallUI();
+    }
 
     document.getElementById('mecaOrbitBanner').classList.toggle('show', isOrbit);
     if (isOrbit) { unlockBadge('orbiter'); Sound.chime ? Sound.chime() : null; }
@@ -1601,6 +1725,71 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
         launchState.vinst = Math.sqrt(vx * vx + vy * vy);
         launchState.t = simTime; launchState.range = x;
         if (y > launchState.maxH) launchState.maxH = y;
+
+        // === COLLISION AVEC LE MUR ===
+        if (launchState.wallEnabled && x >= launchState.wallDist) {
+          const brickW_m = 0.4, brickH_m = 0.2;
+          const wallW = WALL_COLS * brickW_m;
+          const wallTop = WALL_ROWS * brickH_m;
+          // L'objet est-il dans la zone du mur ?
+          if (x <= launchState.wallDist + wallW && y >= 0 && y <= wallTop) {
+            const yImpact = y;
+            const impactRow = Math.max(0, Math.min(WALL_ROWS - 1, Math.floor(yImpact / brickH_m)));
+            const impactCol = Math.max(0, Math.min(WALL_COLS - 1, Math.floor((x - launchState.wallDist) / brickW_m)));
+            // Énergie cinétique réelle
+            const mass = OBJECTS[launchState.object].mass;
+            const Ec = 0.5 * mass * launchState.vinst * launchState.vinst;
+            launchState.impactEc = Ec;
+            // Casse en cascade (BFS depuis l'impact, dépense BRICK_ENERGY par brique)
+            let energyLeft = Ec;
+            const queue = [{ col: impactCol, row: impactRow }];
+            const visited = new Set();
+            const newDebris = [];
+            while (queue.length && energyLeft >= BRICK_ENERGY) {
+              const { col, row } = queue.shift();
+              const key = col + ',' + row;
+              if (visited.has(key)) continue;
+              if (col < 0 || col >= WALL_COLS || row < 0 || row >= WALL_ROWS) continue;
+              visited.add(key);
+              const brick = launchState.wallBricks.find(b => b.col === col && b.row === row && b.alive);
+              if (!brick) continue;
+              brick.alive = false;
+              launchState.bricksBroken++;
+              energyLeft -= BRICK_ENERGY;
+              // Spawn débris à la position de la brique
+              const dx = launchState.wallDist + (col + 0.5) * brickW_m;
+              const dy = (row + 0.5) * brickH_m;
+              const dirAng = (Math.random() - 0.3) * Math.PI;
+              newDebris.push({
+                x: dx, y: dy,
+                vx: vx * 0.25 + Math.cos(dirAng) * 4,
+                vy: Math.abs(vy) * 0.2 + Math.sin(dirAng) * 5 + 3,
+                rot: Math.random() * Math.PI * 2,
+                vrot: (Math.random() - 0.5) * 8,
+                life: 1.2
+              });
+              // Cascade : voisines (4-connectivité)
+              queue.push({ col: col + 1, row });
+              queue.push({ col: col - 1, row });
+              queue.push({ col, row: row + 1 });
+              queue.push({ col, row: row - 1 });
+            }
+            launchState.wallDebris.push(...newDebris);
+            // Effondrement : briques sans support qui tombent
+            collapseUnsupported();
+            // Badges
+            if (launchState.bricksBroken >= 1) unlockBadge('wall-breaker');
+            if (launchState.wallBricks.every(b => !b.alive)) unlockBadge('demolisher');
+            // Fin du vol
+            launchState.flying = false;
+            if (Sound.impact) Sound.impact();
+            updateStats();
+            refreshWallUI();
+            animateDebris();
+            return;
+          }
+        }
+
         if (y < 0) {
           launchState.flying = false;
           if (Sound.impact) Sound.impact();
@@ -1628,6 +1817,59 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
     document.getElementById('mecaStatR').textContent = launchState.range.toFixed(1);
     document.getElementById('mecaStatT').textContent = launchState.t.toFixed(2);
     document.getElementById('mecaStatV').textContent = launchState.vinst.toFixed(1);
+  }
+
+  /* Briques sans support (toutes les briques en dessous cassées) tombent.
+     Logique simple : pour chaque brique vivante, si aucune brique vivante n'existe juste en dessous ET row > 0, elle tombe en débris. */
+  function collapseUnsupported() {
+    const brickW_m = 0.4, brickH_m = 0.2;
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const b of launchState.wallBricks) {
+        if (!b.alive || b.row === 0) continue;
+        const supported = launchState.wallBricks.some(o => o.alive && o.col === b.col && o.row === b.row - 1);
+        if (!supported) {
+          b.alive = false;
+          launchState.bricksBroken++;
+          launchState.wallDebris.push({
+            x: launchState.wallDist + (b.col + 0.5) * brickW_m,
+            y: (b.row + 0.5) * brickH_m,
+            vx: (Math.random() - 0.5) * 2,
+            vy: 0.5,
+            rot: 0,
+            vrot: (Math.random() - 0.5) * 4,
+            life: 1.4
+          });
+          changed = true;
+        }
+      }
+    }
+  }
+
+  function animateDebris() {
+    const planet = PLANETS[launchState.planet];
+    const g = planet.g;
+    let lastT = 0;
+    function step(now) {
+      const dt = lastT ? Math.min(0.04, (now - lastT) / 1000) : 0.016;
+      lastT = now;
+      let alive = false;
+      for (const d of launchState.wallDebris) {
+        if (d.life <= 0) continue;
+        d.x += d.vx * dt * 4;        // x4 pour rendre la chute plus visible à l'échelle scène
+        d.y += d.vy * dt * 4;
+        d.vy -= g * dt * 4;
+        d.rot += (d.vrot || 0) * dt;
+        d.life -= dt * 0.4;
+        if (d.y < 0) { d.y = 0; d.vy = -d.vy * 0.25; d.vx *= 0.6; d.life -= 0.15; }
+        if (d.life > 0) alive = true;
+      }
+      drawLauncher(null);
+      if (alive) requestAnimationFrame(step);
+      else { launchState.wallDebris = []; drawLauncher(null); }
+    }
+    requestAnimationFrame(step);
   }
   document.getElementById('mecaLaunchBtn').addEventListener('click', () => {
     if (launchState.flying) return;
