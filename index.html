@@ -3464,10 +3464,10 @@ renderMission();
     soleil:  { name: 'Soleil',  g: 274,   R: 696340, sky: '#1a0a00', ground1: '#ffaa00', ground2: '#aa3300' }
   };
   const OBJECTS = {
-    ball:       { name: 'Balle',      icon: '⚾', color: '#ffffff', size: 5 },
-    cannonball: { name: 'Boulet',     icon: '⚫', color: '#444444', size: 7 },
-    astronaut:  { name: 'Astronaute', icon: '👨‍🚀', color: '#dddddd', size: 9 },
-    car:        { name: 'Voiture',    icon: '🚗', color: '#ff3030', size: 11 }
+    ball:       { name: 'Balle',      icon: '⚾', color: '#ffffff', size: 14, trail: 'rgba(255,255,255,0.5)' },
+    cannonball: { name: 'Boulet',     icon: '⚫', color: '#666666', size: 22, trail: 'rgba(80,80,80,0.8)' },
+    astronaut:  { name: 'Astronaute', icon: '👨‍🚀', color: '#dddddd', size: 30, trail: 'rgba(180,200,255,0.6)' },
+    car:        { name: 'Voiture',    icon: '🚗', color: '#ff3030', size: 36, trail: 'rgba(255,80,80,0.7)' }
   };
   const ORBIT_SCALE = 1000;
   function vOrbit(p) { return Math.sqrt(p.g * p.R * 1000 / ORBIT_SCALE); }
@@ -3716,9 +3716,17 @@ renderMission();
     if (animObj) {
       const [cx, cy] = toCanvas(animObj.x, animObj.y);
       const o = OBJECTS[launchState.object];
-      lctx.shadowColor = 'rgba(57, 255, 20, 0.7)'; lctx.shadowBlur = 16 * dpr;
-      lctx.fillStyle = o.color;
-      lctx.beginPath(); lctx.arc(cx, cy, o.size * dpr, 0, Math.PI * 2); lctx.fill();
+      // Trainée colorée selon l'objet (en plus de la trajectoire verte)
+      lctx.shadowColor = o.trail; lctx.shadowBlur = 18 * dpr;
+      // Dessine l'emoji de l'objet avec rotation pour voiture/astronaute
+      const angRot = (animObj.vx !== undefined && animObj.vy !== undefined) ? Math.atan2(-animObj.vy, animObj.vx) : 0;
+      lctx.save();
+      lctx.translate(cx, cy);
+      if (launchState.object === 'car' || launchState.object === 'astronaut') lctx.rotate(angRot);
+      lctx.font = (o.size * 2 * dpr) + 'px serif';
+      lctx.textAlign = 'center'; lctx.textBaseline = 'middle';
+      lctx.fillText(o.icon, 0, 0);
+      lctx.restore();
       lctx.shadowBlur = 0;
     }
   }
@@ -3764,7 +3772,7 @@ renderMission();
       } else {
         x = v0 * Math.cos(rad) * simTime;
         y = v0 * Math.sin(rad) * simTime - 0.5 * g * simTime * simTime;
-        const vx = v0 * Math.cos(rad), vy = v0 * Math.sin(rad) - g * simTime;
+        var vx = v0 * Math.cos(rad), vy = v0 * Math.sin(rad) - g * simTime;
         launchState.vinst = Math.sqrt(vx * vx + vy * vy);
         launchState.t = simTime; launchState.range = x;
         if (y > launchState.maxH) launchState.maxH = y;
@@ -3784,7 +3792,7 @@ renderMission();
       launchState.trajectory.push([x, y]);
       if (launchState.trajectory.length > 600) launchState.trajectory.shift();
       updateStats();
-      drawLauncher({ x, y });
+      drawLauncher({ x, y, vx: (typeof vx !== 'undefined' ? vx : 0), vy: (typeof vy !== 'undefined' ? vy : 0) });
       if (isOrbit && simTime > 18) { launchState.flying = false; return; }
       requestAnimationFrame(step);
     }
@@ -3912,7 +3920,10 @@ renderMission();
   let pendActive = false;
   function startPendulum() {
     resizePendCanvas();
+    drawPendulum(); // dessin synchrone immédiat (pas attendre rAF)
     pendState.running = true; pendState.lastTime = performance.now();
+    // Re-resize après que le layout soit définitif
+    setTimeout(() => { resizePendCanvas(); drawPendulum(); }, 80);
     if (pendActive) return;
     pendActive = true;
     requestAnimationFrame(stepPendulum);
@@ -4077,6 +4088,8 @@ renderMission();
     springState.running = true; springState.x = springState.xEq; springState.v = 0;
     springState.lastTime = performance.now();
     recomputeSpringEq();
+    drawSpring(); // dessin immédiat
+    setTimeout(() => { resizeSpringCanvas(); drawSpring(); }, 80);
     if (springActive) return;
     springActive = true;
     requestAnimationFrame(stepSpring);
