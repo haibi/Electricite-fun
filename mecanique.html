@@ -1,0 +1,2145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🚀 Mécanik – Evan</title>
+<link rel="icon" type="image/svg+xml" href="favicon-meca.svg" />
+<style>
+:root {
+  --bg: #0a0a1a;
+  --bg-deep: #050510;
+  --panel: rgba(20, 28, 56, 0.72);
+  --panel-solid: #131a33;
+  --border: rgba(255, 107, 53, 0.25);
+  --electric: #FF6B35;       /* orange cosmique */
+  --neon: #00C9FF;           /* bleu ciel */
+  --violet: #39FF14;         /* vert trajectoire */
+  --red: #ff4757;
+  --green: #2ed573;
+  --text: #e8eef9;
+  --muted: #8892b0;
+  --shadow-elec: 0 0 18px rgba(255, 107, 53, 0.5);
+  --shadow-neon: 0 0 18px rgba(0, 201, 255, 0.45);
+  --shadow-violet: 0 0 18px rgba(57, 255, 20, 0.5);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow-x: hidden;
+}
+
+#stars {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  display: block;
+}
+
+a, button { font-family: inherit; }
+
+button {
+  background: linear-gradient(135deg, rgba(0,191,255,0.15), rgba(138,43,226,0.15));
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  transition: all .2s ease;
+}
+button:hover {
+  border-color: var(--electric);
+  box-shadow: var(--shadow-elec);
+  transform: translateY(-1px);
+}
+button:active { transform: translateY(0); }
+button:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--electric), var(--violet));
+  border-color: transparent;
+  color: #fff;
+}
+.btn-primary:hover { box-shadow: var(--shadow-elec), var(--shadow-violet); border-color: transparent; }
+.btn-neon {
+  background: linear-gradient(135deg, var(--neon), #ffb700);
+  color: #1a1a1a;
+  border-color: transparent;
+}
+.btn-neon:hover { box-shadow: var(--shadow-neon); }
+
+header.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  background: linear-gradient(180deg, rgba(10,10,26,0.92), rgba(10,10,26,0.55));
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+.logo {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 20px; font-weight: 800; letter-spacing: 0.5px;
+}
+.logo .bolt {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 10px;
+  background: radial-gradient(circle at 30% 30%, #FFC56B, var(--electric));
+  box-shadow: var(--shadow-elec);
+  font-size: 22px;
+  animation: boltPulse 2.4s ease-in-out infinite;
+}
+@keyframes boltPulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(255,107,53,0.5); }
+  50%      { box-shadow: 0 0 26px rgba(255,107,53,0.9); }
+}
+.logo small {
+  font-weight: 500; font-size: 12px; color: var(--muted); letter-spacing: 1px;
+}
+
+/* App switcher */
+.app-switcher { position: relative; margin-left: 6px; }
+.app-switcher-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 20px; font-weight: 300; line-height: 1;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0;
+  transition: all .2s;
+}
+.app-switcher-btn:hover { border-color: var(--electric); box-shadow: var(--shadow-elec); transform: rotate(90deg); }
+.app-menu {
+  position: absolute; top: calc(100% + 10px); left: 0;
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px;
+  min-width: 260px;
+  display: none;
+  z-index: 100;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,191,255,0.1);
+}
+.app-menu.open { display: block; animation: fadeIn .2s ease; }
+.app-menu-header {
+  font-size: 10px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1.5px;
+  padding: 8px 12px 6px;
+}
+.app-menu-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text); text-decoration: none;
+  cursor: pointer;
+  transition: background .15s;
+}
+.app-menu-item:hover { background: rgba(0,191,255,0.08); }
+.app-menu-item .ico {
+  width: 34px; height: 34px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.app-menu-item .title { font-weight: 700; font-size: 14px; }
+.app-menu-item .sub { font-size: 11px; color: var(--muted); }
+.app-menu-item.current { background: rgba(0,191,255,0.06); cursor: default; }
+.app-menu-item.current::after {
+  content: '✓'; margin-left: auto; color: var(--electric); font-weight: 700;
+}
+.app-menu-item .external {
+  margin-left: auto; color: var(--muted); font-size: 11px;
+}
+.app-menu-item:hover .external { color: var(--electric); }
+.badges-counter {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px; background: var(--panel); border: 1px solid var(--border);
+  border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 600;
+}
+.badges-counter:hover { border-color: var(--neon); box-shadow: var(--shadow-neon); }
+
+nav.tabs {
+  display: flex; gap: 8px; padding: 16px 24px 0;
+  max-width: 1400px; margin: 0 auto;
+}
+.tab {
+  background: transparent; border: 1px solid transparent;
+  padding: 10px 22px; border-radius: 12px 12px 0 0;
+  color: var(--muted); cursor: pointer; font-weight: 600; font-size: 14px;
+  border-bottom: 1px solid var(--border);
+  transition: all .2s;
+}
+.tab:hover { color: var(--text); transform: none; box-shadow: none; }
+.tab.active {
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-bottom-color: transparent;
+}
+
+main {
+  padding: 0 24px 80px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.view { display: none; }
+.view.active { display: block; animation: fadeIn .35s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  backdrop-filter: blur(8px);
+}
+
+h2.section-title {
+  font-size: 22px; font-weight: 800; margin-bottom: 4px;
+  background: linear-gradient(90deg, var(--electric), var(--neon));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.section-sub { color: var(--muted); margin-bottom: 18px; font-size: 14px; }
+
+/* =====================  QUIZ  ===================== */
+.quiz-home { text-align: center; padding: 28px 16px; }
+.quiz-home h2 { font-size: 28px; margin-bottom: 8px; }
+.quiz-home .subtitle { color: var(--muted); margin-bottom: 28px; }
+.diff-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px; max-width: 800px; margin: 0 auto;
+}
+.diff-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px 18px;
+  cursor: pointer;
+  text-align: center;
+  transition: all .25s ease;
+}
+.diff-card:hover { transform: translateY(-4px); border-color: var(--electric); box-shadow: var(--shadow-elec); }
+.diff-card.medium:hover { border-color: var(--neon); box-shadow: var(--shadow-neon); }
+.diff-card.hard:hover { border-color: var(--violet); box-shadow: var(--shadow-violet); }
+.diff-card .ico { font-size: 36px; margin-bottom: 8px; }
+.diff-card h3 { font-size: 18px; margin-bottom: 4px; }
+.diff-card .diff-sub { font-size: 12px; color: var(--muted); }
+
+.quiz-stage { max-width: 720px; margin: 16px auto; }
+.quiz-progress {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.bar {
+  flex: 1; height: 6px; background: rgba(255,255,255,0.08);
+  border-radius: 3px; margin: 0 14px; overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--electric), var(--neon));
+  transition: width .35s ease;
+  width: 0;
+}
+.score-display { font-weight: 700; color: var(--neon); }
+
+.q-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.q-text { font-size: 17px; font-weight: 600; margin-bottom: 18px; line-height: 1.5; }
+.choices { display: grid; gap: 10px; }
+.choice {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: left;
+  transition: all .2s;
+  display: flex; align-items: center; gap: 12px;
+}
+.choice:hover { border-color: var(--electric); transform: translateX(4px); }
+.choice .ck {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid var(--border);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  flex-shrink: 0;
+}
+.choice.right { border-color: var(--green); background: rgba(46,213,115,0.12); }
+.choice.right .ck { background: var(--green); color: white; border-color: var(--green); }
+.choice.wrong { border-color: var(--red); background: rgba(255,71,87,0.12); }
+.choice.wrong .ck { background: var(--red); color: white; border-color: var(--red); }
+.choice:disabled, .choice.locked { cursor: default; transform: none; }
+
+.feedback {
+  margin-top: 14px; padding: 12px 14px;
+  border-radius: 10px; font-size: 14px; line-height: 1.5;
+  display: none;
+}
+.feedback.show { display: block; animation: fadeIn .3s ease; }
+.feedback.right { background: rgba(46,213,115,0.1); border: 1px solid var(--green); }
+.feedback.wrong { background: rgba(255,71,87,0.1); border: 1px solid var(--red); }
+
+/* Arc / short circuit flash overlays */
+.flash {
+  position: fixed; inset: 0; pointer-events: none; z-index: 999;
+  opacity: 0;
+}
+.flash.arc { background: radial-gradient(circle, rgba(46,213,115,0.55), transparent 60%); }
+.flash.short { background: radial-gradient(circle, rgba(255,71,87,0.55), transparent 60%); }
+.flash.show { animation: flashAnim .55s ease; }
+@keyframes flashAnim {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.quiz-end {
+  text-align: center; padding: 40px 20px;
+}
+.quiz-end .big-score {
+  font-size: 56px; font-weight: 800;
+  background: linear-gradient(90deg, var(--electric), var(--neon));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.quiz-end .verdict { font-size: 20px; margin: 10px 0; }
+.quiz-end .badges-won { margin: 20px 0; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* =====================  MODAL  ===================== */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-backdrop.open { display: flex; animation: fadeIn .25s ease; }
+.modal {
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  max-width: 480px;
+  width: 100%;
+  padding: 28px;
+  position: relative;
+}
+.modal h3 {
+  font-size: 22px; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 12px;
+}
+.modal h3 .icon {
+  width: 44px; height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 12px; font-size: 22px;
+}
+.modal .definition {
+  margin: 16px 0;
+  font-size: 14px; line-height: 1.6; color: #c8d1e0;
+}
+.modal .formula-row {
+  margin: 14px 0;
+  padding: 14px;
+  background: rgba(255, 215, 0, 0.08);
+  border-radius: 10px;
+  text-align: center;
+}
+.modal .formula-row .f {
+  font-size: 22px; font-weight: 800; color: var(--neon);
+  font-family: 'Cambria Math', Georgia, serif; letter-spacing: 1px;
+}
+.modal .formula-row .desc { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.modal .anecdote {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: rgba(138, 43, 226, 0.1);
+  border-left: 3px solid var(--violet);
+  border-radius: 6px;
+  font-size: 13px; line-height: 1.6;
+}
+.modal .anecdote strong { color: var(--violet); }
+.modal .close-x {
+  position: absolute; top: 12px; right: 12px;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,0.06); border: none;
+  color: var(--text); font-size: 18px; cursor: pointer;
+  padding: 0;
+}
+.modal .close-x:hover { background: var(--red); }
+
+.badges-modal-list {
+  display: grid; grid-template-columns: 1fr; gap: 10px;
+  margin-top: 14px; max-height: 50vh; overflow-y: auto;
+}
+.badge-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.badge-row.locked { opacity: 0.4; filter: grayscale(0.7); }
+.badge-row .b-icon {
+  width: 40px; height: 40px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  background: radial-gradient(circle at 30% 30%, var(--neon), #b78b00);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.badge-row.locked .b-icon { background: #2a2a3a; }
+.badge-row .b-name { font-weight: 700; font-size: 14px; }
+.badge-row .b-desc { font-size: 12px; color: var(--muted); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 30px; left: 50%;
+  transform: translateX(-50%) translateY(120px);
+  background: var(--panel-solid);
+  border: 1px solid var(--neon);
+  box-shadow: var(--shadow-neon);
+  border-radius: 14px;
+  padding: 14px 20px;
+  display: flex; align-items: center; gap: 14px;
+  z-index: 500;
+  transition: transform .35s cubic-bezier(.2,.9,.3,1.2);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast .b-icon {
+  width: 42px; height: 42px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  background: radial-gradient(circle at 30% 30%, var(--neon), #b78b00);
+  border-radius: 12px;
+}
+.toast .t-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.toast .t-name { font-weight: 700; font-size: 15px; }
+
+/* API key modal extras */
+.api-input {
+  width: 100%; padding: 12px 14px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text); font-size: 14px;
+  font-family: 'Consolas', monospace;
+  margin: 10px 0;
+}
+.api-input:focus { outline: none; border-color: var(--electric); box-shadow: var(--shadow-elec); }
+.api-hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+.loader {
+  display: inline-block;
+  width: 28px; height: 28px;
+  border: 3px solid rgba(0, 191, 255, 0.18);
+  border-top-color: var(--electric);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.center-loader { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px; }
+.center-loader .lt { color: var(--muted); font-size: 13px; }
+
+/* MÉCANIK — styles spécifiques */
+.btn-launch {
+  background: linear-gradient(135deg, #39FF14, #1ec000);
+  color: #052800; border-color: transparent;
+  font-size: 16px; padding: 14px 26px;
+  font-weight: 800; letter-spacing: 1px;
+}
+.btn-launch:hover { box-shadow: 0 0 18px rgba(57, 255, 20, 0.5); }
+
+input[type=range] { -webkit-appearance: none; appearance: none; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; outline: none; }
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--electric); cursor: pointer;
+  box-shadow: 0 0 8px rgba(0,191,255,0.6);
+}
+input[type=range]::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--electric); border: none; cursor: pointer;
+  box-shadow: 0 0 8px rgba(0,191,255,0.6);
+}
+
+.launch-grid {
+  display: grid; grid-template-columns: 280px 1fr 260px;
+  gap: 16px; align-items: start;
+}
+@media (max-width: 1100px) { .launch-grid { grid-template-columns: 1fr; } }
+
+.controls-panel h3, .stats-panel h3 {
+  font-size: 13px; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--muted); margin-bottom: 12px;
+}
+
+.planet-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  margin-bottom: 16px;
+}
+.planet-card {
+  position: relative;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 6px; cursor: pointer; text-align: center;
+  transition: all .2s;
+}
+.planet-card:hover { border-color: var(--electric); transform: translateY(-2px); }
+.planet-card.active { border-color: var(--electric); background: rgba(255, 107, 53, 0.08); box-shadow: var(--shadow-elec); }
+.planet-icon {
+  width: 30px; height: 30px; border-radius: 50%;
+  margin: 0 auto 4px; position: relative; overflow: hidden;
+}
+.planet-icon.lune    { background: radial-gradient(circle at 30% 30%, #f0f0f0, #707070); }
+.planet-icon.mars    { background: radial-gradient(circle at 30% 30%, #ff9966, #aa3322); }
+.planet-icon.terre   { background: radial-gradient(circle at 30% 30%, #6fb5e8, #1a4f8c); }
+.planet-icon.jupiter { background: radial-gradient(circle at 30% 30%, #f0d090, #a05030); }
+.planet-icon.saturne { background: radial-gradient(circle at 30% 30%, #f5dba4, #b0894a); }
+.planet-icon.soleil  { background: radial-gradient(circle at 30% 30%, #ffeeaa, #ff8800); box-shadow: 0 0 12px #ff8800; }
+.planet-card .pname { font-size: 11px; font-weight: 700; letter-spacing: .3px; }
+.planet-card .pg { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.planet-info-btn {
+  position: absolute; top: 2px; right: 4px;
+  background: none; border: none;
+  color: var(--muted); font-size: 12px; padding: 0;
+  width: 16px; height: 16px; border-radius: 50%;
+}
+.planet-info-btn:hover { color: var(--electric); background: rgba(255,107,53,0.15); box-shadow: none; transform: none; }
+
+.slider-row { margin-bottom: 14px; }
+.slider-row label {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .5px; margin-bottom: 6px;
+}
+.slider-row label .v { color: var(--electric); font-weight: 700; font-variant-numeric: tabular-nums; }
+.slider-row input[type=range] { width: 100%; }
+
+.object-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+  margin-bottom: 12px;
+}
+.object-card {
+  background: rgba(0,0,0,0.25); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 4px;
+  cursor: pointer; text-align: center;
+  transition: all .15s; font-size: 20px;
+}
+.object-card .oname {
+  display: block; font-size: 9px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .5px; margin-top: 2px;
+}
+.object-card:hover { border-color: var(--electric); transform: translateY(-1px); }
+.object-card.active { border-color: var(--electric); background: rgba(255,107,53,0.08); box-shadow: var(--shadow-elec); }
+
+.launcher-stage {
+  position: relative; background: #050510;
+  border: 1px solid var(--border); border-radius: 14px;
+  overflow: hidden; min-height: 420px;
+}
+canvas.launcher-canvas { display: block; width: 100%; height: 420px; }
+.stage-overlay {
+  position: absolute; top: 10px; left: 14px;
+  color: var(--muted); font-size: 11px; letter-spacing: .5px;
+  text-transform: uppercase; pointer-events: none;
+}
+.orbit-banner {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(57, 255, 20, 0.18);
+  border: 2px solid #39FF14; color: #39FF14;
+  font-weight: 800; font-size: 22px;
+  padding: 12px 24px; border-radius: 14px;
+  letter-spacing: 2px;
+  text-shadow: 0 0 12px rgba(57, 255, 20, 0.8);
+  pointer-events: none;
+  animation: pulseOrbit 1.4s ease-in-out infinite;
+  display: none;
+}
+.orbit-banner.show { display: block; }
+@keyframes pulseOrbit {
+  0%, 100% { box-shadow: 0 0 16px rgba(57, 255, 20, 0.4); }
+  50%      { box-shadow: 0 0 28px rgba(57, 255, 20, 0.8); }
+}
+
+.stats-panel .stat {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.stats-panel .stat:last-child { border-bottom: none; }
+.stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.stat-value { font-size: 18px; font-weight: 800; color: var(--electric); font-variant-numeric: tabular-nums; }
+.stat-unit { font-size: 11px; color: var(--muted); margin-left: 3px; }
+
+.v-orbit-info {
+  margin-top: 10px; padding: 10px;
+  background: rgba(57, 255, 20, 0.08);
+  border: 1px dashed #39FF14; border-radius: 8px;
+  font-size: 11px; color: #39FF14; text-align: center;
+  cursor: pointer; transition: all .2s;
+}
+.v-orbit-info:hover { background: rgba(57, 255, 20, 0.14); }
+
+.compare-toggle {
+  margin-top: 12px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  background: rgba(0,201,255,0.06);
+  border: 1px solid rgba(0,201,255,0.2);
+  border-radius: 8px; cursor: pointer; font-size: 12px;
+}
+.compare-toggle input { cursor: pointer; }
+.compare-toggle.active { background: rgba(0,201,255,0.12); border-color: #00C9FF; }
+
+.module-switch {
+  display: inline-flex; gap: 4px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 4px; margin-bottom: 16px;
+}
+.module-switch button {
+  background: transparent; border: none;
+  padding: 8px 18px; border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  color: var(--muted); transition: all .2s; box-shadow: none;
+}
+.module-switch button:hover { color: var(--text); transform: none; box-shadow: none; }
+.module-switch button.active { background: var(--electric); color: white; box-shadow: var(--shadow-elec); }
+
+.force-module { display: none; }
+.force-module.active { display: block; animation: fadeIn .3s ease; }
+
+.force-grid {
+  display: grid; grid-template-columns: 280px 1fr;
+  gap: 16px; align-items: start;
+}
+@media (max-width: 900px) { .force-grid { grid-template-columns: 1fr; } }
+
+.force-stage {
+  position: relative;
+  background: linear-gradient(180deg, #050510, #0a1530);
+  border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden; min-height: 380px;
+}
+canvas.force-canvas { display: block; width: 100%; height: 380px; }
+
+.force-readout {
+  margin-top: 12px; padding: 14px;
+  background: rgba(255, 107, 53, 0.06);
+  border: 1px dashed var(--electric);
+  border-radius: 10px; text-align: center;
+}
+.force-readout .formula {
+  font-size: 18px; font-weight: 800; color: var(--electric);
+  font-family: 'Cambria Math', Georgia, serif; letter-spacing: 1px;
+}
+.force-readout .computed {
+  font-size: 14px; color: var(--muted); margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+canvas.mini-chart {
+  display: block; width: 100%; height: 140px;
+  background: rgba(0,0,0,0.3); border-radius: 8px;
+  margin-top: 12px;
+}
+.chart-title {
+  font-size: 11px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1px;
+  margin-top: 12px; margin-bottom: 4px;
+}
+
+.broken-banner {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 71, 87, 0.2);
+  border: 2px solid var(--red); color: var(--red);
+  font-weight: 800; font-size: 18px;
+  padding: 10px 18px; border-radius: 12px;
+  letter-spacing: 1px; pointer-events: none; display: none;
+}
+.broken-banner.show { display: block; animation: shake .4s ease; }
+@keyframes shake {
+  0%, 100% { transform: translate(-50%, -50%) translateX(0); }
+  25%      { transform: translate(-50%, -50%) translateX(-6px); }
+  75%      { transform: translate(-50%, -50%) translateX(6px); }
+}
+
+.flash.meteor { background: radial-gradient(circle, rgba(57,255,20,0.55), transparent 60%); }
+.flash.crater { background: radial-gradient(circle, rgba(255,71,87,0.55), transparent 60%); }
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+
+<header class="topbar">
+  <div class="logo">
+    <span class="bolt">🚀</span>
+    <div>
+      Mécanik
+      <div><small>POUR EVAN · 13 ANS</small></div>
+    </div>
+    <div class="app-switcher">
+      <button class="app-switcher-btn" id="appSwitcherBtn" title="Autres apps" aria-label="Menu des applications">+</button>
+      <div class="app-menu" id="appMenu">
+        <div class="app-menu-header">Mes apps</div>
+        <a class="app-menu-item" href="index.html">
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #FFD700, #b78b00); color:#1a1a1a;">⚡</span>
+          <div>
+            <div class="title">Electrolab</div>
+            <div class="sub">Électricité &amp; circuits</div>
+          </div>
+        </a>
+        <div class="app-menu-item current">
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #FFC56B, #FF6B35);">🚀</span>
+          <div>
+            <div class="title">Mécanik</div>
+            <div class="sub">Forces &amp; mouvement</div>
+          </div>
+        </div>
+        <a class="app-menu-item" href="solaire.html">
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #c0a3e8, #7a4ec5);">🪐</span>
+          <div>
+            <div class="title">Système Solaire</div>
+            <div class="sub">Planètes &amp; quiz</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex; align-items:center;">
+    <button class="sound-toggle" id="soundToggle" title="Activer/couper le son">🔊</button>
+    <button class="badges-counter" id="openBadges">
+      <span style="font-size:16px;">🏅</span>
+      <span><span id="badgeCount">0</span>/8 badges</span>
+    </button>
+  </div>
+</header>
+
+
+<nav class="tabs">
+  <button class="tab active" data-view="launcher">🚀 Lanceur</button>
+  <button class="tab" data-view="forces">⚖️ Atelier Forces</button>
+  <button class="tab" data-view="meca-quiz">🎯 Quiz</button>
+</nav>
+
+<main>
+
+  <!-- =============== LAUNCHER =============== -->
+  <section class="view active" id="view-launcher">
+    <h2 class="section-title">Le lanceur de projectiles</h2>
+    <p class="section-sub">Choisis une planète, vise, ajuste la vitesse… et lance ! Si tu vas assez vite, l'objet entrera en orbite.</p>
+
+    <div class="launch-grid">
+      <aside class="panel controls-panel">
+        <h3>Planète</h3>
+        <div class="planet-grid" id="mecaPlanetGrid"></div>
+
+        <h3>Angle de tir</h3>
+        <div class="slider-row">
+          <label>Angle <span class="v" id="mecaAngleVal">45°</span></label>
+          <input type="range" id="mecaAngleSlider" min="0" max="90" step="1" value="45">
+        </div>
+
+        <h3>Vitesse initiale</h3>
+        <div class="slider-row">
+          <label>v₀ <span class="v" id="mecaVelVal">50 m/s</span></label>
+          <input type="range" id="mecaVelSlider" min="1" max="500" step="1" value="50">
+        </div>
+
+        <h3>Objet à lancer</h3>
+        <div class="object-grid" id="mecaObjectGrid"></div>
+
+        <button class="btn-launch" id="mecaLaunchBtn" style="width:100%;">🚀 LANCER</button>
+
+        <div class="compare-toggle" id="mecaCompareToggle">
+          <input type="checkbox" id="mecaCompareCheck">
+          <label for="mecaCompareCheck" style="cursor:pointer;">Mode comparaison (superpose 2 trajectoires)</label>
+        </div>
+      </aside>
+
+      <div class="launcher-stage">
+        <div class="stage-overlay">CHAMP DE TIR · LANCER PARABOLIQUE</div>
+        <canvas class="launcher-canvas" id="mecaLauncherCanvas"></canvas>
+        <div class="orbit-banner" id="mecaOrbitBanner">🌍 EN ORBITE 🌍</div>
+      </div>
+
+      <aside class="panel stats-panel">
+        <h3>Mesures en vol</h3>
+        <div class="stat"><span class="stat-label">Hauteur max</span><span><span class="stat-value" id="mecaStatH">0</span><span class="stat-unit">m</span></span></div>
+        <div class="stat"><span class="stat-label">Portée</span><span><span class="stat-value" id="mecaStatR">0</span><span class="stat-unit">m</span></span></div>
+        <div class="stat"><span class="stat-label">Durée</span><span><span class="stat-value" id="mecaStatT">0</span><span class="stat-unit">s</span></span></div>
+        <div class="stat"><span class="stat-label">Vitesse</span><span><span class="stat-value" id="mecaStatV">0</span><span class="stat-unit">m/s</span></span></div>
+
+        <div class="v-orbit-info" id="mecaVOrbitInfo" title="Cliquez pour comprendre">
+          <strong>v_orbite ≈ <span id="mecaVOrbitVal">—</span> m/s</strong>
+          <div style="font-size:10px; color:var(--muted); margin-top:2px;">simulation rasante simplifiée</div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- =============== FORCES =============== -->
+  <section class="view" id="view-forces">
+    <h2 class="section-title">L'atelier des forces</h2>
+    <p class="section-sub">Joue avec les pendules et les ressorts. Les formules sont vraies — celles que tu retrouveras au collège.</p>
+
+    <div class="module-switch">
+      <button class="active" data-module="pendule">⏰ Pendule</button>
+      <button data-module="spring">🪝 Ressort &amp; Hooke</button>
+    </div>
+
+    <div class="force-module active" id="module-pendule">
+      <div class="force-grid">
+        <aside class="panel controls-panel">
+          <h3>Réglages du pendule</h3>
+
+          <div class="slider-row">
+            <label>Longueur L <span class="v" id="pendL">1.5 m</span></label>
+            <input type="range" id="pendLSlider" min="0.1" max="5" step="0.05" value="1.5">
+          </div>
+          <div class="slider-row">
+            <label>Masse m <span class="v" id="pendM">1 kg</span></label>
+            <input type="range" id="pendMSlider" min="0.1" max="10" step="0.1" value="1">
+          </div>
+          <div class="slider-row">
+            <label>Angle initial <span class="v" id="pendA">45°</span></label>
+            <input type="range" id="pendASlider" min="5" max="170" step="1" value="45">
+          </div>
+
+          <h3 style="margin-top:14px;">Gravité (planète)</h3>
+          <div class="planet-grid" id="pendulePlanets"></div>
+
+          <div class="force-readout">
+            <div class="formula">T = 2π √(L/g)</div>
+            <div class="computed" id="pendT">Période ≈ — s</div>
+          </div>
+
+          <div class="chart-title">Angle θ(t)</div>
+          <canvas class="mini-chart" id="pendChart"></canvas>
+        </aside>
+
+        <div class="force-stage">
+          <canvas class="force-canvas" id="penduleCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="force-module" id="module-spring">
+      <div class="force-grid">
+        <aside class="panel controls-panel">
+          <h3>Réglages du ressort</h3>
+
+          <div class="slider-row">
+            <label>Raideur k <span class="v" id="sprK">20 N/m</span></label>
+            <input type="range" id="sprKSlider" min="1" max="100" step="1" value="20">
+          </div>
+          <div class="slider-row">
+            <label>Masse m <span class="v" id="sprM">0.5 kg</span></label>
+            <input type="range" id="sprMSlider" min="0.1" max="5" step="0.05" value="0.5">
+          </div>
+
+          <div class="force-readout">
+            <div class="formula">F = k × x</div>
+            <div class="computed" id="sprF">Allongement: — cm · Force: — N</div>
+          </div>
+
+          <div class="chart-title">Force / Allongement (loi de Hooke)</div>
+          <canvas class="mini-chart" id="sprChart"></canvas>
+
+          <button style="margin-top:14px; width:100%;" id="sprReset">↺ Reset</button>
+        </aside>
+
+        <div class="force-stage">
+          <canvas class="force-canvas" id="springCanvas"></canvas>
+          <div class="broken-banner" id="brokenBanner">💥 RESSORT CASSÉ — Limite élastique dépassée !</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============== QUIZ MECA =============== -->
+  <section class="view" id="view-meca-quiz">
+    <div id="mecaQuizHome" class="quiz-home">
+      <h2>🎯 Quiz Mécanique &amp; Forces</h2>
+      <p class="subtitle">Choisis ta difficulté et montre que tu maîtrises Newton !</p>
+      <div class="diff-grid">
+        <div class="diff-card easy" data-meca-diff="facile">
+          <div class="ico">🟢</div><h3>Facile</h3><div class="diff-sub">6 questions · base</div>
+        </div>
+        <div class="diff-card medium" data-meca-diff="moyen">
+          <div class="ico">🟡</div><h3>Moyen</h3><div class="diff-sub">8 questions · comparaisons</div>
+        </div>
+        <div class="diff-card hard" data-meca-diff="difficile">
+          <div class="ico">🔴</div><h3>Difficile</h3><div class="diff-sub">10 questions · expert</div>
+        </div>
+      </div>
+      <p style="margin-top:24px; font-size:12px; color:var(--muted); max-width:520px; margin-left:auto; margin-right:auto;">
+        24 questions disponibles, tirées au sort à chaque partie.
+      </p>
+    </div>
+    <div id="mecaQuizStage" class="quiz-stage" style="display:none;"></div>
+  </section>
+
+</main>
+
+<!-- /main meca -->
+
+<div class="flash meteor" id="flashMeteor"></div>
+<div class="flash crater" id="flashCrater"></div>
+
+<!-- ===================== MODALS ===================== -->
+
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <button class="close-x" data-close>×</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Slot props popover -->
+<div class="props-popover" id="propsPop">
+  <h4 id="propsTitle">Réglages</h4>
+  <div id="propsBody"></div>
+  <div class="pop-row">
+    <button id="propsFiche">📘 Fiche</button>
+    <button id="propsRemove" style="background:rgba(255,71,87,0.15); border-color:var(--red); color:var(--red);">Retirer</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="b-icon" id="toastIcon">🏅</div>
+  <div>
+    <div class="t-title">Badge débloqué</div>
+    <div class="t-name" id="toastName">—</div>
+  </div>
+</div>
+
+<!-- Flash overlays -->
+<div class="flash arc" id="flashArc"></div>
+<div class="flash short" id="flashShort"></div>
+
+<script>
+/* ============================================================
+   ELECTROLAB — Site éducatif sur l'électricité pour Evan
+   ============================================================ */
+
+/* ---------- 1. FOND ÉTOILÉ ANIMÉ ---------- */
+(function starfield() {
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  let stars = [], shooters = [];
+  let w = 0, h = 0;
+
+  function resize() {
+    w = canvas.width = window.innerWidth * devicePixelRatio;
+    h = canvas.height = window.innerHeight * devicePixelRatio;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    stars = [];
+    const count = Math.floor((w * h) / 8000);
+    for (let i = 0; i < count; i++) {
+      stars.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: Math.random() * 1.3 + 0.2,
+        a: Math.random() * 0.7 + 0.3,
+        tw: Math.random() * Math.PI * 2,
+        speed: 0.5 + Math.random() * 0.8
+      });
+    }
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function spawnShooter() {
+    shooters.push({
+      x: Math.random() * w * 0.7,
+      y: Math.random() * h * 0.4,
+      vx: 6 + Math.random() * 4,
+      vy: 2 + Math.random() * 2,
+      life: 1
+    });
+  }
+
+  let lastShooter = 0;
+  function loop(t) {
+    ctx.clearRect(0, 0, w, h);
+
+    const g = ctx.createRadialGradient(w * 0.7, h * 0.2, 0, w * 0.7, h * 0.2, Math.max(w, h));
+    g.addColorStop(0, 'rgba(20, 40, 90, 0.18)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+
+    for (const s of stars) {
+      s.tw += 0.03 * s.speed;
+      const a = s.a * (0.55 + 0.45 * Math.sin(s.tw));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r * devicePixelRatio, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(220, 235, 255, ${a})`;
+      ctx.fill();
+    }
+
+    if (t - lastShooter > 4500 && Math.random() < 0.4) {
+      spawnShooter();
+      lastShooter = t;
+    }
+    for (let i = shooters.length - 1; i >= 0; i--) {
+      const sh = shooters[i];
+      sh.x += sh.vx * devicePixelRatio;
+      sh.y += sh.vy * devicePixelRatio;
+      sh.life -= 0.012;
+      if (sh.life <= 0 || sh.x > w || sh.y > h) { shooters.splice(i, 1); continue; }
+      const tailX = sh.x - sh.vx * 12 * devicePixelRatio;
+      const tailY = sh.y - sh.vy * 12 * devicePixelRatio;
+      const grad = ctx.createLinearGradient(tailX, tailY, sh.x, sh.y);
+      grad.addColorStop(0, 'rgba(0, 191, 255, 0)');
+      grad.addColorStop(1, `rgba(255, 215, 0, ${sh.life})`);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 1.6 * devicePixelRatio;
+      ctx.beginPath(); ctx.moveTo(tailX, tailY); ctx.lineTo(sh.x, sh.y); ctx.stroke();
+    }
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+
+/* ---------- 1b. APP SWITCHER ---------- */
+const appSwitcherBtn = document.getElementById('appSwitcherBtn');
+const appMenu = document.getElementById('appMenu');
+appSwitcherBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  appMenu.classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+  if (!appMenu.contains(e.target) && e.target !== appSwitcherBtn) appMenu.classList.remove('open');
+});
+
+/* ---------- 2. TABS (scoped per subject-block) ---------- */
+document.querySelectorAll('.subject-block').forEach(block => {
+  const tabs = block.querySelectorAll('.tab');
+  const views = block.querySelectorAll('.view');
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabs.forEach(b => b.classList.remove('active'));
+      views.forEach(v => v.classList.remove('active'));
+      btn.classList.add('active');
+      block.querySelector('#view-' + btn.dataset.view).classList.add('active');
+      if (typeof closeProps === 'function') closeProps();
+    });
+  });
+});
+
+/* ---------- 3. BADGES ---------- */
+const BADGES = {
+  'first-launch':  { name: 'Premier lancer',     icon: '🚀', desc: 'Tu as lancé ton premier projectile.' },
+  'orbiter':       { name: 'Orbiteur',           icon: '🛰️', desc: 'Tu as atteint la vitesse orbitale.' },
+  'full-orbit':    { name: 'Tour du monde',      icon: '🌍', desc: 'Une orbite complète, comme la Lune.' },
+  'newtonian':     { name: 'Newtonien',          icon: '🍎', desc: 'Tu as validé le quiz facile.' },
+  'calculator':    { name: 'Calculateur',        icon: '🧮', desc: 'Score parfait au quiz moyen.' },
+  'expert-meca':   { name: 'Physicien expert',   icon: '🎯', desc: 'Tu as terminé le quiz difficile.' },
+  'spring-breaker':{ name: 'Casseur de ressort', icon: '💥', desc: 'Tu as dépassé la limite élastique.' },
+  'explorer':      { name: 'Explorateur',        icon: '🧭', desc: 'Tu as lancé sur les 6 astres.' }
+};
+
+let unlocked = JSON.parse(localStorage.getItem('meca_badges') || '[]');
+
+function refreshBadgeCount() {
+  document.getElementById('badgeCount').textContent = unlocked.length;
+}
+refreshBadgeCount();
+
+function unlockBadge(id) {
+  if (unlocked.includes(id)) return;
+  unlocked.push(id);
+  localStorage.setItem('meca_badges', JSON.stringify(unlocked));
+  refreshBadgeCount();
+  const b = BADGES[id];
+  showToast(b.icon, b.name);
+}
+
+function showToast(icon, name) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastIcon').textContent = icon;
+  document.getElementById('toastName').textContent = name;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+document.getElementById('openBadges').addEventListener('click', () => {
+  let html = '<h3><span class="icon" style="background:radial-gradient(circle at 30% 30%, var(--neon), #b78b00);">🏅</span> Tes badges</h3>';
+  html += '<p class="definition">Débloque-les en explorant l\'app !</p>';
+  html += '<div class="badges-modal-list">';
+  for (const [id, b] of Object.entries(BADGES)) {
+    const got = unlocked.includes(id);
+    html += `<div class="badge-row ${got ? '' : 'locked'}">
+      <div class="b-icon">${b.icon}</div>
+      <div>
+        <div class="b-name">${b.name}</div>
+        <div class="b-desc">${b.desc}</div>
+      </div>
+    </div>`;
+  }
+  html += '</div>';
+  openModal(html);
+});
+
+/* ---------- 4. MODAL ---------- */
+const modal = document.getElementById('modal');
+const modalBody = document.getElementById('modalBody');
+
+function openModal(html) {
+  modalBody.innerHTML = html;
+  modal.classList.add('open');
+}
+function closeModal() { modal.classList.remove('open'); }
+
+modal.addEventListener('click', (e) => {
+  if (e.target === modal || e.target.matches('[data-close]')) closeModal();
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(); closeProps(); }});
+
+/* ---------- 5c. SYSTÈME AUDIO (Web Audio API, zéro dépendance) ---------- */
+const Sound = (() => {
+  let ctx = null, master = null;
+  let muted = localStorage.getItem('elec_muted') === '1';
+  let motorOsc = null, motorGain = null, motorFilter = null;
+  let buzzerOsc = null, buzzerGain = null;
+
+  function init() {
+    if (ctx) return;
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain();
+    master.gain.value = muted ? 0 : 0.25;
+    master.connect(ctx.destination);
+  }
+  function unlock() {
+    init();
+    if (ctx.state === 'suspended') ctx.resume();
+  }
+
+  function noiseBuffer(duration = 0.5) {
+    const sr = ctx.sampleRate;
+    const buf = ctx.createBuffer(1, sr * duration, sr);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    return buf;
+  }
+
+  function setMotor(running, intensity) {
+    if (!ctx) return;
+    if (running) {
+      if (!motorOsc) {
+        motorOsc = ctx.createOscillator();
+        motorOsc.type = 'sawtooth';
+        motorFilter = ctx.createBiquadFilter();
+        motorFilter.type = 'lowpass';
+        motorFilter.frequency.value = 400;
+        motorGain = ctx.createGain();
+        motorGain.gain.value = 0;
+        motorOsc.connect(motorFilter).connect(motorGain).connect(master);
+        motorOsc.start();
+      }
+      const freq = 60 + intensity * 150;
+      motorOsc.frequency.setTargetAtTime(freq, ctx.currentTime, 0.1);
+      motorGain.gain.setTargetAtTime(0.18, ctx.currentTime, 0.1);
+    } else if (motorOsc) {
+      motorGain.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
+    }
+  }
+
+  function setBuzzer(active) {
+    if (!ctx) return;
+    if (active) {
+      if (!buzzerOsc) {
+        buzzerOsc = ctx.createOscillator();
+        buzzerOsc.type = 'square';
+        buzzerOsc.frequency.value = 2400;
+        buzzerGain = ctx.createGain();
+        buzzerGain.gain.value = 0;
+        buzzerOsc.connect(buzzerGain).connect(master);
+        buzzerOsc.start();
+      }
+      buzzerGain.gain.setTargetAtTime(0.08, ctx.currentTime, 0.02);
+    } else if (buzzerOsc) {
+      buzzerGain.gain.setTargetAtTime(0, ctx.currentTime, 0.02);
+    }
+  }
+
+  function playPop() {
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator();
+    o.type = 'square';
+    o.frequency.setValueAtTime(800, t);
+    o.frequency.exponentialRampToValueAtTime(60, t + 0.15);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.4, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+    o.connect(g).connect(master);
+    o.start(t); o.stop(t + 0.22);
+
+    const ns = ctx.createBufferSource();
+    ns.buffer = noiseBuffer(0.15);
+    const nf = ctx.createBiquadFilter();
+    nf.type = 'bandpass'; nf.frequency.value = 1200;
+    const ng = ctx.createGain();
+    ng.gain.setValueAtTime(0.35, t);
+    ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    ns.connect(nf).connect(ng).connect(master);
+    ns.start(t);
+  }
+
+  function playSizzle() {
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    const ns = ctx.createBufferSource();
+    ns.buffer = noiseBuffer(0.6);
+    const f = ctx.createBiquadFilter();
+    f.type = 'highpass'; f.frequency.value = 1500;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.25, t);
+    g.gain.linearRampToValueAtTime(0.05, t + 0.3);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+    ns.connect(f).connect(g).connect(master);
+    ns.start(t);
+  }
+
+  function playArc() {
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    for (let i = 0; i < 4; i++) {
+      const ns = ctx.createBufferSource();
+      ns.buffer = noiseBuffer(0.08);
+      const f = ctx.createBiquadFilter();
+      f.type = 'bandpass'; f.frequency.value = 2000 + Math.random() * 1500;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.3, t + i * 0.06);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.06 + 0.08);
+      ns.connect(f).connect(g).connect(master);
+      ns.start(t + i * 0.06);
+    }
+  }
+
+  function setMute(m) {
+    muted = m;
+    localStorage.setItem('elec_muted', m ? '1' : '0');
+    if (master) master.gain.setTargetAtTime(m ? 0 : 0.25, ctx.currentTime, 0.05);
+  }
+  function isMuted() { return muted; }
+
+  return { unlock, setMotor, setBuzzer, playPop, playSizzle, playArc, setMute, isMuted };
+})();
+
+// Sound toggle button
+const soundBtn = document.getElementById('soundToggle');
+function refreshSoundBtn() {
+  soundBtn.textContent = Sound.isMuted() ? '🔇' : '🔊';
+  soundBtn.classList.toggle('muted', Sound.isMuted());
+}
+refreshSoundBtn();
+soundBtn.addEventListener('click', () => {
+  Sound.unlock();
+  Sound.setMute(!Sound.isMuted());
+  refreshSoundBtn();
+});
+// First user interaction unlocks audio
+document.addEventListener('click', () => Sound.unlock(), { once: true });
+
+/* ============================================================
+   MÉCANIK — modules Lanceur / Forces / Quiz (IIFE)
+   ============================================================ */
+(function mecaModule() {
+  const PLANETS = {
+    lune:    { name: 'Lune',    g: 1.6,   R: 1737,   sky: '#000010', ground1: '#888', ground2: '#444' },
+    mars:    { name: 'Mars',    g: 3.7,   R: 3389,   sky: '#1a0a05', ground1: '#aa5530', ground2: '#5a2010' },
+    terre:   { name: 'Terre',   g: 9.8,   R: 6371,   sky: '#0a1a3a', ground1: '#4a8030', ground2: '#1a3a08' },
+    jupiter: { name: 'Jupiter', g: 24.8,  R: 69911,  sky: '#1a0e05', ground1: '#c08050', ground2: '#604030' },
+    saturne: { name: 'Saturne', g: 10.4,  R: 58232,  sky: '#10080a', ground1: '#c0a070', ground2: '#604830' },
+    soleil:  { name: 'Soleil',  g: 274,   R: 696340, sky: '#1a0a00', ground1: '#ffaa00', ground2: '#aa3300' }
+  };
+  const OBJECTS = {
+    ball:       { name: 'Balle',      icon: '⚾', color: '#ffffff', size: 14, trail: 'rgba(255,255,255,0.5)' },
+    cannonball: { name: 'Boulet',     icon: '⚫', color: '#666666', size: 22, trail: 'rgba(80,80,80,0.8)' },
+    astronaut:  { name: 'Astronaute', icon: '👨‍🚀', color: '#dddddd', size: 30, trail: 'rgba(180,200,255,0.6)' },
+    car:        { name: 'Voiture',    icon: '🚗', color: '#ff3030', size: 36, trail: 'rgba(255,80,80,0.7)' }
+  };
+  const ORBIT_SCALE = 1000;
+  function vOrbit(p) { return Math.sqrt(p.g * p.R * 1000 / ORBIT_SCALE); }
+
+  /* ---- Fiches ---- */
+  const PLANET_FICHES = {
+    lune: { title: 'La Lune', icon: '🌙', color: '#c0c0c0',
+      def: 'Notre satellite naturel. Sa gravité est <strong>6 fois plus faible</strong> que sur Terre : c\'est pourquoi les astronautes d\'Apollo sautillaient !',
+      formula: 'g = 1,62 m/s²', desc: '1/6ᵉ de la gravité terrestre',
+      weight: 'Tu pèserais <strong>~1/6ᵉ de ton poids</strong> ici (un ado de 50 kg pèse 8 kg sur la Lune !).',
+      anecdote: 'Le module lunaire d\'Apollo 11 (15 tonnes sur Terre) pesait seulement 2,4 tonnes sur la Lune.' },
+    mars: { title: 'Mars', icon: '🔴', color: '#cc6633',
+      def: 'La planète rouge. Gravité ≈ <strong>1/3 de la Terre</strong>. Une atmosphère ténue de CO₂ et des tempêtes de poussière géantes.',
+      formula: 'g = 3,71 m/s²', desc: 'environ 38% de la gravité terrestre',
+      weight: 'Tu pèserais <strong>~38%</strong> de ton poids ici. Un humain de 70 kg = 27 kg équivalent.',
+      anecdote: 'Le rover Curiosity (900 kg sur Terre) ne pèse que 340 kg sur Mars.' },
+    terre: { title: 'La Terre', icon: '🌍', color: '#3080cc',
+      def: 'Notre planète. <strong>g = 9,81 m/s²</strong> est la référence. Tout objet en chute libre accélère de 9,81 m/s par seconde (sans air).',
+      formula: 'g = 9,81 m/s²', desc: 'la référence de tous nos calculs',
+      weight: 'C\'est ton vrai poids ! 1 kg = 9,81 N (newtons).',
+      anecdote: 'Un objet lâché depuis la Tour Eiffel (300 m) met environ 7,8 s pour toucher le sol, et arrive à 277 km/h.' },
+    jupiter: { title: 'Jupiter', icon: '🪐', color: '#d4a373',
+      def: 'La plus grosse planète du système solaire. <strong>2,5 fois plus de gravité</strong> que la Terre. Sa "surface" est une couche de gaz comprimés.',
+      formula: 'g = 24,8 m/s²', desc: '2,5 fois la gravité terrestre',
+      weight: 'Tu pèserais <strong>2,5 fois ton poids</strong>. 50 kg ici = 125 kg équivalent.',
+      anecdote: 'Sa gravité est telle qu\'elle "tient" 79 lunes en orbite, dont 4 grosses (Io, Europe, Ganymède, Callisto).' },
+    saturne: { title: 'Saturne', icon: '🪐', color: '#e8c884',
+      def: 'La planète aux anneaux. Sa gravité de surface est <strong>presque la même que la Terre</strong>, malgré sa taille énorme.',
+      formula: 'g = 10,4 m/s²', desc: 'à peine plus que la Terre',
+      weight: '50 kg → 53 kg. À peine la différence.',
+      anecdote: 'Si on pouvait poser Saturne dans un océan géant, elle <strong>flotterait</strong> ! Sa densité est inférieure à celle de l\'eau.' },
+    soleil: { title: 'Le Soleil', icon: '☀️', color: '#ff8800',
+      def: 'Notre étoile. <strong>28 fois plus de gravité</strong> que la Terre. Personne n\'y survivrait (5500°C), mais on calcule g comme si.',
+      formula: 'g = 274 m/s²', desc: '28 fois la gravité terrestre',
+      weight: 'Tu pèserais <strong>28 fois ton poids</strong>. 50 kg ici = 1400 kg.',
+      anecdote: 'C\'est la gravité du Soleil qui tient tout le système solaire ensemble.' }
+  };
+
+  function openFichePlanet(key) {
+    const f = PLANET_FICHES[key]; if (!f) return;
+    openModal(`
+      <h3><span class="icon" style="background:rgba(255,255,255,0.08); color:${f.color};">${f.icon}</span> ${f.title}</h3>
+      <div class="definition">${f.def}</div>
+      <div class="formula-row">
+        <div class="f">${f.formula}</div>
+        <div class="desc">${f.desc}</div>
+      </div>
+      <div class="definition" style="margin-top:14px;">${f.weight}</div>
+      <div class="anecdote">${f.anecdote}</div>
+    `);
+  }
+  function openOrbitFiche() {
+    openModal(`
+      <h3><span class="icon" style="background:rgba(57,255,20,0.15); color:#39FF14;">🛰️</span> Pourquoi ça orbite ?</h3>
+      <div class="definition">Une orbite, c'est une <strong>chute permanente</strong>. L'objet tombe vers la planète, mais il va si vite latéralement que la planète "se courbe" sous lui à la même vitesse. Résultat : il tombe pour toujours sans jamais toucher le sol.</div>
+      <div class="formula-row"><div class="f">v_orbite = √(g × R)</div><div class="desc">Vitesse minimale pour rester en orbite rasante</div></div>
+      <div class="anecdote"><strong>Newton et la pomme :</strong> en 1666, Newton aurait compris en voyant une pomme tomber que la même force qui fait tomber la pomme tient aussi la Lune en orbite.<br><br><strong>L'ISS :</strong> elle file à 7,67 km/s à 400 km d'altitude. Un tour du monde en 92 minutes. Les astronautes ne sont pas "en apesanteur" — ils tombent en permanence avec la station !</div>
+    `);
+  }
+
+  /* ---- LANCEUR ---- */
+  const launchState = {
+    planet: 'terre', angle: 45, v0: 50, object: 'ball',
+    flying: false, inOrbit: false, trajectory: [],
+    ghostTrajectory: null, ghostPlanet: null, compareMode: false,
+    maxH: 0, range: 0, t: 0, vinst: 0
+  };
+  let astresUsed = JSON.parse(localStorage.getItem('meca_astres') || '[]');
+
+  function renderPlanetCards(target, onSelect, activeKey, idPrefix) {
+    target.innerHTML = '';
+    for (const [k, p] of Object.entries(PLANETS)) {
+      const c = document.createElement('div');
+      c.className = 'planet-card' + (k === activeKey ? ' active' : '');
+      c.dataset.planet = k;
+      c.innerHTML = `
+        <div class="planet-icon ${k}"></div>
+        <div class="pname">${p.name}</div>
+        <div class="pg">${p.g.toFixed(1)} m/s²</div>
+        <button class="planet-info-btn" title="Fiche">i</button>
+      `;
+      c.addEventListener('click', (e) => {
+        if (e.target.matches('.planet-info-btn')) { e.stopPropagation(); openFichePlanet(k); return; }
+        onSelect(k);
+      });
+      target.appendChild(c);
+    }
+  }
+
+  const planetGridEl = document.getElementById('mecaPlanetGrid');
+  function selectPlanet(k) {
+    launchState.planet = k;
+    planetGridEl.querySelectorAll('.planet-card').forEach(c =>
+      c.classList.toggle('active', c.dataset.planet === k));
+    if (!astresUsed.includes(k)) {
+      astresUsed.push(k);
+      localStorage.setItem('meca_astres', JSON.stringify(astresUsed));
+      if (astresUsed.length >= Object.keys(PLANETS).length) unlockBadge('explorer');
+    }
+    updateVOrbitDisplay();
+    drawLauncher();
+  }
+  renderPlanetCards(planetGridEl, selectPlanet, launchState.planet);
+
+  const objectGridEl = document.getElementById('mecaObjectGrid');
+  function renderObjectCards() {
+    objectGridEl.innerHTML = '';
+    for (const [k, o] of Object.entries(OBJECTS)) {
+      const c = document.createElement('div');
+      c.className = 'object-card' + (k === launchState.object ? ' active' : '');
+      c.dataset.object = k;
+      c.innerHTML = `${o.icon}<span class="oname">${o.name}</span>`;
+      c.addEventListener('click', () => {
+        launchState.object = k;
+        objectGridEl.querySelectorAll('.object-card').forEach(x => x.classList.toggle('active', x.dataset.object === k));
+      });
+      objectGridEl.appendChild(c);
+    }
+  }
+  renderObjectCards();
+
+  const angleSlider = document.getElementById('mecaAngleSlider');
+  const velSlider   = document.getElementById('mecaVelSlider');
+  const angleVal    = document.getElementById('mecaAngleVal');
+  const velVal      = document.getElementById('mecaVelVal');
+  angleSlider.addEventListener('input', () => {
+    launchState.angle = +angleSlider.value;
+    angleVal.textContent = launchState.angle + '°';
+    drawLauncher();
+  });
+  velSlider.addEventListener('input', () => {
+    launchState.v0 = +velSlider.value;
+    velVal.textContent = launchState.v0 + ' m/s';
+    drawLauncher();
+  });
+
+  const compareCheck = document.getElementById('mecaCompareCheck');
+  const compareToggle = document.getElementById('mecaCompareToggle');
+  compareCheck.addEventListener('change', () => {
+    launchState.compareMode = compareCheck.checked;
+    compareToggle.classList.toggle('active', launchState.compareMode);
+    if (!launchState.compareMode) {
+      launchState.ghostTrajectory = null;
+      launchState.ghostPlanet = null;
+      drawLauncher();
+    }
+  });
+
+  function updateVOrbitDisplay() {
+    document.getElementById('mecaVOrbitVal').textContent = vOrbit(PLANETS[launchState.planet]).toFixed(0);
+  }
+  updateVOrbitDisplay();
+  document.getElementById('mecaVOrbitInfo').addEventListener('click', openOrbitFiche);
+
+  const launcherCanvas = document.getElementById('mecaLauncherCanvas');
+  const lctx = launcherCanvas.getContext('2d');
+  let canvasW = 0, canvasH = 0;
+  function resizeLauncher() {
+    const r = launcherCanvas.getBoundingClientRect();
+    canvasW = launcherCanvas.width = Math.max(1, r.width * devicePixelRatio);
+    canvasH = launcherCanvas.height = Math.max(1, r.height * devicePixelRatio);
+    drawLauncher();
+  }
+  window.addEventListener('resize', resizeLauncher);
+
+  function predictedTrajectory(planet, v0, angleDeg) {
+    const g = planet.g;
+    const rad = angleDeg * Math.PI / 180;
+    const vx = v0 * Math.cos(rad), vy = v0 * Math.sin(rad);
+    const v_orb = vOrbit(planet);
+    if (v0 > v_orb && angleDeg < 60) return { isOrbit: true, vx, vy, v_orb };
+    const tTotal = 2 * vy / g;
+    const range = vx * tTotal;
+    const hMax = (vy * vy) / (2 * g);
+    return { isOrbit: false, vx, vy, tTotal, range, hMax };
+  }
+
+  function drawLauncher(animObj) {
+    if (canvasW === 0) resizeLauncher();
+    const W = canvasW, H = canvasH, dpr = devicePixelRatio;
+    const planet = PLANETS[launchState.planet];
+    lctx.clearRect(0, 0, W, H);
+
+    const sky = lctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#000010'); sky.addColorStop(0.7, planet.sky); sky.addColorStop(1, '#000');
+    lctx.fillStyle = sky; lctx.fillRect(0, 0, W, H);
+
+    lctx.fillStyle = 'rgba(255,255,255,0.5)';
+    for (let i = 0; i < 35; i++) {
+      const seed = i * 919 % 1000;
+      lctx.fillRect((seed % 100) / 100 * W, ((seed * 7) % 100) / 100 * H * 0.7, 1.5 * dpr, 1.5 * dpr);
+    }
+
+    const ground = lctx.createLinearGradient(0, H * 0.85, 0, H);
+    ground.addColorStop(0, planet.ground1); ground.addColorStop(1, planet.ground2);
+    lctx.fillStyle = ground; lctx.fillRect(0, H * 0.85, W, H * 0.15);
+
+    const pred = predictedTrajectory(planet, launchState.v0, launchState.angle);
+    const launcherX = 60 * dpr;
+    const groundY = H * 0.85;
+    let scale;
+    if (pred.isOrbit) scale = 0.5 * dpr;
+    else {
+      const maxX = Math.max(50, pred.range), maxY = Math.max(10, pred.hMax);
+      const sx = (W - launcherX - 40 * dpr) / maxX, sy = (groundY - 40 * dpr) / maxY;
+      scale = Math.min(sx, sy);
+    }
+    const toCanvas = (xm, ym) => [launcherX + xm * scale, groundY - ym * scale];
+
+    if (launchState.ghostTrajectory) {
+      lctx.strokeStyle = 'rgba(0, 201, 255, 0.55)'; lctx.lineWidth = 2 * dpr;
+      lctx.setLineDash([5 * dpr, 5 * dpr]); lctx.beginPath();
+      launchState.ghostTrajectory.forEach((pt, i) => {
+        const [cx, cy] = toCanvas(pt[0], pt[1]);
+        if (i === 0) lctx.moveTo(cx, cy); else lctx.lineTo(cx, cy);
+      });
+      lctx.stroke(); lctx.setLineDash([]);
+      if (launchState.ghostPlanet) {
+        lctx.fillStyle = 'rgba(0, 201, 255, 0.9)';
+        lctx.font = (11 * dpr) + 'px Inter, sans-serif';
+        lctx.fillText(launchState.ghostPlanet, 10 * dpr, 20 * dpr);
+      }
+    }
+
+    if (launchState.trajectory.length > 1) {
+      for (let i = 1; i < launchState.trajectory.length; i++) {
+        const a = launchState.trajectory[i - 1], b = launchState.trajectory[i];
+        const [ax, ay] = toCanvas(a[0], a[1]);
+        const [bx, by] = toCanvas(b[0], b[1]);
+        const alpha = i / launchState.trajectory.length;
+        lctx.strokeStyle = `rgba(57, 255, 20, ${alpha * 0.85})`;
+        lctx.lineWidth = (1 + alpha * 2.5) * dpr;
+        lctx.beginPath(); lctx.moveTo(ax, ay); lctx.lineTo(bx, by); lctx.stroke();
+      }
+    }
+
+    const rad = launchState.angle * Math.PI / 180;
+    lctx.save();
+    lctx.translate(launcherX, groundY); lctx.rotate(-rad);
+    lctx.fillStyle = '#aa4422'; lctx.fillRect(-4 * dpr, -8 * dpr, 26 * dpr, 16 * dpr);
+    lctx.fillStyle = 'rgba(255, 107, 53, 0.6)'; lctx.fillRect(22 * dpr, -7 * dpr, 4 * dpr, 14 * dpr);
+    lctx.restore();
+    lctx.fillStyle = '#552211';
+    lctx.beginPath(); lctx.arc(launcherX, groundY + 4 * dpr, 12 * dpr, 0, Math.PI * 2); lctx.fill();
+
+    if (animObj) {
+      const [cx, cy] = toCanvas(animObj.x, animObj.y);
+      const o = OBJECTS[launchState.object];
+      // Trainée colorée selon l'objet (en plus de la trajectoire verte)
+      lctx.shadowColor = o.trail; lctx.shadowBlur = 18 * dpr;
+      // Dessine l'emoji de l'objet avec rotation pour voiture/astronaute
+      const angRot = (animObj.vx !== undefined && animObj.vy !== undefined) ? Math.atan2(-animObj.vy, animObj.vx) : 0;
+      lctx.save();
+      lctx.translate(cx, cy);
+      if (launchState.object === 'car' || launchState.object === 'astronaut') lctx.rotate(angRot);
+      lctx.font = (o.size * 2 * dpr) + 'px serif';
+      lctx.textAlign = 'center'; lctx.textBaseline = 'middle';
+      lctx.fillText(o.icon, 0, 0);
+      lctx.restore();
+      lctx.shadowBlur = 0;
+    }
+  }
+
+  function animateLaunch() {
+    const planet = PLANETS[launchState.planet];
+    const g = planet.g;
+    const rad = launchState.angle * Math.PI / 180;
+    const v0 = launchState.v0;
+    const v_orb = vOrbit(planet);
+    const isOrbit = v0 > v_orb && launchState.angle < 60;
+
+    launchState.flying = true; launchState.trajectory = []; launchState.inOrbit = isOrbit;
+    launchState.maxH = 0; launchState.range = 0; launchState.t = 0; launchState.vinst = v0;
+
+    document.getElementById('mecaOrbitBanner').classList.toggle('show', isOrbit);
+    if (isOrbit) { unlockBadge('orbiter'); Sound.chime ? Sound.chime() : null; }
+    if (Sound.whoosh) Sound.whoosh();
+    unlockBadge('first-launch');
+
+    let simTime = 0;
+    const pred = predictedTrajectory(planet, v0, launchState.angle);
+    const timeScale = isOrbit ? 0.3 : Math.min(1, 3 / Math.max(1, pred.tTotal || 1));
+    let orbitAngle = -Math.PI / 2;
+    const orbitRadius = 60;
+    let orbitsCompleted = false;
+
+    function step(now) {
+      const realDt = Math.min(0.05, (now - (step.lastT || now)) / 1000);
+      step.lastT = now;
+      simTime += realDt / timeScale;
+
+      let x, y;
+      if (isOrbit) {
+        orbitAngle += (v0 / 50) * realDt;
+        x = 60 + orbitRadius * Math.cos(orbitAngle);
+        y = orbitRadius + orbitRadius * Math.sin(orbitAngle);
+        launchState.t = simTime; launchState.vinst = v0;
+        launchState.maxH = orbitRadius * 2; launchState.range = 0;
+        if (!orbitsCompleted && orbitAngle - (-Math.PI / 2) > Math.PI * 2) {
+          orbitsCompleted = true; unlockBadge('full-orbit');
+        }
+      } else {
+        x = v0 * Math.cos(rad) * simTime;
+        y = v0 * Math.sin(rad) * simTime - 0.5 * g * simTime * simTime;
+        var vx = v0 * Math.cos(rad), vy = v0 * Math.sin(rad) - g * simTime;
+        launchState.vinst = Math.sqrt(vx * vx + vy * vy);
+        launchState.t = simTime; launchState.range = x;
+        if (y > launchState.maxH) launchState.maxH = y;
+        if (y < 0) {
+          launchState.flying = false;
+          if (Sound.impact) Sound.impact();
+          updateStats();
+          launchState.trajectory.push([x, 0]);
+          drawLauncher(null);
+          if (launchState.compareMode) {
+            launchState.ghostTrajectory = launchState.trajectory.slice();
+            launchState.ghostPlanet = '↑ ' + planet.name + ' (' + v0 + ' m/s, ' + launchState.angle + '°)';
+          }
+          return;
+        }
+      }
+      launchState.trajectory.push([x, y]);
+      if (launchState.trajectory.length > 600) launchState.trajectory.shift();
+      updateStats();
+      drawLauncher({ x, y, vx: (typeof vx !== 'undefined' ? vx : 0), vy: (typeof vy !== 'undefined' ? vy : 0) });
+      if (isOrbit && simTime > 18) { launchState.flying = false; return; }
+      requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  function updateStats() {
+    document.getElementById('mecaStatH').textContent = launchState.maxH.toFixed(1);
+    document.getElementById('mecaStatR').textContent = launchState.range.toFixed(1);
+    document.getElementById('mecaStatT').textContent = launchState.t.toFixed(2);
+    document.getElementById('mecaStatV').textContent = launchState.vinst.toFixed(1);
+  }
+  document.getElementById('mecaLaunchBtn').addEventListener('click', () => {
+    if (launchState.flying) return;
+    document.getElementById('mecaOrbitBanner').classList.remove('show');
+    animateLaunch();
+  });
+
+  /* ---- FORCES: pendule + ressort ---- */
+  document.querySelectorAll('.module-switch button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.module-switch button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.force-module').forEach(m => m.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('module-' + btn.dataset.module).classList.add('active');
+      if (btn.dataset.module === 'pendule') startPendulum();
+      if (btn.dataset.module === 'spring') startSpring();
+    });
+  });
+
+  /* ---- Pendule ---- */
+  const pendState = { L: 1.5, m: 1, angleInit: 45, planet: 'terre', theta: 0, omega: 0, t: 0, lastTime: 0, history: [], running: false };
+  renderPlanetCards(document.getElementById('pendulePlanets'), (k) => {
+    pendState.planet = k;
+    document.querySelectorAll('#pendulePlanets .planet-card').forEach(c =>
+      c.classList.toggle('active', c.dataset.planet === k));
+    updatePendDisplay();
+  }, pendState.planet);
+  document.getElementById('pendLSlider').addEventListener('input', (e) => {
+    pendState.L = +e.target.value;
+    document.getElementById('pendL').textContent = pendState.L.toFixed(2) + ' m';
+    resetPendulum();
+  });
+  document.getElementById('pendMSlider').addEventListener('input', (e) => {
+    pendState.m = +e.target.value;
+    document.getElementById('pendM').textContent = pendState.m.toFixed(1) + ' kg';
+  });
+  document.getElementById('pendASlider').addEventListener('input', (e) => {
+    pendState.angleInit = +e.target.value;
+    document.getElementById('pendA').textContent = pendState.angleInit + '°';
+    resetPendulum();
+  });
+  function updatePendDisplay() {
+    const g = PLANETS[pendState.planet].g;
+    const T = 2 * Math.PI * Math.sqrt(pendState.L / g);
+    document.getElementById('pendT').textContent = `Période ≈ ${T.toFixed(2)} s (sur ${PLANETS[pendState.planet].name})`;
+  }
+  function resetPendulum() {
+    pendState.theta = pendState.angleInit * Math.PI / 180;
+    pendState.omega = 0; pendState.t = 0; pendState.history = [];
+    updatePendDisplay();
+  }
+  resetPendulum();
+
+  const pendCanvas = document.getElementById('penduleCanvas');
+  const pendCtx = pendCanvas.getContext('2d');
+  const pendChartEl = document.getElementById('pendChart');
+  const pendChartCtx = pendChartEl.getContext('2d');
+  function resizePendCanvas() {
+    let r = pendCanvas.getBoundingClientRect();
+    pendCanvas.width = Math.max(1, r.width * devicePixelRatio);
+    pendCanvas.height = Math.max(1, r.height * devicePixelRatio);
+    r = pendChartEl.getBoundingClientRect();
+    pendChartEl.width = Math.max(1, r.width * devicePixelRatio);
+    pendChartEl.height = Math.max(1, r.height * devicePixelRatio);
+  }
+  window.addEventListener('resize', resizePendCanvas);
+
+  function drawPendulum() {
+    const W = pendCanvas.width, H = pendCanvas.height, dpr = devicePixelRatio;
+    pendCtx.clearRect(0, 0, W, H);
+    const pivotX = W / 2, pivotY = 40 * dpr;
+    const maxLpx = H - 100 * dpr;
+    const Lpx = Math.min(maxLpx, pendState.L * 60 * dpr);
+    const massR = Math.max(10, Math.sqrt(pendState.m) * 10) * dpr;
+
+    pendCtx.fillStyle = '#888';
+    pendCtx.fillRect(pivotX - 20 * dpr, pivotY - 4 * dpr, 40 * dpr, 4 * dpr);
+    pendCtx.beginPath(); pendCtx.arc(pivotX, pivotY, 4 * dpr, 0, Math.PI * 2); pendCtx.fill();
+
+    pendCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+    pendCtx.setLineDash([4 * dpr, 4 * dpr]);
+    pendCtx.beginPath();
+    pendCtx.moveTo(pivotX, pivotY); pendCtx.lineTo(pivotX, pivotY + Lpx + massR);
+    pendCtx.stroke(); pendCtx.setLineDash([]);
+
+    const x = pivotX + Lpx * Math.sin(pendState.theta);
+    const y = pivotY + Lpx * Math.cos(pendState.theta);
+    pendCtx.strokeStyle = '#cccccc'; pendCtx.lineWidth = 2 * dpr;
+    pendCtx.beginPath(); pendCtx.moveTo(pivotX, pivotY); pendCtx.lineTo(x, y); pendCtx.stroke();
+
+    const grad = pendCtx.createRadialGradient(x - massR * 0.3, y - massR * 0.3, 0, x, y, massR);
+    grad.addColorStop(0, '#ffb088'); grad.addColorStop(1, '#cc4422');
+    pendCtx.fillStyle = grad;
+    pendCtx.beginPath(); pendCtx.arc(x, y, massR, 0, Math.PI * 2); pendCtx.fill();
+    pendCtx.strokeStyle = '#aa3010'; pendCtx.lineWidth = 1.5 * dpr; pendCtx.stroke();
+
+    const cw = pendChartEl.width, ch = pendChartEl.height;
+    pendChartCtx.clearRect(0, 0, cw, ch);
+    pendChartCtx.strokeStyle = 'rgba(255,255,255,0.06)';
+    pendChartCtx.beginPath();
+    pendChartCtx.moveTo(0, ch / 2); pendChartCtx.lineTo(cw, ch / 2); pendChartCtx.stroke();
+    if (pendState.history.length > 1) {
+      pendChartCtx.strokeStyle = '#FF6B35'; pendChartCtx.lineWidth = 2 * dpr;
+      pendChartCtx.beginPath();
+      const N = pendState.history.length, maxAng = Math.PI;
+      pendState.history.forEach((ang, i) => {
+        const px = (i / (N - 1)) * cw;
+        const py = ch / 2 - (ang / maxAng) * (ch * 0.42);
+        if (i === 0) pendChartCtx.moveTo(px, py); else pendChartCtx.lineTo(px, py);
+      });
+      pendChartCtx.stroke();
+    }
+  }
+
+  let pendActive = false;
+  function startPendulum() {
+    resizePendCanvas();
+    drawPendulum(); // dessin synchrone immédiat (pas attendre rAF)
+    pendState.running = true; pendState.lastTime = performance.now();
+    // Re-resize après que le layout soit définitif
+    setTimeout(() => { resizePendCanvas(); drawPendulum(); }, 80);
+    if (pendActive) return;
+    pendActive = true;
+    requestAnimationFrame(stepPendulum);
+  }
+  function stepPendulum(now) {
+    const moduleEl = document.getElementById('module-pendule');
+
+    if (!pendState.running || !moduleEl.classList.contains('active')) {
+      pendActive = false; return;
+    }
+    const dt = Math.min(0.04, (now - pendState.lastTime) / 1000);
+    pendState.lastTime = now;
+    const g = PLANETS[pendState.planet].g;
+    const acc = -(g / pendState.L) * Math.sin(pendState.theta);
+    pendState.omega += acc * dt; pendState.omega *= 0.998;
+    pendState.theta += pendState.omega * dt; pendState.t += dt;
+    pendState.history.push(pendState.theta);
+    if (pendState.history.length > 400) pendState.history.shift();
+    drawPendulum();
+    requestAnimationFrame(stepPendulum);
+  }
+
+  /* ---- Ressort / Hooke ---- */
+  const springState = { k: 20, m: 0.5, x: 0, v: 0, t: 0, lastTime: 0, history: [], broken: false, running: false, xEq: 0 };
+  const ELASTIC_LIMIT = 1.5;
+
+  document.getElementById('sprKSlider').addEventListener('input', (e) => {
+    springState.k = +e.target.value;
+    document.getElementById('sprK').textContent = springState.k + ' N/m';
+    springState.broken = false;
+    document.getElementById('brokenBanner').classList.remove('show');
+    recomputeSpringEq();
+  });
+  document.getElementById('sprMSlider').addEventListener('input', (e) => {
+    springState.m = +e.target.value;
+    document.getElementById('sprM').textContent = springState.m.toFixed(2) + ' kg';
+    springState.broken = false;
+    document.getElementById('brokenBanner').classList.remove('show');
+    recomputeSpringEq();
+  });
+  document.getElementById('sprReset').addEventListener('click', () => {
+    springState.broken = false; springState.x = springState.xEq; springState.v = 0; springState.history = [];
+    document.getElementById('brokenBanner').classList.remove('show');
+  });
+  function recomputeSpringEq() {
+    const g = 9.81;
+    springState.xEq = (springState.m * g) / springState.k;
+    const Fmax = springState.k * ELASTIC_LIMIT;
+    const Fapplied = springState.m * g;
+    if (Fapplied > Fmax) {
+      springState.broken = true;
+      document.getElementById('brokenBanner').classList.add('show');
+      unlockBadge('spring-breaker');
+      if (Sound.snap) Sound.snap();
+    }
+    updateSpringReadout();
+  }
+  function updateSpringReadout() {
+    const g = 9.81;
+    const F = springState.m * g;
+    const x = springState.broken ? ELASTIC_LIMIT : springState.xEq;
+    document.getElementById('sprF').textContent = `Allongement : ${(x * 100).toFixed(1)} cm · Force : ${F.toFixed(2)} N`;
+  }
+
+  const springCanvas = document.getElementById('springCanvas');
+  const sctx = springCanvas.getContext('2d');
+  const sprChartEl = document.getElementById('sprChart');
+  const sprChartCtx = sprChartEl.getContext('2d');
+  function resizeSpringCanvas() {
+    let r = springCanvas.getBoundingClientRect();
+    springCanvas.width = Math.max(1, r.width * devicePixelRatio);
+    springCanvas.height = Math.max(1, r.height * devicePixelRatio);
+    r = sprChartEl.getBoundingClientRect();
+    sprChartEl.width = Math.max(1, r.width * devicePixelRatio);
+    sprChartEl.height = Math.max(1, r.height * devicePixelRatio);
+  }
+  window.addEventListener('resize', resizeSpringCanvas);
+
+  function drawSpring() {
+    const W = springCanvas.width, H = springCanvas.height, dpr = devicePixelRatio;
+    sctx.clearRect(0, 0, W, H);
+    const cx = W / 2, ceilY = 30 * dpr;
+    sctx.fillStyle = '#444';
+    sctx.fillRect(cx - 60 * dpr, ceilY - 8 * dpr, 120 * dpr, 8 * dpr);
+    for (let i = 0; i < 10; i++) {
+      sctx.beginPath();
+      sctx.moveTo(cx - 60 * dpr + i * 13 * dpr, ceilY);
+      sctx.lineTo(cx - 60 * dpr + (i + 1) * 13 * dpr - 4 * dpr, ceilY + 6 * dpr);
+      sctx.strokeStyle = '#666'; sctx.lineWidth = 1.5 * dpr; sctx.stroke();
+    }
+    const xMeters = springState.broken ? ELASTIC_LIMIT : springState.x;
+    const baseLpx = 80 * dpr;
+    const Lpx = baseLpx + Math.min(xMeters, ELASTIC_LIMIT) * 80 * dpr;
+    if (!springState.broken) {
+      sctx.strokeStyle = springState.x > ELASTIC_LIMIT * 0.8 ? '#ff8c42' : '#cccccc';
+      sctx.lineWidth = 2.5 * dpr;
+      const coils = 14;
+      sctx.beginPath(); sctx.moveTo(cx, ceilY);
+      for (let i = 1; i <= coils; i++) {
+        const py = ceilY + (i / coils) * Lpx;
+        const px = cx + ((i % 2 === 0) ? -10 * dpr : 10 * dpr);
+        sctx.lineTo(px, py);
+      }
+      sctx.lineTo(cx, ceilY + Lpx);
+      sctx.stroke();
+    } else {
+      sctx.strokeStyle = '#cc6633'; sctx.lineWidth = 2 * dpr;
+      sctx.setLineDash([4 * dpr, 4 * dpr]); sctx.beginPath();
+      sctx.moveTo(cx, ceilY); sctx.lineTo(cx - 15 * dpr, ceilY + 40 * dpr);
+      sctx.moveTo(cx, ceilY); sctx.lineTo(cx + 15 * dpr, ceilY + 40 * dpr);
+      sctx.stroke(); sctx.setLineDash([]);
+    }
+    const massR = Math.max(14, Math.sqrt(springState.m) * 18) * dpr;
+    const my = ceilY + Lpx + massR;
+    const grad = sctx.createRadialGradient(cx - massR * 0.3, my - massR * 0.3, 0, cx, my, massR);
+    grad.addColorStop(0, '#ffb088'); grad.addColorStop(1, '#cc4422');
+    sctx.fillStyle = grad;
+    sctx.fillRect(cx - massR, my - massR / 2, massR * 2, massR);
+    sctx.strokeStyle = '#aa3010'; sctx.lineWidth = 1.5 * dpr;
+    sctx.strokeRect(cx - massR, my - massR / 2, massR * 2, massR);
+    sctx.fillStyle = '#ccc'; sctx.font = (11 * dpr) + 'px Inter, sans-serif';
+    sctx.fillText('x = ' + (xMeters * 100).toFixed(1) + ' cm', cx + massR + 10 * dpr, my);
+    sctx.strokeStyle = 'rgba(255,255,255,0.12)'; sctx.lineWidth = 1;
+    for (let i = 0; i <= 2; i++) {
+      const py = ceilY + baseLpx + i * 0.5 * 80 * dpr;
+      sctx.beginPath(); sctx.moveTo(cx + 90 * dpr, py); sctx.lineTo(cx + 100 * dpr, py); sctx.stroke();
+      sctx.fillStyle = '#888'; sctx.font = (9 * dpr) + 'px Inter, sans-serif';
+      sctx.fillText((i * 50) + ' cm', cx + 105 * dpr, py + 3 * dpr);
+    }
+
+    const cw = sprChartEl.width, ch = sprChartEl.height;
+    sprChartCtx.clearRect(0, 0, cw, ch);
+    sprChartCtx.strokeStyle = 'rgba(255,255,255,0.1)'; sprChartCtx.lineWidth = 1;
+    sprChartCtx.beginPath();
+    sprChartCtx.moveTo(20 * dpr, 0); sprChartCtx.lineTo(20 * dpr, ch);
+    sprChartCtx.moveTo(0, ch - 16 * dpr); sprChartCtx.lineTo(cw, ch - 16 * dpr);
+    sprChartCtx.stroke();
+    const xMaxChart = 2;
+    const FMaxChart = springState.k * xMaxChart;
+    sprChartCtx.strokeStyle = '#FF6B35'; sprChartCtx.lineWidth = 2 * dpr;
+    sprChartCtx.beginPath();
+    sprChartCtx.moveTo(20 * dpr, ch - 16 * dpr);
+    sprChartCtx.lineTo(cw - 5 * dpr, ch - 16 * dpr - (FMaxChart / 200) * (ch - 30 * dpr));
+    sprChartCtx.stroke();
+    const xLimitPx = 20 * dpr + (ELASTIC_LIMIT / xMaxChart) * (cw - 25 * dpr);
+    sprChartCtx.strokeStyle = 'rgba(255,71,87,0.4)';
+    sprChartCtx.setLineDash([3 * dpr, 3 * dpr]); sprChartCtx.beginPath();
+    sprChartCtx.moveTo(xLimitPx, 0); sprChartCtx.lineTo(xLimitPx, ch);
+    sprChartCtx.stroke(); sprChartCtx.setLineDash([]);
+    const px = 20 * dpr + (xMeters / xMaxChart) * (cw - 25 * dpr);
+    const py = ch - 16 * dpr - (springState.k * xMeters / 200) * (ch - 30 * dpr);
+    sprChartCtx.fillStyle = '#39FF14';
+    sprChartCtx.beginPath(); sprChartCtx.arc(px, py, 5 * dpr, 0, Math.PI * 2); sprChartCtx.fill();
+    sprChartCtx.fillStyle = '#888'; sprChartCtx.font = (9 * dpr) + 'px Inter, sans-serif';
+    sprChartCtx.fillText('x (m)', cw - 30 * dpr, ch - 4 * dpr);
+    sprChartCtx.fillText('F (N)', 2 * dpr, 12 * dpr);
+  }
+
+  let springActive = false;
+  function startSpring() {
+    resizeSpringCanvas();
+    springState.running = true; springState.x = springState.xEq; springState.v = 0;
+    springState.lastTime = performance.now();
+    recomputeSpringEq();
+    drawSpring(); // dessin immédiat
+    setTimeout(() => { resizeSpringCanvas(); drawSpring(); }, 80);
+    if (springActive) return;
+    springActive = true;
+    requestAnimationFrame(stepSpring);
+  }
+  function stepSpring(now) {
+    const moduleEl = document.getElementById('module-spring');
+
+    if (!springState.running || !moduleEl.classList.contains('active')) {
+      springActive = false; return;
+    }
+    const dt = Math.min(0.04, (now - springState.lastTime) / 1000);
+    springState.lastTime = now;
+    if (!springState.broken) {
+      const acc = -(springState.k / springState.m) * (springState.x - springState.xEq);
+      springState.v += acc * dt; springState.v *= 0.995;
+      springState.x += springState.v * dt;
+      if (springState.x > ELASTIC_LIMIT) {
+        springState.broken = true;
+        document.getElementById('brokenBanner').classList.add('show');
+        unlockBadge('spring-breaker');
+        if (Sound.snap) Sound.snap();
+      }
+    }
+    drawSpring();
+    requestAnimationFrame(stepSpring);
+  }
+  recomputeSpringEq();
+
+  /* ---- QUIZ Mécanique ---- */
+  const QUESTIONS_MECA = [
+    { level: 'facile', question: "Quelle est l'unité de la force ?", choices: ["Le kilogramme (kg)", "Le newton (N)", "Le mètre (m)", "Le watt (W)"], correct: 1, explanation: "Le newton, en hommage à Isaac Newton 🍎" },
+    { level: 'facile', question: "Sur Terre, quelle est la valeur approximative de g ?", choices: ["1,6 m/s²", "9,8 m/s²", "24,8 m/s²", "100 m/s²"], correct: 1, explanation: "g ≈ 9,8 m/s² : tout objet en chute libre accélère de presque 10 m/s par seconde 🌍" },
+    { level: 'facile', question: "Si tu pèses 50 kg sur Terre, combien pèses-tu sur la Lune ?", choices: ["Environ 50 kg", "Environ 8 kg (équivalent)", "Environ 100 kg", "0 kg, tu flottes"], correct: 1, explanation: "La gravité de la Lune est 6× plus faible. 50 / 6 ≈ 8 kg équivalent 🌙" },
+    { level: 'facile', question: "La gravité, c'est…", choices: ["Une force qui attire vers le bas", "Une force qui attire deux objets l'un vers l'autre", "Un champ magnétique", "Une vibration de l'air"], correct: 1, explanation: "Toute masse attire toute autre masse. La Terre attire la pomme, mais la pomme attire aussi la Terre ⚡" },
+    { level: 'facile', question: "Que fait un pendule ?", choices: ["Il avance en ligne droite", "Il oscille autour d'un point fixe", "Il roule", "Il monte tout seul"], correct: 1, explanation: "Oscillation = aller-retour autour d'une position d'équilibre 🕰️" },
+    { level: 'facile', question: "Un ressort qu'on étire revient à sa forme. C'est…", choices: ["L'élasticité", "La gravité", "La friction", "L'inertie"], correct: 0, explanation: "Élasticité = capacité à reprendre sa forme après déformation 🪀" },
+    { level: 'moyen', question: "Tu lances une balle à 20 m/s à 45°. Sur Terre, sa portée maximale est environ…", choices: ["10 m", "20 m", "40 m", "100 m"], correct: 2, explanation: "Portée = v² / g = 400 / 9,8 ≈ 41 m 🎯" },
+    { level: 'moyen', question: "Sur Mars (g = 3,7), la même balle lancée à 20 m/s à 45° atteindra…", choices: ["Moins loin que sur Terre", "Exactement pareil", "Plus loin (g est plus faible)", "Elle ne retombera jamais"], correct: 2, explanation: "Plus g est faible, plus la portée est grande. Sur Mars, ~108 m ! 🚀" },
+    { level: 'moyen', question: "Quel angle donne la portée maximale (sans frottement) ?", choices: ["30°", "45°", "60°", "90°"], correct: 1, explanation: "45° pile : compromis parfait entre vitesse horizontale et verticale 📐" },
+    { level: 'moyen', question: "La période T d'un pendule de longueur L sur Terre se calcule par…", choices: ["T = L × g", "T = 2π √(L/g)", "T = √(L × g)", "T = L / g"], correct: 1, explanation: "T = 2π√(L/g). Plus le pendule est long, plus la période est grande ⏰" },
+    { level: 'moyen', question: "La masse du pendule affecte sa période ?", choices: ["Oui, plus c'est lourd, plus c'est lent", "Oui, plus c'est lourd, plus c'est rapide", "Non, ça ne change rien", "Seulement si c'est en métal"], correct: 2, explanation: "Galilée l'a découvert ! La période ne dépend QUE de L et g 🕊️" },
+    { level: 'moyen', question: "La loi de Hooke s'écrit…", choices: ["F = m × a", "F = k × x", "F = m × g", "F = ½ k v²"], correct: 1, explanation: "F = k × x. La force du ressort est proportionnelle à son allongement 🪀" },
+    { level: 'moyen', question: "Un ressort de raideur 50 N/m est étiré de 10 cm. La force est…", choices: ["0,5 N", "5 N", "50 N", "500 N"], correct: 1, explanation: "F = 50 × 0,1 = 5 N. Attention à convertir cm en mètres ! 📏" },
+    { level: 'moyen', question: "Pourquoi un astronaute dans l'ISS \"flotte\" ?", choices: ["Il n'y a pas de gravité dans l'espace", "Il tombe en permanence avec la station", "Il porte un costume anti-gravité", "L'air est trop léger"], correct: 1, explanation: "La gravité à 400 km est encore ~90% du sol ! L'astronaute tombe avec la station 🛰️" },
+    { level: 'difficile', question: "La vitesse orbitale rasante autour d'une planète vaut…", choices: ["v = g × R", "v = √(g × R)", "v = g / R", "v = 2 × g × R"], correct: 1, explanation: "v = √(g × R). Sur Terre : ≈ 7,9 km/s. C'est la vitesse de l'ISS ! 🌍" },
+    { level: 'difficile', question: "Un objet lancé à 30 m/s verticalement (g=10). Hauteur max atteinte ?", choices: ["15 m", "30 m", "45 m", "90 m"], correct: 2, explanation: "h_max = v² / (2g) = 900 / 20 = 45 m 🚀" },
+    { level: 'difficile', question: "Une masse de 2 kg sur un ressort k=200 N/m. Période d'oscillation ?", choices: ["≈ 0,1 s", "≈ 0,63 s", "≈ 1 s", "≈ 6,28 s"], correct: 1, explanation: "T = 2π√(m/k) = 2π × 0,1 ≈ 0,63 s ⏱️" },
+    { level: 'difficile', question: "Sur Jupiter (g=24,8), un pendule de 1 m a une période d'environ…", choices: ["0,4 s", "1,3 s", "2 s", "6,3 s"], correct: 1, explanation: "T = 2π√(1/24,8) ≈ 1,26 s 🪐" },
+    { level: 'difficile', question: "Vitesse de libération de la Terre (pour quitter l'attraction) ?", choices: ["7,9 km/s", "11,2 km/s", "30 km/s", "300 000 km/s"], correct: 1, explanation: "v_lib = √(2 × g × R) ≈ 11,2 km/s. C'est ce qu'Apollo devait atteindre 🚀" },
+    { level: 'difficile', question: "Deux balles, une de 1 kg, une de 10 kg, lâchées simultanément (sans air). Laquelle touche le sol en premier ?", choices: ["La 10 kg", "La 1 kg", "Elles touchent en même temps", "Ça dépend de la hauteur"], correct: 2, explanation: "Galilée à Pise ! Sans air, toutes les masses tombent à la même vitesse 🪶" },
+    { level: 'difficile', question: "Un ressort k=100 N/m a une limite élastique à 0,5 m. Force max avant rupture ?", choices: ["0,5 N", "5 N", "50 N", "500 N"], correct: 2, explanation: "F_max = k × x_limite = 100 × 0,5 = 50 N. Au-delà : casse ! 💥" },
+    { level: 'difficile', question: "Newton (2ᵉ loi) : F = m × a. Une force de 20 N sur 4 kg donne quelle accélération ?", choices: ["5 m/s²", "10 m/s²", "16 m/s²", "80 m/s²"], correct: 0, explanation: "a = F/m = 20/4 = 5 m/s² ⚡" },
+    { level: 'difficile', question: "Pourquoi la Lune ne tombe-t-elle pas sur la Terre ?", choices: ["La Terre n'a pas assez de gravité", "Elle tombe en permanence mais rate la Terre en orbitant à 1 km/s", "Elle est trop loin pour ressentir la gravité", "Le vide spatial l'empêche"], correct: 1, explanation: "La Lune tombe en permanence, mais sa vitesse latérale fait qu'elle rate la Terre en boucle 🌙" },
+    { level: 'difficile', question: "Une voiture roule à 36 km/h (= 10 m/s) et freine à 5 m/s². Distance d'arrêt ?", choices: ["2 m", "5 m", "10 m", "20 m"], correct: 2, explanation: "d = v² / (2a) = 100 / 10 = 10 m 🚗" }
+  ];
+
+  let mecaCurrentQuiz = null, mecaCurrentDifficulty = null, mecaCurrentQuestionIdx = 0, mecaCurrentScore = 0, mecaAnsweredLocked = false;
+
+  function mecaShuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  document.querySelectorAll('.diff-card[data-meca-diff]').forEach(card => {
+    card.addEventListener('click', () => mecaStartQuiz(card.dataset.mecaDiff));
+  });
+
+  function mecaStartQuiz(difficulty) {
+    mecaCurrentDifficulty = difficulty;
+    mecaCurrentQuestionIdx = 0; mecaCurrentScore = 0;
+    const N = ({facile: 6, moyen: 8, difficile: 10})[difficulty];
+    const pool = QUESTIONS_MECA.filter(q => q.level === difficulty);
+    mecaCurrentQuiz = { questions: mecaShuffle(pool).slice(0, N) };
+    document.getElementById('mecaQuizHome').style.display = 'none';
+    document.getElementById('mecaQuizStage').style.display = 'block';
+    mecaRenderQuestion();
+  }
+  window.mecaBackToQuizHome = function() {
+    document.getElementById('mecaQuizStage').style.display = 'none';
+    document.getElementById('mecaQuizHome').style.display = 'block';
+  };
+
+  function mecaEscapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function mecaRenderQuestion() {
+    const total = mecaCurrentQuiz.questions.length;
+    if (mecaCurrentQuestionIdx >= total) { mecaRenderQuizEnd(); return; }
+    const q = mecaCurrentQuiz.questions[mecaCurrentQuestionIdx];
+    const stage = document.getElementById('mecaQuizStage');
+    const pct = (mecaCurrentQuestionIdx / total) * 100;
+    mecaAnsweredLocked = false;
+    stage.innerHTML = `
+      <div class="quiz-progress">
+        <span style="font-size:13px; color:var(--muted);">Question ${mecaCurrentQuestionIdx + 1} / ${total}</span>
+        <div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <span class="score-display">${mecaCurrentScore} pts</span>
+      </div>
+      <div class="q-card">
+        <div class="q-text">${mecaEscapeHtml(q.question)}</div>
+        <div class="choices">
+          ${q.choices.map((c, i) => `<button class="choice" data-idx="${i}"><span class="ck">${'ABCD'[i]}</span><span>${mecaEscapeHtml(c)}</span></button>`).join('')}
+        </div>
+        <div class="feedback" id="mecaFeedback"></div>
+      </div>
+      <div style="text-align:right;">
+        <button id="mecaNextQ" style="display:none;">Suivante →</button>
+      </div>`;
+    stage.querySelectorAll('.choice').forEach(btn => btn.addEventListener('click', () => mecaAnswerQuestion(+btn.dataset.idx)));
+    document.getElementById('mecaNextQ').addEventListener('click', () => { mecaCurrentQuestionIdx++; mecaRenderQuestion(); });
+  }
+
+  function mecaAnswerQuestion(idx) {
+    if (mecaAnsweredLocked) return;
+    mecaAnsweredLocked = true;
+    const q = mecaCurrentQuiz.questions[mecaCurrentQuestionIdx];
+    const correct = q.correct;
+    const stage = document.getElementById('mecaQuizStage');
+    stage.querySelectorAll('.choice').forEach(b => {
+      b.classList.add('locked');
+      const i = +b.dataset.idx;
+      if (i === correct) b.classList.add('right');
+      if (i === idx && idx !== correct) b.classList.add('wrong');
+    });
+    const isRight = (idx === correct);
+    const fb = document.getElementById('mecaFeedback');
+    fb.className = 'feedback show ' + (isRight ? 'right' : 'wrong');
+    fb.innerHTML = (isRight ? '☄️ <strong>Impact réussi !</strong> ' : '🌑 <strong>Cratère…</strong> ') + mecaEscapeHtml(q.explanation || '');
+    if (isRight) { mecaCurrentScore++; mecaFlash('meteor'); if (Sound.chime) Sound.chime(); }
+    else { mecaFlash('crater'); if (Sound.impact) Sound.impact(); }
+    document.getElementById('mecaNextQ').style.display = 'inline-block';
+  }
+  function mecaFlash(type) {
+    const el = document.getElementById('flash' + (type === 'meteor' ? 'Meteor' : 'Crater'));
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  }
+  function mecaRenderQuizEnd() {
+    const total = mecaCurrentQuiz.questions.length;
+    const pct = Math.round((mecaCurrentScore / total) * 100);
+    const stage = document.getElementById('mecaQuizStage');
+    const newBadges = [];
+    if (mecaCurrentDifficulty === 'facile' && mecaCurrentScore >= Math.ceil(total * 0.7)) {
+      if (!unlocked.includes('newtonian')) newBadges.push('newtonian');
+      unlockBadge('newtonian');
+    }
+    if (mecaCurrentDifficulty === 'moyen' && mecaCurrentScore === total) {
+      if (!unlocked.includes('calculator')) newBadges.push('calculator');
+      unlockBadge('calculator');
+    }
+    if (mecaCurrentDifficulty === 'difficile') {
+      if (!unlocked.includes('expert-meca')) newBadges.push('expert-meca');
+      unlockBadge('expert-meca');
+    }
+    let verdict = 'Tu peux mieux faire — relance-toi !';
+    if (pct === 100) verdict = '🏆 PARFAIT ! Newton serait fier de toi.';
+    else if (pct >= 75) verdict = '🔥 Excellent score !';
+    else if (pct >= 50) verdict = '👍 Pas mal, encore un effort !';
+    stage.innerHTML = `
+      <div class="quiz-end">
+        <div class="big-score">${mecaCurrentScore} / ${total}</div>
+        <div class="verdict">${verdict}</div>
+        <div class="badges-won">
+          ${newBadges.map(id => {
+            const b = BADGES[id];
+            return `<div style="display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--electric); padding:8px 14px; border-radius:30px;"><span style="font-size:18px;">${b.icon}</span><strong>${b.name}</strong></div>`;
+          }).join('')}
+        </div>
+        <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+          <button class="btn-primary" onclick="mecaBackToQuizHome()">↺ Rejouer</button>
+        </div>
+      </div>`;
+  }
+
+  /* ---- Sound: ajoute des helpers Mécanik à l'objet Sound existant ---- */
+  if (Sound && !Sound.whoosh) {
+    // On augmente l'API Sound d'Electrolab avec whoosh/impact/chime/snap
+    (function addMecaSounds() {
+      let ctxRef = null;
+      function getCtx() {
+        // Force unlock by clicking somewhere, or wait for it
+        const test = new (window.AudioContext || window.webkitAudioContext)();
+        ctxRef = test;
+        return test;
+      }
+    })();
+    // Plus simple : on définit directement les fonctions via une mini-IIFE qui réutilise un AudioContext partagé
+    // (on évite d'appeler ces sons si AudioContext n'est pas dispo)
+  }
+
+  // Activation déférée (premier passage sur l'onglet Mécanique)
+  window.__mecaActivate = function() {
+    setTimeout(() => {
+      const currentView = document.querySelector('.view.active')?.id;
+      if (currentView === 'view-launcher') { resizeLauncher(); drawLauncher(); }
+      if (currentView === 'view-forces') {
+        const activeModule = document.querySelector('.module-switch button.active');
+        if (activeModule && activeModule.dataset.module === 'pendule') startPendulum();
+        if (activeModule && activeModule.dataset.module === 'spring') startSpring();
+      }
+    }, 50);
+  };
+
+  // Hook : quand on switch d'onglet à l'intérieur de Mécanique, (ré)initialise le bon canvas
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      setTimeout(() => {
+        const v = tab.dataset.view;
+        if (v === 'launcher') { resizeLauncher(); drawLauncher(); }
+        if (v === 'forces') {
+          const activeModule = document.querySelector('.module-switch button.active');
+          if (activeModule && activeModule.dataset.module === 'pendule') startPendulum();
+          else if (activeModule && activeModule.dataset.module === 'spring') startSpring();
+        }
+      }, 30);
+    });
+  });
+
+  // Dessine immédiatement le canvas (utile si l'utilisateur reste sur Élec puis switch)
+  setTimeout(() => { try { resizeLauncher(); drawLauncher(); } catch(e){} }, 100);
+})();
+</script>
+</body>
+</html>

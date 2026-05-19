@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="bg" cx="0.3" cy="0.3" r="0.9">
+      <stop offset="0%" stop-color="#3a1a0a"/>
+      <stop offset="100%" stop-color="#0a0510"/>
+    </radialGradient>
+    <linearGradient id="rocket" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFC56B"/>
+      <stop offset="55%" stop-color="#FF6B35"/>
+      <stop offset="100%" stop-color="#C03000"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFE65C"/>
+      <stop offset="100%" stop-color="#FF6B35"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <circle cx="48" cy="16" r="2" fill="#fff" opacity="0.9"/>
+  <circle cx="14" cy="22" r="1.2" fill="#fff" opacity="0.7"/>
+  <circle cx="52" cy="38" r="1" fill="#fff" opacity="0.6"/>
+  <!-- Fusée orientée diagonale (en l'air) -->
+  <g transform="translate(32 32) rotate(-45) translate(-32 -32)" filter="url(#glow)">
+    <path d="M 32 10 L 38 26 L 38 44 L 32 50 L 26 44 L 26 26 Z"
+          fill="url(#rocket)" stroke="#FF8C00" stroke-width="0.6"/>
+    <circle cx="32" cy="28" r="3" fill="#0a1a3a" stroke="#00C9FF" stroke-width="0.8"/>
+    <path d="M 26 40 L 20 48 L 26 46 Z" fill="#C03000"/>
+    <path d="M 38 40 L 44 48 L 38 46 Z" fill="#C03000"/>
+    <path d="M 28 50 Q 32 60 36 50 L 34 50 L 32 56 L 30 50 Z" fill="url(#flame)"/>
+  </g>
+</svg>
