@@ -771,7 +771,7 @@ canvas.mini-chart {
 
         <h3>Vitesse initiale</h3>
         <div class="slider-row">
-          <label>v₀ <span class="v" id="mecaVelVal">50 m/s</span></label>
+          <label>v₀ <span class="v" id="mecaVelVal">50 m/s · 180 km/h</span></label>
           <input type="range" id="mecaVelSlider" min="1" max="500" step="1" value="50">
         </div>
 
@@ -810,7 +810,7 @@ canvas.mini-chart {
         <div class="stat"><span class="stat-label">Hauteur max</span><span><span class="stat-value" id="mecaStatH">0</span><span class="stat-unit">m</span></span></div>
         <div class="stat"><span class="stat-label">Portée</span><span><span class="stat-value" id="mecaStatR">0</span><span class="stat-unit">m</span></span></div>
         <div class="stat"><span class="stat-label">Durée</span><span><span class="stat-value" id="mecaStatT">0</span><span class="stat-unit">s</span></span></div>
-        <div class="stat"><span class="stat-label">Vitesse</span><span><span class="stat-value" id="mecaStatV">0</span><span class="stat-unit">m/s</span></span></div>
+        <div class="stat"><span class="stat-label">Vitesse</span><span><span class="stat-value" id="mecaStatV">0</span><span class="stat-unit">m/s <span style="opacity:.7;">(<span id="mecaStatVkm">0</span> km/h)</span></span></span></div>
         <div class="stat" id="mecaStatWallRow" style="display:none;"><span class="stat-label">Briques</span><span><span class="stat-value" id="mecaStatBricks">0</span><span class="stat-unit"> / 100</span></span></div>
         <div class="stat" id="mecaStatEcRow" style="display:none;"><span class="stat-label">E_c impact</span><span><span class="stat-value" id="mecaStatEc">0</span><span class="stat-unit">J</span></span></div>
 
@@ -1297,6 +1297,13 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
    MÉCANIK — modules Lanceur / Forces / Quiz (IIFE)
    ============================================================ */
 (function mecaModule() {
+  // Alias sons Mécanik vers les sons existants du Sound system
+  if (typeof Sound !== 'undefined' && Sound.playPop) {
+    if (!Sound.impact) Sound.impact = function() { Sound.unlock && Sound.unlock(); Sound.playPop(); };
+    if (!Sound.whoosh) Sound.whoosh = function() { Sound.unlock && Sound.unlock(); Sound.playSizzle && Sound.playSizzle(); };
+    if (!Sound.chime)  Sound.chime  = function() { Sound.playPop && Sound.playPop(); };
+    if (!Sound.snap)   Sound.snap   = function() { Sound.playPop && Sound.playPop(); };
+  }
   const PLANETS = {
     lune:    { name: 'Lune',    g: 1.6,   R: 1737,   sky: '#000010', ground1: '#888', ground2: '#444' },
     mars:    { name: 'Mars',    g: 3.7,   R: 3389,   sky: '#1a0a05', ground1: '#aa5530', ground2: '#5a2010' },
@@ -1306,10 +1313,10 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
     soleil:  { name: 'Soleil',  g: 274,   R: 696340, sky: '#1a0a00', ground1: '#ffaa00', ground2: '#aa3300' }
   };
   const OBJECTS = {
-    ball:       { name: 'Balle',      icon: '⚾', color: '#ffffff', size: 14, trail: 'rgba(255,255,255,0.5)',  mass: 0.15 },
-    cannonball: { name: 'Boulet',     icon: '⚫', color: '#666666', size: 22, trail: 'rgba(80,80,80,0.8)',     mass: 5 },
-    astronaut:  { name: 'Astronaute', icon: '👨‍🚀', color: '#dddddd', size: 30, trail: 'rgba(180,200,255,0.6)', mass: 100 },
-    car:        { name: 'Voiture',    icon: '🚗', color: '#ff3030', size: 36, trail: 'rgba(255,80,80,0.7)',   mass: 1200 }
+    ball:       { name: 'Balle',      icon: '⚾',  color: '#ffffff', size: 14, displayM: 0.35, trail: 'rgba(255,255,255,0.5)',  mass: 0.15 },
+    cannonball: { name: 'Boulet',     icon: '⚫',  color: '#666666', size: 22, displayM: 0.55, trail: 'rgba(80,80,80,0.8)',     mass: 5 },
+    astronaut:  { name: 'Astronaute', icon: '👨‍🚀', color: '#dddddd', size: 30, displayM: 1.3,  trail: 'rgba(180,200,255,0.6)', mass: 100 },
+    car:        { name: 'Voiture',    icon: '🚗', color: '#ff3030', size: 36, displayM: 2.0,  trail: 'rgba(255,80,80,0.7)',   mass: 1200 }
   };
   const BRICK_ENERGY = 150; // J par brique
   const WALL_COLS = 4, WALL_ROWS = 25;
@@ -1464,7 +1471,7 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
   });
   velSlider.addEventListener('input', () => {
     launchState.v0 = +velSlider.value;
-    velVal.textContent = launchState.v0 + ' m/s';
+    velVal.textContent = launchState.v0 + ' m/s · ' + Math.round(launchState.v0 * 3.6) + ' km/h';
     drawLauncher();
   });
 
@@ -1568,16 +1575,16 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
     const launcherX = 60 * dpr;
     const groundY = H * 0.85;
     let scale;
-    if (pred.isOrbit) scale = 0.5 * dpr;
-    else if (launchState.wallEnabled) {
-      // Mode mur : cadrage serré pour voir la tour bien grande
+    // Mode mur prioritaire (même en cas de vitesse orbitale) — pour ne pas perdre le mur
+    if (launchState.wallEnabled) {
       const wallExtraX = launchState.wallDist + WALL_COLS * BRICK_W + 5;
       const wallExtraY = WALL_ROWS * BRICK_H + 2;
       const maxX = Math.max(40, wallExtraX);
-      // On limite la hauteur affichée à ~1.4× la tour pour pas écraser visuellement
-      const maxY = Math.max(10, Math.min(pred.hMax, wallExtraY * 1.4));
+      const maxY = Math.max(10, Math.min(pred.hMax || wallExtraY * 1.4, wallExtraY * 1.4));
       const sx = (W - launcherX - 40 * dpr) / maxX, sy = (groundY - 40 * dpr) / maxY;
       scale = Math.min(sx, sy);
+    } else if (pred.isOrbit) {
+      scale = 0.5 * dpr;
     } else {
       const maxX = Math.max(50, pred.range), maxY = Math.max(10, pred.hMax);
       const sx = (W - launcherX - 40 * dpr) / maxX, sy = (groundY - 40 * dpr) / maxY;
@@ -1669,14 +1676,14 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
     if (animObj) {
       const [cx, cy] = toCanvas(animObj.x, animObj.y);
       const o = OBJECTS[launchState.object];
-      // Trainée colorée selon l'objet (en plus de la trajectoire verte)
       lctx.shadowColor = o.trail; lctx.shadowBlur = 18 * dpr;
-      // Dessine l'emoji de l'objet avec rotation pour voiture/astronaute
       const angRot = (animObj.vx !== undefined && animObj.vy !== undefined) ? Math.atan2(-animObj.vy, animObj.vx) : 0;
       lctx.save();
       lctx.translate(cx, cy);
       if (launchState.object === 'car' || launchState.object === 'astronaut') lctx.rotate(angRot);
-      lctx.font = (o.size * 2 * dpr) + 'px serif';
+      // Taille proportionnelle au monde physique (mètres × scale), avec minimum visuel
+      const sizePx = Math.max(14 * dpr, o.displayM * scale);
+      lctx.font = sizePx + 'px serif';
       lctx.textAlign = 'center'; lctx.textBaseline = 'middle';
       lctx.fillText(o.icon, 0, 0);
       lctx.restore();
@@ -1694,11 +1701,7 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
 
     launchState.flying = true; launchState.trajectory = []; launchState.inOrbit = isOrbit;
     launchState.maxH = 0; launchState.range = 0; launchState.t = 0; launchState.vinst = v0;
-    // Si le mur est activé : reconstruire à chaque tir (sinon l'utilisateur doit cliquer reset)
-    if (launchState.wallEnabled) {
-      buildWall();
-      refreshWallUI();
-    }
+    // Le mur N'EST PAS reconstruit auto entre les tirs. Le joueur clique "↺ Reconstruire" quand il veut.
 
     document.getElementById('mecaOrbitBanner').classList.toggle('show', isOrbit);
     if (isOrbit) { unlockBadge('orbiter'); Sound.chime ? Sound.chime() : null; }
@@ -1784,8 +1787,7 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
               queue.push({ col, row: row - 1 });
             }
             launchState.wallDebris.push(...newDebris);
-            // Effondrement : briques sans support qui tombent
-            collapseUnsupported();
+            // (pas d'effondrement automatique — chaque brique cassée reste indépendante)
             // Badges
             if (launchState.bricksBroken >= 1) unlockBadge('wall-breaker');
             if (launchState.wallBricks.every(b => !b.alive)) unlockBadge('demolisher');
@@ -1826,6 +1828,8 @@ document.addEventListener('click', () => Sound.unlock(), { once: true });
     document.getElementById('mecaStatR').textContent = launchState.range.toFixed(1);
     document.getElementById('mecaStatT').textContent = launchState.t.toFixed(2);
     document.getElementById('mecaStatV').textContent = launchState.vinst.toFixed(1);
+    const kmh = document.getElementById('mecaStatVkm');
+    if (kmh) kmh.textContent = Math.round(launchState.vinst * 3.6);
   }
 
   /* Briques sans support (toutes les briques en dessous cassées) tombent.
