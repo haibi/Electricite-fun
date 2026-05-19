@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#ffd166" />
+<title>Quiz du Système Solaire</title>
+<link rel="icon" type="image/svg+xml" href="favicon-ss.svg" />
+
+<style>
+  :root {
+    --bg-deep: #02030a; --bg-mid: #070a1a;
+    --accent: #ffd166; --text: #e8eef9; --muted: #8892b0;
+    --panel: rgba(12, 18, 36, 0.85); --panel-border: rgba(255, 255, 255, 0.08);
+    --good: #06d6a0; --bad: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    background: radial-gradient(ellipse at center, var(--bg-mid) 0%, var(--bg-deep) 70%);
+  }
+  .starsCanvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; width: 100%; height: 100%; }
+  .topbar {
+    position: relative; z-index: 2; padding: 18px 24px;
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px;
+  }
+  .title { font-size: 22px; font-weight: 600; text-align: center; }
+  .title span { color: var(--accent); }
+  .topActions { display: flex; gap: 8px; align-items: center; justify-self: end; }
+  .langBtn {
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 10px; padding: 8px 14px; color: var(--text);
+    text-decoration: none; font-size: 13px; font-weight: 600;
+    backdrop-filter: blur(10px); cursor: pointer;
+  }
+  .langBtn:hover { background: rgba(255,255,255,0.05); }
+  .backToSolar {
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 12px; padding: 10px 16px; font-size: 14px;
+    color: var(--text); cursor: pointer; text-decoration: none;
+    backdrop-filter: blur(10px); font-weight: 600;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: background 0.15s, transform 0.15s;
+    justify-self: start;
+  }
+  .backToSolar:hover { background: rgba(255,255,255,0.06); transform: translateX(-2px); }
+  .backToSolar .arrow { font-size: 18px; line-height: 1; }
+  .backToSolar .systemName { color: var(--accent); }
+
+  .container { position: relative; z-index: 2; max-width: 720px; margin: 30px auto; padding: 0 20px 60px; }
+
+  .welcome {
+    text-align: center;
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 20px; padding: 40px 30px;
+    backdrop-filter: blur(10px);
+  }
+  .welcome .emoji { font-size: 64px; margin-bottom: 12px; }
+  .welcome h1 { font-size: 28px; margin: 0 0 8px 0; }
+  .welcome h1 span { color: var(--accent); }
+  .welcome p { color: var(--muted); margin: 0 0 24px 0; }
+  .difficultyPicker {
+    display: flex; gap: 10px; margin: 24px auto; flex-wrap: wrap; justify-content: center;
+    max-width: 480px;
+  }
+  .difficultyPicker button {
+    flex: 1 1 130px; background: rgba(255,255,255,0.04);
+    border: 1.5px solid var(--panel-border); border-radius: 12px;
+    color: var(--text); padding: 14px 12px; cursor: pointer;
+    font-size: 14px; font-weight: 600; transition: all 0.15s;
+  }
+  .difficultyPicker button:hover { background: rgba(255,255,255,0.08); border-color: var(--accent); }
+  .difficultyPicker button .lvl { display: block; font-size: 11px; color: var(--muted); margin-top: 4px; font-weight: 500; }
+  .difficultyPicker button .best { display: block; font-size: 10px; color: var(--accent); margin-top: 4px; }
+
+  .startBtn {
+    background: var(--accent); color: #02030a; border: none;
+    padding: 14px 32px; font-size: 16px; font-weight: 700;
+    border-radius: 12px; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 6px 20px rgba(255, 209, 102, 0.3);
+  }
+  .startBtn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(255, 209, 102, 0.4); }
+
+  .badges {
+    margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--panel-border);
+  }
+  .badges h3 { font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px 0; }
+  .badgesList { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .badge {
+    background: rgba(255,209,102,0.1); border: 1px solid rgba(255,209,102,0.3);
+    border-radius: 100px; padding: 6px 12px; font-size: 12px; color: #fff5d6;
+  }
+  .badge.locked { background: rgba(255,255,255,0.04); border-color: var(--panel-border); color: var(--muted); }
+
+  .progress { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+  .progressBar { flex: 1; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
+  .progressFill { height: 100%; background: linear-gradient(to right, var(--accent), #ff6b6b); width: 0%; transition: width 0.4s ease; }
+  .progressLabel { font-size: 13px; color: var(--muted); font-weight: 600; min-width: 60px; text-align: right; }
+  .score { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 8px; padding: 5px 12px; font-size: 13px; font-weight: 600; }
+  .score .scoreNum { color: var(--accent); }
+  .diffBadge { background: var(--accent); color: #02030a; border-radius: 6px; padding: 4px 8px; font-size: 11px; font-weight: 700; }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 18px; padding: 30px; backdrop-filter: blur(10px);
+  }
+  .question { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+  .hint { color: var(--muted); font-size: 13px; margin-bottom: 22px; }
+
+  .choices { display: flex; flex-direction: column; gap: 10px; }
+  .choice {
+    background: rgba(255,255,255,0.04);
+    border: 1.5px solid var(--panel-border); border-radius: 12px;
+    padding: 14px 18px; cursor: pointer; font-size: 15px; color: var(--text);
+    text-align: left; transition: all 0.15s;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .choice:hover:not(.disabled):not(.revealed) { background: rgba(255,255,255,0.08); border-color: var(--accent); transform: translateY(-1px); }
+  .choice .letter {
+    width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; color: var(--accent);
+  }
+  .choice.right { background: rgba(6, 214, 160, 0.18); border-color: var(--good); }
+  .choice.right .letter { background: var(--good); color: #02030a; }
+  .choice.wrong { background: rgba(255, 107, 107, 0.18); border-color: var(--bad); }
+  .choice.wrong .letter { background: var(--bad); color: #02030a; }
+  .choice.disabled { cursor: default; opacity: 0.6; }
+  .choice.revealed { cursor: default; }
+
+  .clickArea {
+    position: relative; width: 100%; height: 340px;
+    background: radial-gradient(ellipse at center, #0a1024 0%, #02030a 80%);
+    border-radius: 14px; overflow: hidden; margin-bottom: 12px;
+    border: 1px solid var(--panel-border);
+  }
+  .clickArea canvas { width: 100%; height: 100%; display: block; }
+
+  .feedback {
+    margin-top: 18px; padding: 14px 18px;
+    border-radius: 12px; font-size: 14px; line-height: 1.5; display: none;
+  }
+  .feedback.visible { display: block; }
+  .feedback.good { background: rgba(6, 214, 160, 0.15); border-left: 3px solid var(--good); }
+  .feedback.bad  { background: rgba(255, 107, 107, 0.15); border-left: 3px solid var(--bad); }
+
+  .nextBtn {
+    margin-top: 18px;
+    background: var(--accent); color: #02030a; border: none;
+    padding: 12px 28px; font-size: 14px; font-weight: 700;
+    border-radius: 10px; cursor: pointer; display: none;
+  }
+  .nextBtn.visible { display: inline-block; }
+  .nextBtn:hover { transform: scale(1.04); }
+
+  .end {
+    text-align: center;
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 20px; padding: 40px 30px; backdrop-filter: blur(10px);
+  }
+  .end .bigEmoji { font-size: 72px; margin-bottom: 10px; }
+  .end h2 { font-size: 26px; margin: 0 0 6px 0; }
+  .end .finalScore { font-size: 56px; font-weight: 700; color: var(--accent); margin: 14px 0; }
+  .end p { color: var(--muted); margin: 0 0 26px 0; }
+  .end-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .end-actions button, .end-actions a {
+    padding: 12px 24px; border-radius: 10px; font-weight: 600;
+    cursor: pointer; text-decoration: none; font-size: 14px;
+    border: 1px solid var(--panel-border); background: rgba(255,255,255,0.06); color: var(--text);
+  }
+  .end-actions .primary { background: var(--accent); color: #02030a; border: none; }
+  .newBadgeBanner {
+    margin: 20px auto; padding: 12px 20px; max-width: 380px;
+    background: linear-gradient(135deg, rgba(255,209,102,0.2), rgba(255,107,107,0.2));
+    border: 1px solid rgba(255,209,102,0.4); border-radius: 12px;
+    color: #fff5d6; font-size: 14px; font-weight: 600;
+    animation: badgeIn 0.6s ease-out;
+  }
+  @keyframes badgeIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  /* First-visit language picker */
+  .langPicker {
+    position: fixed; inset: 0; z-index: 50;
+    background: radial-gradient(ellipse at center, var(--bg-mid) 0%, var(--bg-deep) 70%);
+    display: none; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .langPicker.visible { display: flex; }
+  .langPickerCard {
+    text-align: center; max-width: 460px; width: 100%;
+    animation: lpIn 0.4s ease-out;
+  }
+  @keyframes lpIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .langPickerCard .icon { font-size: 56px; margin-bottom: 14px; }
+  .langPickerCard .titles { font-size: 20px; font-weight: 600; line-height: 1.6; margin-bottom: 32px; }
+  .langPickerCard .titles div { opacity: 0.85; }
+  .langPickerCard .titles div + div { font-size: 16px; opacity: 0.6; }
+  .langPickerOptions { display: flex; flex-direction: column; gap: 12px; }
+  .langPickerOptions button {
+    background: var(--panel); border: 1.5px solid var(--panel-border);
+    border-radius: 14px; padding: 16px 22px;
+    display: flex; align-items: center; gap: 16px;
+    font-size: 17px; font-weight: 600; color: var(--text);
+    cursor: pointer; text-align: left;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  }
+  .langPickerOptions button:hover {
+    background: rgba(255,255,255,0.06); border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .langPickerOptions button .flag { font-size: 28px; line-height: 1; flex-shrink: 0; }
+  .langPickerOptions button .label { flex: 1; }
+  .langPickerOptions button .arrow { color: var(--muted); font-size: 18px; }
+
+  @media (max-width: 600px) {
+    .langPickerCard .icon { font-size: 44px; }
+    .langPickerCard .titles { font-size: 17px; margin-bottom: 24px; }
+    .langPickerCard .titles div + div { font-size: 14px; }
+    .langPickerOptions button { padding: 13px 16px; font-size: 15px; }
+    .langPickerOptions button .flag { font-size: 24px; }
+  }
+  @media (max-width: 600px) {
+    .topbar { padding: 10px 12px; gap: 10px; grid-template-columns: auto 1fr auto; }
+    .title { font-size: 14px; }
+    .langBtn { padding: 6px 10px; font-size: 12px; }
+    .backToSolar { padding: 7px 10px; font-size: 12px; gap: 5px; }
+    .backToSolar .arrow { font-size: 14px; }
+    .backToSolar .systemName { display: inline; }
+    .container { margin: 16px auto; padding: 0 12px 40px; }
+    .welcome { padding: 28px 18px; }
+    .welcome .emoji { font-size: 48px; }
+    .welcome h1 { font-size: 22px; }
+    .welcome p { font-size: 14px; }
+    .startBtn { padding: 12px 24px; font-size: 15px; }
+    .progress { gap: 10px; margin-bottom: 14px; }
+    .progressLabel { font-size: 12px; min-width: 50px; }
+    .score { padding: 4px 9px; font-size: 12px; }
+    .card { padding: 18px 16px; border-radius: 14px; }
+    .question { font-size: 16px; line-height: 1.35; }
+    .hint { font-size: 12px; margin-bottom: 16px; }
+    .choice { padding: 11px 14px; font-size: 14px; gap: 10px; }
+    .choice .letter { width: 26px; height: 26px; font-size: 12px; }
+    .clickArea { height: 260px; }
+    .feedback { padding: 12px 14px; font-size: 13px; }
+    .nextBtn { padding: 10px 20px; font-size: 13px; width: 100%; }
+    .end { padding: 28px 20px; }
+    .end .bigEmoji { font-size: 56px; }
+    .end h2 { font-size: 21px; }
+    .end .finalScore { font-size: 44px; }
+    .end p { font-size: 13px; }
+    .end-actions button, .end-actions a { padding: 10px 18px; font-size: 13px; }
+  }
+  @media (max-width: 380px) {
+    .clickArea { height: 220px; }
+    .choice { padding: 10px 12px; font-size: 13px; }
+    .backToSolar .systemName { display: none; }
+    .backToSolar { padding: 7px 9px; }
+    .title { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div class="langPicker" id="langPicker">
+  <div class="langPickerCard">
+    <div class="icon">🌍</div>
+    <div class="titles">
+      <div>Choisis ta langue</div>
+      <div>Choose your language</div>
+      <div>Обери свою мову</div>
+    </div>
+    <div class="langPickerOptions">
+      <button data-lang="fr"><span class="flag">🇫🇷</span><span class="label">Français</span><span class="arrow">→</span></button>
+      <button data-lang="en"><span class="flag">🇬🇧</span><span class="label">English</span><span class="arrow">→</span></button>
+      <button data-lang="uk"><span class="flag">🇺🇦</span><span class="label">Українська</span><span class="arrow">→</span></button>
+    </div>
+  </div>
+</div>
+
+<canvas class="starsCanvas" id="starsCanvas"></canvas>
+
+<div class="topbar">
+  <a class="backToSolar" href="solaire.html">
+    <span class="arrow">←</span>
+    <span class="systemName" data-i18n="back_to_solar"></span>
+  </a>
+  <div class="title">🎯 <span data-i18n="title"></span></div>
+  <div class="topActions">
+    <button class="langBtn" id="langBtn">🇫🇷</button>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Welcome -->
+  <div id="welcome" class="welcome">
+    <div class="emoji">🪐</div>
+    <h1><span data-i18n="welcome_title"></span></h1>
+    <p data-i18n="welcome_sub"></p>
+
+    <h3 style="font-size:12px; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin: 26px 0 0 0;" data-i18n="pick_diff"></h3>
+    <div class="difficultyPicker" id="diffPicker">
+      <button data-diff="easy">
+        <span data-i18n="easy">Facile</span>
+        <span class="lvl" data-i18n="easy_sub">6 questions</span>
+        <span class="best" id="bestEasy"></span>
+      </button>
+      <button data-diff="medium">
+        <span data-i18n="medium">Moyen</span>
+        <span class="lvl" data-i18n="medium_sub">8 questions</span>
+        <span class="best" id="bestMedium"></span>
+      </button>
+      <button data-diff="hard">
+        <span data-i18n="hard">Difficile</span>
+        <span class="lvl" data-i18n="hard_sub">10 questions</span>
+        <span class="best" id="bestHard"></span>
+      </button>
+    </div>
+
+    <button class="startBtn" id="startBtn">🚀 <span data-i18n="start"></span></button>
+
+    <div class="badges">
+      <h3 data-i18n="badges_title"></h3>
+      <div class="badgesList" id="badgesList"></div>
+    </div>
+  </div>
+
+  <!-- Quiz -->
+  <div id="quiz" style="display:none">
+    <div class="progress">
+      <div class="progressBar"><div class="progressFill" id="progressFill"></div></div>
+      <div class="progressLabel" id="progressLabel">1 / 8</div>
+      <div class="diffBadge" id="diffBadge"></div>
+      <div class="score">⭐ <span class="scoreNum" id="scoreNum">0</span></div>
+    </div>
+    <div class="card">
+      <div class="question" id="qText"></div>
+      <div class="hint" id="qHint"></div>
+      <div class="clickArea" id="clickArea" style="display:none">
+        <canvas id="targetCanvas"></canvas>
+      </div>
+      <div class="choices" id="choices"></div>
+      <div class="feedback" id="feedback"></div>
+      <button class="nextBtn" id="nextBtn"></button>
+    </div>
+  </div>
+
+  <!-- End -->
+  <div id="end" class="end" style="display:none">
+    <div class="bigEmoji" id="endEmoji">🌟</div>
+    <h2 id="endTitle">Bravo !</h2>
+    <div class="finalScore"><span id="finalScore">0</span> / <span id="finalTotal">8</span></div>
+    <p id="endMsg"></p>
+    <div id="newBadges"></div>
+    <div class="end-actions">
+      <button class="primary" id="restartBtn">🔁 <span data-i18n="restart"></span></button>
+      <button id="shareBtn">📤 <span data-i18n="share"></span></button>
+      <a href="solaire.html">🪐 <span data-i18n="home"></span></a>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ============ i18n ============
+  const I18N = {
+    fr: {
+      title: 'Quiz du Système Solaire', back: 'Retour', back_to_solar: 'Système Solaire',
+      welcome_title: 'Prêt à devenir un petit astronaute ?',
+      welcome_sub: 'Réponds aux questions et collectionne les badges. Bonne chance !',
+      pick_diff: 'Choisis ta difficulté',
+      easy: 'Facile', medium: 'Moyen', hard: 'Difficile',
+      easy_sub: '6 questions · base', medium_sub: '8 questions · intermédiaire', hard_sub: '10 questions · expert',
+      start: 'Commencer le quiz',
+      badges_title: 'Tes badges',
+      restart: 'Recommencer', share: 'Partager', home: 'Retour au système solaire',
+      best: 'Record : {n}/{t}',
+      next_q: 'Question suivante →', see_result: 'Voir le résultat →',
+      good_answer: '✅ Bonne réponse !', bad_answer: '❌ Pas tout à fait…',
+    },
+    en: {
+      title: 'Solar System Quiz', back: 'Back', back_to_solar: 'Solar System',
+      welcome_title: 'Ready to become a young astronaut?',
+      welcome_sub: 'Answer the questions and collect badges. Good luck!',
+      pick_diff: 'Choose your difficulty',
+      easy: 'Easy', medium: 'Medium', hard: 'Hard',
+      easy_sub: '6 questions · basic', medium_sub: '8 questions · intermediate', hard_sub: '10 questions · expert',
+      start: 'Start the quiz',
+      badges_title: 'Your badges',
+      restart: 'Restart', share: 'Share', home: 'Back to solar system',
+      best: 'Best: {n}/{t}',
+      next_q: 'Next question →', see_result: 'See result →',
+      good_answer: '✅ Correct!', bad_answer: '❌ Not quite…',
+    },
+    uk: {
+      title: 'Вікторина про Сонячну систему', back: 'Назад', back_to_solar: 'Сонячна система',
+      welcome_title: 'Готовий стати юним космонавтом?',
+      welcome_sub: 'Відповідай на питання та збирай значки. Успіху!',
+      pick_diff: 'Обери складність',
+      easy: 'Легко', medium: 'Середньо', hard: 'Складно',
+      easy_sub: '6 питань · базовий', medium_sub: '8 питань · середній', hard_sub: '10 питань · експерт',
+      start: 'Почати вікторину',
+      badges_title: 'Твої значки',
+      restart: 'Спочатку', share: 'Поділитись', home: 'Назад у Сонячну систему',
+      best: 'Рекорд: {n}/{t}',
+      next_q: 'Наступне питання →', see_result: 'Побачити результат →',
+      good_answer: '✅ Правильно!', bad_answer: '❌ Не зовсім…',
+    },
+  };
+  let lang = (() => { const s = localStorage.getItem('lang'); return (s === 'en' || s === 'uk') ? s : 'fr'; })();
+  function t(key, vars) {
+    let s = (I18N[lang][key] || I18N.fr[key] || key);
+    if (vars) for (const k in vars) s = s.replace('{' + k + '}', vars[k]);
+    return s;
+  }
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+    document.getElementById('langBtn').textContent = lang === 'uk' ? '🇺🇦' : lang === 'en' ? '🇬🇧' : '🇫🇷';
+    refreshBestScores(); refreshBadges();
+  }
+
+  // ============ Stars ============
+  const starsCanvas = document.getElementById('starsCanvas');
+  const starsCtx = starsCanvas.getContext('2d');
+  let starsArr = [];
+  function resizeStars() {
+    const dpr = window.devicePixelRatio || 1;
+    const w = window.innerWidth, h = window.innerHeight;
+    starsCanvas.width = w * dpr; starsCanvas.height = h * dpr;
+    starsCanvas.style.width = w + 'px'; starsCanvas.style.height = h + 'px';
+    starsCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    starsArr = [];
+    const count = Math.floor((w * h) / 5500);
+    for (let i = 0; i < count; i++) {
+      starsArr.push({
+        x: Math.random() * w, y: Math.random() * h,
+        r: Math.random() * 1.2 + 0.2,
+        a: Math.random() * 0.7 + 0.3,
+        twinkle: Math.random() * Math.PI * 2,
+      });
+    }
+  }
+  let lastT = performance.now();
+  function loopStars(now) {
+    const dt = (now - lastT) / 1000; lastT = now;
+    const w = starsCanvas.width / (window.devicePixelRatio || 1);
+    const h = starsCanvas.height / (window.devicePixelRatio || 1);
+    starsCtx.clearRect(0, 0, w, h);
+    for (const s of starsArr) {
+      s.twinkle += dt * 2;
+      const a = s.a * (0.7 + 0.3 * Math.sin(s.twinkle));
+      starsCtx.fillStyle = `rgba(255,255,255,${a})`;
+      starsCtx.beginPath(); starsCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); starsCtx.fill();
+    }
+    requestAnimationFrame(loopStars);
+  }
+  window.addEventListener('resize', resizeStars);
+  resizeStars();
+  requestAnimationFrame(loopStars);
+
+  // ============ Planet data for click questions ============
+  const PLANETS = [
+    { name: 'Mercure', nameEn: 'Mercury', nameUk: 'Меркурій', color: '#b1a08b', radius: 8, distance: 60 },
+    { name: 'Vénus', nameEn: 'Venus', nameUk: 'Венера', color: '#e8c391', radius: 11, distance: 100 },
+    { name: 'Terre', nameEn: 'Earth', nameUk: 'Земля', color: '#4a9eff', radius: 11, distance: 140 },
+    { name: 'Mars', nameEn: 'Mars', nameUk: 'Марс', color: '#e07b5a', radius: 9, distance: 180 },
+    { name: 'Jupiter', nameEn: 'Jupiter', nameUk: 'Юпітер', color: '#d4a574', radius: 22, distance: 240 },
+    { name: 'Saturne', nameEn: 'Saturn', nameUk: 'Сатурн', color: '#e8d39c', radius: 19, distance: 300, hasRings: true },
+    { name: 'Uranus', nameEn: 'Uranus', nameUk: 'Уран', color: '#9fdcd9', radius: 14, distance: 350 },
+    { name: 'Neptune', nameEn: 'Neptune', nameUk: 'Нептун', color: '#4d6dcf', radius: 14, distance: 400 },
+  ];
+
+  // ============ Questions ============
+  // Each question has: id, level, type, q/qEn, hint/hintEn, choices/choicesEn (for choice), answer index, target (for click), explain
+  const QUESTIONS = [
+    // === EASY ===
+    { id: 1, level: 'easy', type: 'choice',
+      q: { fr: 'Quelle est la planète la plus proche du Soleil ?', en: 'Which planet is closest to the Sun?', uk: 'Яка планета найближча до Сонця?' },
+      hint: { fr: '🔥 Elle est petite et brûlée !', en: '🔥 Small and burned!', uk: '🔥 Маленька й обпалена!' },
+      choices: [
+        { fr: 'Vénus', en: 'Venus', uk: 'Венера' }, { fr: 'Mercure', en: 'Mercury', uk: 'Меркурій' },
+        { fr: 'Terre', en: 'Earth', uk: 'Земля' }, { fr: 'Mars', en: 'Mars', uk: 'Марс' }],
+      answer: 1,
+      explain: { fr: 'Mercure est la plus proche. Une journée y dure 59 jours terrestres !', en: 'Mercury is closest. A day there lasts 59 Earth days!', uk: 'Меркурій найближчий. Доба там триває 59 земних діб!' } },
+    { id: 2, level: 'easy', type: 'choice',
+      q: { fr: 'Combien de temps met la Terre pour faire un tour autour du Soleil ?', en: 'How long does Earth take to orbit the Sun?', uk: 'Скільки часу Земля робить оберт навколо Сонця?' },
+      hint: { fr: '📅 On appelle ça une « année »', en: '📅 We call it a "year"', uk: '📅 Ми називаємо це «роком»' },
+      choices: [
+        { fr: '24 heures', en: '24 hours', uk: '24 години' }, { fr: '1 mois', en: '1 month', uk: '1 місяць' },
+        { fr: '365 jours', en: '365 days', uk: '365 днів' }, { fr: '10 ans', en: '10 years', uk: '10 років' }],
+      answer: 2,
+      explain: { fr: '365 jours et 6 heures. C\'est ce qu\'on appelle une année !', en: '365 days and 6 hours. We call this a year!', uk: '365 днів і 6 годин. Це і є рік!' } },
+    { id: 3, level: 'easy', type: 'choice',
+      q: { fr: 'Quelle planète est surnommée « la planète rouge » ?', en: 'Which planet is known as "the red planet"?', uk: 'Яку планету називають «червоною планетою»?' },
+      hint: { fr: '🤖 Des robots y roulent', en: '🤖 Rovers are driving there', uk: '🤖 Там зараз їздять марсоходи' },
+      choices: [
+        { fr: 'Vénus', en: 'Venus', uk: 'Венера' }, { fr: 'Jupiter', en: 'Jupiter', uk: 'Юпітер' },
+        { fr: 'Mars', en: 'Mars', uk: 'Марс' }, { fr: 'Mercure', en: 'Mercury', uk: 'Меркурій' }],
+      answer: 2,
+      explain: { fr: 'Mars, à cause du fer rouillé sur sa surface.', en: 'Mars, because of rusted iron on its surface.', uk: 'Марс — через іржаве залізо на поверхні.' } },
+    { id: 4, level: 'easy', type: 'choice',
+      q: { fr: 'Combien y a-t-il de planètes dans le système solaire ?', en: 'How many planets are in the solar system?', uk: 'Скільки планет у Сонячній системі?' },
+      hint: { fr: '🪐 Pluton n\'en fait plus partie', en: '🪐 Pluto is no longer one', uk: '🪐 Плутон більше не вважається планетою' },
+      choices: [
+        { fr: '7', en: '7', uk: '7' }, { fr: '8', en: '8', uk: '8' }, { fr: '9', en: '9', uk: '9' }, { fr: '12', en: '12', uk: '12' }],
+      answer: 1,
+      explain: { fr: '8 planètes : Mercure, Vénus, Terre, Mars, Jupiter, Saturne, Uranus, Neptune.', en: '8 planets: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune.', uk: '8 планет: Меркурій, Венера, Земля, Марс, Юпітер, Сатурн, Уран, Нептун.' } },
+    { id: 5, level: 'easy', type: 'choice',
+      q: { fr: 'Pourquoi fait-il jour et nuit sur Terre ?', en: 'Why do we have day and night on Earth?', uk: 'Чому на Землі є день і ніч?' },
+      hint: { fr: '🔄 La Terre fait quelque chose toutes les 24 h', en: '🔄 Earth does something every 24 hours', uk: '🔄 Земля щось робить кожні 24 години' },
+      choices: [
+        { fr: 'La Terre tourne sur elle-même', en: 'Earth spins on itself', uk: 'Земля обертається навколо своєї осі' },
+        { fr: 'Le Soleil s\'éteint la nuit', en: 'The Sun turns off at night', uk: 'Сонце вимикається вночі' },
+        { fr: 'La Lune cache le Soleil', en: 'The Moon hides the Sun', uk: 'Місяць закриває Сонце' },
+        { fr: 'Les nuages bloquent la lumière', en: 'Clouds block the light', uk: 'Хмари блокують світло' }],
+      answer: 0,
+      explain: { fr: 'La Terre tourne en 24 h. La moitié face au Soleil a le jour.', en: 'Earth spins in 24 h. The side facing the Sun has day.', uk: 'Земля обертається за 24 години. Половина, повернута до Сонця, має день.' } },
+    { id: 6, level: 'easy', type: 'click',
+      q: { fr: 'Trouve Saturne, la planète aux anneaux', en: 'Find Saturn, the ringed planet', uk: 'Знайди Сатурн, планету з кільцями' },
+      hint: { fr: '✨ Elle a de magnifiques anneaux', en: '✨ It has beautiful rings', uk: '✨ Вона має чудові кільця' },
+      target: 'Saturne',
+      explain: { fr: 'Saturne est célèbre pour ses anneaux de glace et de roche.', en: 'Saturn is famous for its ice-and-rock rings.', uk: 'Сатурн відомий своїми кільцями з льоду й каменю.' } },
+    { id: 7, level: 'easy', type: 'click',
+      q: { fr: 'Trouve la Terre, notre maison', en: 'Find Earth, our home', uk: 'Знайди Землю, наш дім' },
+      hint: { fr: '🌍 Elle est bleue', en: '🌍 It\'s blue', uk: '🌍 Вона блакитна' },
+      target: 'Terre',
+      explain: { fr: 'La Terre est unique : c\'est la seule planète connue avec de la vie.', en: 'Earth is unique: the only planet known to host life.', uk: 'Земля унікальна — єдина відома планета з життям.' } },
+    { id: 8, level: 'easy', type: 'choice',
+      q: { fr: 'Quel est notre satellite naturel ?', en: 'What is our natural satellite?', uk: 'Який наш природний супутник?' },
+      hint: { fr: '🌙 On la voit la nuit', en: '🌙 We see it at night', uk: '🌙 Ми бачимо його вночі' },
+      choices: [
+        { fr: 'Le Soleil', en: 'The Sun', uk: 'Сонце' }, { fr: 'La Lune', en: 'The Moon', uk: 'Місяць' },
+        { fr: 'Une étoile', en: 'A star', uk: 'Зірка' }, { fr: 'Une comète', en: 'A comet', uk: 'Комета' }],
+      answer: 1,
+      explain: { fr: 'La Lune ! Elle fait le tour de la Terre en 29,5 jours.', en: 'The Moon! It orbits Earth in 29.5 days.', uk: 'Місяць! Він облітає Землю за 29,5 днів.' } },
+
+    // === MEDIUM ===
+    { id: 9, level: 'medium', type: 'choice',
+      q: { fr: 'Que se passe-t-il quand la Lune est entre la Terre et le Soleil ?', en: 'What happens when the Moon is between Earth and Sun?', uk: 'Що відбувається, коли Місяць між Землею і Сонцем?' },
+      hint: { fr: '🌑 C\'est rare et magnifique', en: '🌑 Rare and beautiful', uk: '🌑 Рідко і прекрасно' },
+      choices: [
+        { fr: 'Une pleine Lune', en: 'A full Moon', uk: 'Повний Місяць' },
+        { fr: 'Une éclipse solaire', en: 'A solar eclipse', uk: 'Сонячне затемнення' },
+        { fr: 'Une éclipse lunaire', en: 'A lunar eclipse', uk: 'Місячне затемнення' },
+        { fr: 'Rien de spécial', en: 'Nothing special', uk: 'Нічого особливого' }],
+      answer: 1,
+      explain: { fr: 'Éclipse solaire ! La Lune cache le Soleil.', en: 'Solar eclipse! The Moon hides the Sun.', uk: 'Сонячне затемнення! Місяць закриває Сонце.' } },
+    { id: 10, level: 'medium', type: 'choice',
+      q: { fr: 'Quelle est la plus grosse planète du système solaire ?', en: 'Which is the largest planet in the solar system?', uk: 'Яка найбільша планета Сонячної системи?' },
+      hint: { fr: '🌪 Elle a une Grande Tache Rouge', en: '🌪 It has a Great Red Spot', uk: '🌪 Має Велику червону пляму' },
+      choices: [
+        { fr: 'Saturne', en: 'Saturn', uk: 'Сатурн' }, { fr: 'Neptune', en: 'Neptune', uk: 'Нептун' },
+        { fr: 'Jupiter', en: 'Jupiter', uk: 'Юпітер' }, { fr: 'Terre', en: 'Earth', uk: 'Земля' }],
+      answer: 2,
+      explain: { fr: 'Jupiter ! 1 300 Terres tiennent à l\'intérieur.', en: 'Jupiter! 1,300 Earths fit inside.', uk: 'Юпітер! У ньому помістилося б 1 300 Земель.' } },
+    { id: 11, level: 'medium', type: 'click',
+      q: { fr: 'Trouve Jupiter, la plus grosse planète', en: 'Find Jupiter, the largest planet', uk: 'Знайди Юпітер, найбільшу планету' },
+      hint: { fr: '🌪 Connue pour sa Grande Tache Rouge', en: '🌪 Known for its Great Red Spot', uk: '🌪 Відомий Великою червоною плямою' },
+      target: 'Jupiter',
+      explain: { fr: 'Jupiter est 11× plus large que la Terre !', en: 'Jupiter is 11× wider than Earth!', uk: 'Юпітер у 11 разів ширший за Землю!' } },
+    { id: 12, level: 'medium', type: 'choice',
+      q: { fr: 'Qu\'est-ce qu\'une UA (Unité Astronomique) ?', en: 'What is an AU (Astronomical Unit)?', uk: 'Що таке АО (Астрономічна одиниця)?' },
+      hint: { fr: '📏 Une distance', en: '📏 A distance', uk: '📏 Відстань' },
+      choices: [
+        { fr: 'La taille de la Terre', en: 'Earth\'s size', uk: 'Розмір Землі' },
+        { fr: 'La distance Terre-Soleil', en: 'Earth-Sun distance', uk: 'Відстань Земля–Сонце' },
+        { fr: 'La vitesse de la lumière', en: 'Speed of light', uk: 'Швидкість світла' },
+        { fr: 'Le nom d\'une planète', en: 'A planet\'s name', uk: 'Назва планети' }],
+      answer: 1,
+      explain: { fr: '1 UA = distance Terre-Soleil ≈ 150 millions de km.', en: '1 AU = Earth-Sun distance ≈ 150 million km.', uk: '1 АО = відстань Земля–Сонце ≈ 150 мільйонів км.' } },
+    { id: 13, level: 'medium', type: 'choice',
+      q: { fr: 'Combien de temps met la lumière du Soleil pour atteindre la Terre ?', en: 'How long does sunlight take to reach Earth?', uk: 'Скільки часу сонячне світло долітає до Землі?' },
+      hint: { fr: '⏱ Quelques minutes', en: '⏱ A few minutes', uk: '⏱ Кілька хвилин' },
+      choices: [
+        { fr: '1 seconde', en: '1 second', uk: '1 секунда' }, { fr: '8 minutes', en: '8 minutes', uk: '8 хвилин' },
+        { fr: '1 heure', en: '1 hour', uk: '1 година' }, { fr: '1 jour', en: '1 day', uk: '1 день' }],
+      answer: 1,
+      explain: { fr: 'Environ 8 minutes 20 secondes !', en: 'About 8 minutes 20 seconds!', uk: 'Близько 8 хвилин 20 секунд!' } },
+    { id: 14, level: 'medium', type: 'choice',
+      q: { fr: 'Quelle planète tourne « à l\'envers » sur elle-même ?', en: 'Which planet spins "backwards"?', uk: 'Яка планета обертається «у зворотний бік»?' },
+      hint: { fr: '☀ Le Soleil s\'y lève à l\'ouest', en: '☀ The Sun rises in the west there', uk: '☀ Сонце там сходить на заході' },
+      choices: [
+        { fr: 'Mercure', en: 'Mercury', uk: 'Меркурій' }, { fr: 'Vénus', en: 'Venus', uk: 'Венера' },
+        { fr: 'Uranus', en: 'Uranus', uk: 'Уран' }, { fr: 'Mars', en: 'Mars', uk: 'Марс' }],
+      answer: 1,
+      explain: { fr: 'Vénus tourne en sens inverse des autres planètes !', en: 'Venus spins opposite to the other planets!', uk: 'Венера обертається у зворотний бік порівняно з іншими планетами!' } },
+    { id: 15, level: 'medium', type: 'click',
+      q: { fr: 'Trouve Mars, la planète rouge', en: 'Find Mars, the red planet', uk: 'Знайди Марс, червону планету' },
+      hint: { fr: '🔴 Visible à l\'œil nu depuis la Terre', en: '🔴 Visible to the naked eye from Earth', uk: '🔴 Видимий неозброєним оком із Землі' },
+      target: 'Mars',
+      explain: { fr: 'Mars abrite Olympus Mons, plus grand volcan du système (22 km !).', en: 'Mars has Olympus Mons, the largest volcano (22 km tall!).', uk: 'На Марсі — гора Олімп, найбільший вулкан системи (22 км!).' } },
+    { id: 16, level: 'medium', type: 'choice',
+      q: { fr: 'Pourquoi y a-t-il des saisons sur Terre ?', en: 'Why are there seasons on Earth?', uk: 'Чому на Землі є пори року?' },
+      hint: { fr: '📐 L\'axe de la Terre est incliné', en: '📐 Earth\'s axis is tilted', uk: '📐 Вісь Землі нахилена' },
+      choices: [
+        { fr: 'La Terre s\'approche du Soleil', en: 'Earth gets closer to the Sun', uk: 'Земля наближається до Сонця' },
+        { fr: 'L\'axe de la Terre est incliné à 23,5°', en: 'Earth\'s axis is tilted 23.5°', uk: 'Вісь Землі нахилена на 23,5°' },
+        { fr: 'La Lune nous protège', en: 'The Moon protects us', uk: 'Місяць нас захищає' },
+        { fr: 'Le Soleil change de couleur', en: 'The Sun changes color', uk: 'Сонце змінює колір' }],
+      answer: 1,
+      explain: { fr: 'L\'inclinaison à 23,5° change l\'angle des rayons selon la saison.', en: 'The 23.5° tilt changes how sun rays hit Earth.', uk: 'Нахил у 23,5° змінює кут падіння променів залежно від сезону.' } },
+
+    // === HARD ===
+    { id: 17, level: 'hard', type: 'choice',
+      q: { fr: 'Quelle est la lune la plus grosse du système solaire ?', en: 'What is the largest moon in the solar system?', uk: 'Який найбільший супутник у Сонячній системі?' },
+      hint: { fr: '🪐 Elle orbite autour de Jupiter', en: '🪐 It orbits Jupiter', uk: '🪐 Він обертається навколо Юпітера' },
+      choices: [
+        { fr: 'Titan', en: 'Titan', uk: 'Титан' }, { fr: 'La Lune', en: 'The Moon', uk: 'Місяць' },
+        { fr: 'Ganymède', en: 'Ganymede', uk: 'Ганімед' }, { fr: 'Europe', en: 'Europa', uk: 'Європа' }],
+      answer: 2,
+      explain: { fr: 'Ganymède (Jupiter) est plus grande que Mercure !', en: 'Ganymede (Jupiter) is larger than Mercury!', uk: 'Ганімед (супутник Юпітера) більший за Меркурій!' } },
+    { id: 18, level: 'hard', type: 'choice',
+      q: { fr: 'Combien de temps met Neptune pour faire le tour du Soleil ?', en: 'How long does Neptune take to orbit the Sun?', uk: 'Скільки часу Нептун обертається навколо Сонця?' },
+      hint: { fr: '⏳ Très longtemps', en: '⏳ A very long time', uk: '⏳ Дуже довго' },
+      choices: [
+        { fr: '12 ans', en: '12 years', uk: '12 років' }, { fr: '30 ans', en: '30 years', uk: '30 років' },
+        { fr: '165 ans', en: '165 years', uk: '165 років' }, { fr: '500 ans', en: '500 years', uk: '500 років' }],
+      answer: 2,
+      explain: { fr: '165 ans ! Neptune n\'a fait qu\'une orbite depuis sa découverte en 1846.', en: '165 years! Neptune has done only one orbit since discovery in 1846.', uk: '165 років! Нептун зробив лише один оберт з моменту відкриття у 1846 році.' } },
+    { id: 19, level: 'hard', type: 'choice',
+      q: { fr: 'Où se trouve la ceinture d\'astéroïdes principale ?', en: 'Where is the main asteroid belt located?', uk: 'Де знаходиться головний пояс астероїдів?' },
+      hint: { fr: '🪨 Entre deux planètes', en: '🪨 Between two planets', uk: '🪨 Між двома планетами' },
+      choices: [
+        { fr: 'Entre la Terre et Mars', en: 'Between Earth and Mars', uk: 'Між Землею і Марсом' },
+        { fr: 'Entre Mars et Jupiter', en: 'Between Mars and Jupiter', uk: 'Між Марсом і Юпітером' },
+        { fr: 'Entre Jupiter et Saturne', en: 'Between Jupiter and Saturn', uk: 'Між Юпітером і Сатурном' },
+        { fr: 'Au-delà de Neptune', en: 'Beyond Neptune', uk: 'За Нептуном' }],
+      answer: 1,
+      explain: { fr: 'Entre Mars et Jupiter. Cérès, son plus grand objet, est une planète naine.', en: 'Between Mars and Jupiter. Ceres, its largest object, is a dwarf planet.', uk: 'Між Марсом і Юпітером. Церера, найбільший об\'єкт, — карликова планета.' } },
+    { id: 20, level: 'hard', type: 'click',
+      q: { fr: 'Trouve Uranus, presque couchée sur le côté', en: 'Find Uranus, lying nearly on its side', uk: 'Знайди Уран, що лежить майже на боці' },
+      hint: { fr: '💚 Bleu-vert, glaciale', en: '💚 Blue-green, icy', uk: '💚 Блакитно-зелений, крижаний' },
+      target: 'Uranus',
+      explain: { fr: 'Uranus a un axe incliné à 98° — elle « roule » sur son orbite !', en: 'Uranus has a 98° axial tilt — it "rolls" along its orbit!', uk: 'Уран має нахил осі 98° — він «котиться» по орбіті!' } },
+    { id: 21, level: 'hard', type: 'choice',
+      q: { fr: 'Quelle galaxie habitons-nous ?', en: 'Which galaxy do we live in?', uk: 'У якій галактиці ми живемо?' },
+      hint: { fr: '🌌 On la voit en bande dans le ciel', en: '🌌 We see it as a band in the sky', uk: '🌌 Видно як стрічку на небі' },
+      choices: [
+        { fr: 'Andromède', en: 'Andromeda', uk: 'Андромеда' },
+        { fr: 'La Voie lactée', en: 'The Milky Way', uk: 'Чумацький Шлях' },
+        { fr: 'Triangulum', en: 'Triangulum', uk: 'Трикутник' },
+        { fr: 'Sombrero', en: 'Sombrero', uk: 'Сомбреро' }],
+      answer: 1,
+      explain: { fr: 'La Voie lactée — environ 100 milliards d\'étoiles !', en: 'The Milky Way — about 100 billion stars!', uk: 'Чумацький Шлях — близько 100 мільярдів зірок!' } },
+    { id: 22, level: 'hard', type: 'choice',
+      q: { fr: 'Quelle est la température au cœur du Soleil ?', en: 'What is the temperature at the Sun\'s core?', uk: 'Яка температура в ядрі Сонця?' },
+      hint: { fr: '🔥 Extrêmement chaud', en: '🔥 Extremely hot', uk: '🔥 Надзвичайно гаряче' },
+      choices: [
+        { fr: '5 500 °C', en: '5,500 °C', uk: '5 500 °C' },
+        { fr: '150 000 °C', en: '150,000 °C', uk: '150 000 °C' },
+        { fr: '15 millions °C', en: '15 million °C', uk: '15 мільйонів °C' },
+        { fr: '1 milliard °C', en: '1 billion °C', uk: '1 мільярд °C' }],
+      answer: 2,
+      explain: { fr: '15 millions de degrés au cœur — fusion nucléaire !', en: '15 million degrees at the core — nuclear fusion!', uk: '15 мільйонів градусів у ядрі — ядерний синтез!' } },
+    { id: 23, level: 'hard', type: 'choice',
+      q: { fr: 'Quelle est la 4ème lune galiléenne (découverte par Galilée) ?', en: 'Which is the 4th Galilean moon (discovered by Galileo)?', uk: 'Який 4-й галілеєвий супутник (відкритий Галілеєм)?' },
+      hint: { fr: '🌑 Io, Europe, Ganymède, et… ?', en: '🌑 Io, Europa, Ganymede, and…?', uk: '🌑 Іо, Європа, Ганімед, і…?' },
+      choices: [
+        { fr: 'Callisto', en: 'Callisto', uk: 'Каллісто' }, { fr: 'Titan', en: 'Titan', uk: 'Титан' },
+        { fr: 'Encelade', en: 'Enceladus', uk: 'Енцелад' }, { fr: 'Triton', en: 'Triton', uk: 'Тритон' }],
+      answer: 0,
+      explain: { fr: 'Callisto ! Les 4 lunes galiléennes : Io, Europe, Ganymède, Callisto.', en: 'Callisto! The 4 Galilean moons: Io, Europa, Ganymede, Callisto.', uk: 'Каллісто! 4 галілеєві супутники: Іо, Європа, Ганімед, Каллісто.' } },
+    { id: 24, level: 'hard', type: 'choice',
+      q: { fr: 'Qu\'est-ce qu\'une année-lumière ?', en: 'What is a light-year?', uk: 'Що таке світловий рік?' },
+      hint: { fr: '📏 Une distance, pas une durée !', en: '📏 A distance, not a duration!', uk: '📏 Це відстань, не час!' },
+      choices: [
+        { fr: 'Le temps que met la lumière en un an', en: 'How long light takes in a year', uk: 'Час, який потрібен світлу за рік' },
+        { fr: 'La distance parcourue par la lumière en un an', en: 'The distance light travels in a year', uk: 'Відстань, яку світло долає за рік' },
+        { fr: 'L\'âge d\'une étoile', en: 'A star\'s age', uk: 'Вік зірки' },
+        { fr: 'La durée d\'une orbite', en: 'An orbit duration', uk: 'Тривалість орбіти' }],
+      answer: 1,
+      explain: { fr: 'Distance que la lumière parcourt en 1 an, soit ≈ 9 461 milliards de km.', en: 'Distance light travels in 1 year — about 9.46 trillion km.', uk: 'Відстань, яку світло долає за 1 рік — близько 9 461 мільярдів км.' } },
+    { id: 25, level: 'hard', type: 'choice',
+      q: { fr: 'Pluton est-elle toujours une planète ?', en: 'Is Pluto still a planet?', uk: 'Чи Плутон досі є планетою?' },
+      hint: { fr: '📅 Décision officielle en 2006', en: '📅 Official decision in 2006', uk: '📅 Офіційне рішення у 2006 році' },
+      choices: [
+        { fr: 'Oui, c\'est la 9ème', en: 'Yes, it\'s the 9th', uk: 'Так, це 9-та' },
+        { fr: 'Non, elle est devenue une planète naine', en: 'No, it became a dwarf planet', uk: 'Ні, він став карликовою планетою' },
+        { fr: 'Non, c\'est un astéroïde', en: 'No, it\'s an asteroid', uk: 'Ні, це астероїд' },
+        { fr: 'Oui, mais seulement en hiver', en: 'Yes, but only in winter', uk: 'Так, але тільки взимку' }],
+      answer: 1,
+      explain: { fr: 'En 2006, Pluton est reclassée en « planète naine ».', en: 'In 2006, Pluto was reclassified as a "dwarf planet".', uk: 'У 2006 році Плутон перекласифіковано на «карликову планету».' } },
+    { id: 26, level: 'hard', type: 'click',
+      q: { fr: 'Trouve Neptune, la plus lointaine', en: 'Find Neptune, the farthest planet', uk: 'Знайди Нептун, найвіддаленішу планету' },
+      hint: { fr: '💙 Vents les plus rapides du système', en: '💙 Fastest winds in the system', uk: '💙 Найшвидші вітри в системі' },
+      target: 'Neptune',
+      explain: { fr: 'Neptune : 4,5 milliards de km du Soleil, vents à 2000 km/h !', en: 'Neptune: 4.5 billion km from the Sun, winds at 2,000 km/h!', uk: 'Нептун: 4,5 мільярда км від Сонця, вітри 2 000 км/год!' } },
+  ];
+
+  // ============ Storage ============
+  function loadProgress() {
+    try { return JSON.parse(localStorage.getItem('quizProgress') || '{}'); } catch { return {}; }
+  }
+  function saveProgress(p) { localStorage.setItem('quizProgress', JSON.stringify(p)); }
+
+  // ============ Badges ============
+  const BADGES = [
+    { id: 'first',   name: { fr: '🚀 Premier vol',     en: '🚀 First flight',    uk: '🚀 Перший політ' },     test: (p) => (p.totalPlayed || 0) >= 1 },
+    { id: 'easy3',   name: { fr: '🌱 3 quiz Facile',   en: '🌱 3 easy quizzes',  uk: '🌱 3 легкі вікторини' }, test: (p) => (p.played?.easy || 0) >= 3 },
+    { id: 'medGold', name: { fr: '🏅 Or Moyen',         en: '🏅 Medium gold',     uk: '🏅 Золото на середньому' }, test: (p) => (p.best?.medium || 0) >= 7 },
+    { id: 'perfect', name: { fr: '💯 Score parfait',   en: '💯 Perfect score',   uk: '💯 Ідеальний рахунок' }, test: (p) => p.perfect },
+    { id: 'expert',  name: { fr: '🧠 Expert validé',   en: '🧠 Verified expert', uk: '🧠 Підтверджений експерт' }, test: (p) => (p.best?.hard || 0) >= 8 },
+    { id: 'all',     name: { fr: '🌟 Astronome',        en: '🌟 Astronomer',      uk: '🌟 Астроном' },         test: (p) => (p.best?.easy || 0) >= 5 && (p.best?.medium || 0) >= 6 && (p.best?.hard || 0) >= 7 },
+  ];
+  function refreshBadges() {
+    const p = loadProgress();
+    const list = document.getElementById('badgesList');
+    list.innerHTML = '';
+    for (const b of BADGES) {
+      const earned = b.test(p);
+      const el = document.createElement('div');
+      el.className = 'badge' + (earned ? '' : ' locked');
+      el.textContent = earned ? b.name[lang] : '🔒 ' + b.name[lang].replace(/^[^\s]+ /, '');
+      list.appendChild(el);
+    }
+  }
+  function refreshBestScores() {
+    const p = loadProgress();
+    const counts = { easy: 6, medium: 8, hard: 10 };
+    document.getElementById('bestEasy').textContent   = p.best?.easy   ? t('best', { n: p.best.easy,   t: counts.easy }) : '';
+    document.getElementById('bestMedium').textContent = p.best?.medium ? t('best', { n: p.best.medium, t: counts.medium }) : '';
+    document.getElementById('bestHard').textContent   = p.best?.hard   ? t('best', { n: p.best.hard,   t: counts.hard }) : '';
+  }
+  function recordRun(diff, score, total) {
+    const p = loadProgress();
+    p.played = p.played || {}; p.played[diff] = (p.played[diff] || 0) + 1;
+    p.totalPlayed = (p.totalPlayed || 0) + 1;
+    p.best = p.best || {};
+    p.best[diff] = Math.max(p.best[diff] || 0, score);
+    if (score === total) p.perfect = true;
+    const before = new Set(BADGES.filter(b => b.test(loadProgress())).map(b => b.id));
+    saveProgress(p);
+    const after = BADGES.filter(b => b.test(p));
+    const newOnes = after.filter(b => !before.has(b.id));
+    return newOnes;
+  }
+
+  // ============ Quiz logic ============
+  const COUNTS = { easy: 6, medium: 8, hard: 10 };
+  const welcomeEl = document.getElementById('welcome');
+  const quizEl = document.getElementById('quiz');
+  const endEl = document.getElementById('end');
+  const startBtn = document.getElementById('startBtn');
+  const restartBtn = document.getElementById('restartBtn');
+  const shareBtn = document.getElementById('shareBtn');
+  const langBtn = document.getElementById('langBtn');
+  const qText = document.getElementById('qText');
+  const qHint = document.getElementById('qHint');
+  const choicesEl = document.getElementById('choices');
+  const feedbackEl = document.getElementById('feedback');
+  const nextBtn = document.getElementById('nextBtn');
+  const progressFill = document.getElementById('progressFill');
+  const progressLabel = document.getElementById('progressLabel');
+  const scoreNum = document.getElementById('scoreNum');
+  const diffBadgeEl = document.getElementById('diffBadge');
+  const clickArea = document.getElementById('clickArea');
+  const targetCanvas = document.getElementById('targetCanvas');
+  const tctx = targetCanvas.getContext('2d');
+
+  let runQuestions = [];
+  let currentIdx = 0;
+  let score = 0;
+  let locked = false;
+  let currentDiff = 'easy';
+
+  // Difficulty selection
+  document.querySelectorAll('#diffPicker button').forEach(b => {
+    b.addEventListener('click', () => {
+      currentDiff = b.dataset.diff;
+      document.querySelectorAll('#diffPicker button').forEach(x => x.style.borderColor = '');
+      b.style.borderColor = 'var(--accent)';
+    });
+  });
+  // Default-select easy
+  document.querySelector('#diffPicker button[data-diff="easy"]').style.borderColor = 'var(--accent)';
+
+  startBtn.addEventListener('click', () => {
+    const pool = QUESTIONS.filter(q => q.level === currentDiff);
+    runQuestions = shuffle([...pool]).slice(0, COUNTS[currentDiff]);
+    welcomeEl.style.display = 'none';
+    quizEl.style.display = 'block';
+    currentIdx = 0; score = 0;
+    showQuestion();
+  });
+  restartBtn.addEventListener('click', () => { endEl.style.display = 'none'; welcomeEl.style.display = 'block'; refreshBestScores(); refreshBadges(); });
+  shareBtn.addEventListener('click', shareScore);
+  langBtn.addEventListener('click', () => {
+    // Cycle FR → EN → UK → FR
+    lang = lang === 'fr' ? 'en' : lang === 'en' ? 'uk' : 'fr';
+    localStorage.setItem('lang', lang);
+    applyLang();
+  });
+
+  nextBtn.addEventListener('click', () => {
+    currentIdx++;
+    if (currentIdx >= runQuestions.length) showEnd();
+    else showQuestion();
+  });
+
+  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+  function showQuestion() {
+    locked = false;
+    const q = runQuestions[currentIdx];
+    qText.textContent = q.q[lang];
+    qHint.textContent = q.hint[lang];
+    feedbackEl.classList.remove('visible', 'good', 'bad');
+    nextBtn.classList.remove('visible');
+    choicesEl.innerHTML = '';
+    scoreNum.textContent = score;
+    progressLabel.textContent = `${currentIdx + 1} / ${runQuestions.length}`;
+    progressFill.style.width = `${((currentIdx) / runQuestions.length) * 100}%`;
+    diffBadgeEl.textContent = t(currentDiff);
+
+    if (q.type === 'choice') {
+      clickArea.style.display = 'none';
+      choicesEl.style.display = 'flex';
+      const letters = ['A', 'B', 'C', 'D'];
+      q.choices.forEach((c, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'choice';
+        btn.innerHTML = `<span class="letter">${letters[i]}</span><span>${c[lang]}</span>`;
+        btn.addEventListener('click', () => answerChoice(i));
+        choicesEl.appendChild(btn);
+      });
+    } else {
+      clickArea.style.display = 'block';
+      choicesEl.style.display = 'none';
+      setupClickQuestion(q);
+    }
+  }
+
+  function answerChoice(idx) {
+    if (locked) return; locked = true;
+    const q = runQuestions[currentIdx];
+    const choices = choicesEl.querySelectorAll('.choice');
+    const correct = idx === q.answer;
+    choices.forEach((c, i) => {
+      c.classList.add('disabled', 'revealed');
+      if (i === q.answer) c.classList.add('right');
+      else if (i === idx) c.classList.add('wrong');
+    });
+    revealFeedback(correct, q.explain[lang]);
+  }
+
+  function revealFeedback(correct, explain) {
+    if (correct) score++;
+    scoreNum.textContent = score;
+    feedbackEl.classList.add('visible', correct ? 'good' : 'bad');
+    feedbackEl.innerHTML = `<b>${correct ? t('good_answer') : t('bad_answer')}</b><br/>${explain}`;
+    nextBtn.classList.add('visible');
+    nextBtn.textContent = currentIdx + 1 >= runQuestions.length ? t('see_result') : t('next_q');
+  }
+
+  let targetPlanets = [];
+  function resizeTargetCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const w = clickArea.clientWidth, h = clickArea.clientHeight;
+    targetCanvas.width = w * dpr; targetCanvas.height = h * dpr;
+    targetCanvas.style.width = w + 'px'; targetCanvas.style.height = h + 'px';
+    tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function setupClickQuestion(q) {
+    resizeTargetCanvas();
+    const w = targetCanvas.width / (window.devicePixelRatio || 1);
+    const h = targetCanvas.height / (window.devicePixelRatio || 1);
+    const cx = w / 2, cy = h / 2;
+    const sunR = 18;
+    const maxD = 400;
+    const avail = Math.min(w, h) / 2 - 25;
+    const scl = avail / maxD;
+    targetPlanets = [];
+    const baseAng = Math.random() * Math.PI * 2;
+    PLANETS.forEach((p, i) => {
+      const ang = baseAng + i * 0.85;
+      const x = cx + Math.cos(ang) * p.distance * scl;
+      const y = cy + Math.sin(ang) * p.distance * scl;
+      const visR = Math.max(5, p.radius * 0.55);
+      targetPlanets.push({ ...p, x, y, visR });
+    });
+    drawTargetScene(cx, cy, sunR, scl);
+    targetCanvas.onclick = (e) => {
+      if (locked) return;
+      const rect = targetCanvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      let best = null, bestD = Infinity;
+      for (const p of targetPlanets) {
+        const d = Math.hypot(mx - p.x, my - p.y);
+        if (d < p.visR + 14 && d < bestD) { best = p; bestD = d; }
+      }
+      if (!best) return;
+      locked = true;
+      const correct = best.name === q.target;
+      drawTargetScene(cx, cy, sunR, scl, best.name, q.target);
+      revealFeedback(correct, q.explain[lang]);
+    };
+  }
+  function drawTargetScene(cx, cy, sunR, scl, picked, correctName) {
+    const w = targetCanvas.width / (window.devicePixelRatio || 1);
+    const h = targetCanvas.height / (window.devicePixelRatio || 1);
+    tctx.clearRect(0, 0, w, h);
+    for (let i = 0; i < 60; i++) {
+      tctx.fillStyle = `rgba(255,255,255,${0.2 + Math.random() * 0.5})`;
+      const sx = (i * 73 + 13) % w, sy = (i * 157 + 41) % h;
+      tctx.beginPath(); tctx.arc(sx, sy, Math.random() * 0.8 + 0.3, 0, Math.PI * 2); tctx.fill();
+    }
+    for (const p of PLANETS) {
+      tctx.strokeStyle = 'rgba(255,255,255,0.07)'; tctx.lineWidth = 1;
+      tctx.beginPath(); tctx.arc(cx, cy, p.distance * scl, 0, Math.PI * 2); tctx.stroke();
+    }
+    const glow = tctx.createRadialGradient(cx, cy, 0, cx, cy, sunR * 3);
+    glow.addColorStop(0, 'rgba(255,209,102,0.5)'); glow.addColorStop(1, 'rgba(255,140,40,0)');
+    tctx.fillStyle = glow;
+    tctx.beginPath(); tctx.arc(cx, cy, sunR * 3, 0, Math.PI * 2); tctx.fill();
+    const sg = tctx.createRadialGradient(cx - 3, cy - 3, 1, cx, cy, sunR);
+    sg.addColorStop(0, '#fff5cc'); sg.addColorStop(0.6, '#ffd166'); sg.addColorStop(1, '#ff8c28');
+    tctx.fillStyle = sg;
+    tctx.beginPath(); tctx.arc(cx, cy, sunR, 0, Math.PI * 2); tctx.fill();
+    for (const p of targetPlanets) {
+      if (p.hasRings) {
+        tctx.save();
+        tctx.translate(p.x, p.y); tctx.rotate(0.3); tctx.scale(1, 0.35);
+        tctx.strokeStyle = 'rgba(232,211,156,0.6)'; tctx.lineWidth = 2;
+        tctx.beginPath(); tctx.arc(0, 0, p.visR * 2.1, 0, Math.PI * 2); tctx.stroke();
+        tctx.restore();
+      }
+      const g = tctx.createRadialGradient(p.x - p.visR * 0.4, p.y - p.visR * 0.4, 0, p.x, p.y, p.visR);
+      g.addColorStop(0, p.color); g.addColorStop(1, p.color);
+      tctx.fillStyle = g;
+      tctx.beginPath(); tctx.arc(p.x, p.y, p.visR, 0, Math.PI * 2); tctx.fill();
+      if (picked) {
+        if (p.name === correctName) {
+          tctx.strokeStyle = '#06d6a0'; tctx.lineWidth = 3;
+          tctx.beginPath(); tctx.arc(p.x, p.y, p.visR + 8, 0, Math.PI * 2); tctx.stroke();
+        }
+        if (p.name === picked && picked !== correctName) {
+          tctx.strokeStyle = '#ff6b6b'; tctx.lineWidth = 3;
+          tctx.beginPath(); tctx.arc(p.x, p.y, p.visR + 8, 0, Math.PI * 2); tctx.stroke();
+        }
+        tctx.fillStyle = 'rgba(232,238,249,0.85)';
+        tctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+        tctx.textAlign = 'center';
+        tctx.fillText(lang === 'uk' ? p.nameUk : lang === 'en' ? p.nameEn : p.name, p.x, p.y - p.visR - 10);
+      }
+    }
+  }
+
+  function showEnd() {
+    quizEl.style.display = 'none';
+    endEl.style.display = 'block';
+    const total = runQuestions.length;
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalTotal').textContent = total;
+    const pct = score / total;
+    let emoji, titles, msgs;
+    if (pct === 1) {
+      emoji = '🏆';
+      titles = { fr: 'Parfait, tu es une star !', en: 'Perfect, you\'re a star!', uk: 'Ідеально, ти зірка!' };
+      msgs = { fr: 'Tu connais le système solaire sur le bout des doigts. La NASA va t\'appeler !',
+               en: 'You know the solar system inside out. NASA will be calling!',
+               uk: 'Ти знаєш Сонячну систему на відмінно. НАСА зателефонує!' };
+    } else if (pct >= 0.75) {
+      emoji = '🌟';
+      titles = { fr: 'Bravo !', en: 'Great job!', uk: 'Молодець!' };
+      msgs = { fr: 'Excellent score ! Tu es un vrai petit astronome.',
+               en: 'Excellent score! A real little astronomer.',
+               uk: 'Чудовий результат! Ти справжній юний астроном.' };
+    } else if (pct >= 0.5) {
+      emoji = '🚀';
+      titles = { fr: 'Bien joué !', en: 'Well done!', uk: 'Гарно зіграно!' };
+      msgs = { fr: 'Pas mal du tout ! Refais le quiz pour viser plus haut.',
+               en: 'Pretty good! Try again to aim higher.',
+               uk: 'Дуже добре! Спробуй знову, щоб піднятися ще вище.' };
+    } else if (pct >= 0.25) {
+      emoji = '🌍';
+      titles = { fr: 'Continue à explorer !', en: 'Keep exploring!', uk: 'Продовжуй досліджувати!' };
+      msgs = { fr: 'Retourne explorer le système solaire et reviens !',
+               en: 'Go explore the solar system and come back!',
+               uk: 'Йди досліджувати Сонячну систему і повертайся!' };
+    } else {
+      emoji = '🌱';
+      titles = { fr: 'C\'est un début !', en: 'It\'s a start!', uk: 'Це початок!' };
+      msgs = { fr: 'Va explorer l\'app et reviens essayer le quiz !',
+               en: 'Go explore the app and try again!',
+               uk: 'Йди досліджувати додаток і повертайся до вікторини!' };
+    }
+    document.getElementById('endEmoji').textContent = emoji;
+    document.getElementById('endTitle').textContent = titles[lang] || titles.fr;
+    document.getElementById('endMsg').textContent = msgs[lang] || msgs.fr;
+    // Record progress and show any new badges earned
+    const newBadges = recordRun(currentDiff, score, total);
+    const nb = document.getElementById('newBadges');
+    nb.innerHTML = '';
+    for (const b of newBadges) {
+      const div = document.createElement('div');
+      div.className = 'newBadgeBanner';
+      div.textContent = (lang === 'uk' ? '🎉 Новий значок: ' : lang === 'en' ? '🎉 New badge: ' : '🎉 Nouveau badge : ') + (b.name[lang] || b.name.fr);
+      nb.appendChild(div);
+    }
+  }
+
+  async function shareScore() {
+    const total = runQuestions.length;
+    const txt = lang === 'uk'
+      ? `Я набрав ${score}/${total} у Вікторині про Сонячну систему! 🌟`
+      : lang === 'en'
+        ? `I scored ${score}/${total} on the Solar System Quiz! 🌟`
+        : `J'ai eu ${score}/${total} au Quiz du Système Solaire ! 🌟`;
+    const url = location.origin + location.pathname.replace('quiz.html', '');
+    if (navigator.share) {
+      try { await navigator.share({ title: t('title'), text: txt, url }); } catch {}
+    } else {
+      try {
+        await navigator.clipboard.writeText(`${txt} ${url}`);
+        shareBtn.textContent = lang === 'uk' ? '✅ Скопійовано!' : lang === 'en' ? '✅ Copied!' : '✅ Copié !';
+        setTimeout(() => { shareBtn.textContent = '📤 ' + t('share'); }, 1800);
+      } catch {
+        alert(txt);
+      }
+    }
+  }
+
+  window.addEventListener('resize', () => {
+    if (clickArea.style.display !== 'none' && runQuestions[currentIdx] && runQuestions[currentIdx].type === 'click') {
+      setupClickQuestion(runQuestions[currentIdx]);
+    }
+  });
+
+  // Service worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => { /* SW disabled to avoid cross-app cache */ });
+  }
+
+  // First-visit language picker
+  (function maybeShowLangPicker() {
+    if (localStorage.getItem('lang')) return;
+    const picker = document.getElementById('langPicker');
+    picker.classList.add('visible');
+    picker.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        lang = btn.dataset.lang;
+        localStorage.setItem('lang', lang);
+        applyLang();
+        picker.classList.remove('visible');
+      });
+    });
+  })();
+
+  // Init
+  applyLang();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="earth" cx="38%" cy="32%" r="70%">
+      <stop offset="0%" stop-color="#7ab6ff"/>
+      <stop offset="55%" stop-color="#1f5fb8"/>
+      <stop offset="100%" stop-color="#062148"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffd166" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#ffd166" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" fill="#02030a"/>
+  <circle cx="32" cy="32" r="30" fill="url(#glow)"/>
+  <circle cx="32" cy="32" r="22" fill="url(#earth)"/>
+  <!-- continents -->
+  <path d="M16 26 Q22 22 28 24 Q30 28 26 32 Q20 34 16 30 Z" fill="#3d9b4f"/>
+  <path d="M30 34 Q38 30 44 34 Q46 40 40 44 Q34 46 30 42 Z" fill="#3d9b4f"/>
+  <path d="M40 22 Q46 20 48 26 Q44 28 42 26 Z" fill="#3d9b4f"/>
+  <!-- highlight -->
+  <ellipse cx="26" cy="22" rx="6" ry="3" fill="#ffffff" opacity="0.18"/>
+  <!-- orbit ring -->
+  <ellipse cx="32" cy="32" rx="30" ry="9" fill="none" stroke="#ffd166" stroke-width="1.5" opacity="0.7" transform="rotate(-25 32 32)"/>
+  <!-- moon -->
+  <circle cx="58" cy="20" r="3" fill="#e8e8e8"/>
+</svg>

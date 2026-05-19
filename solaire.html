@@ -1,0 +1,3455 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#ffd166" />
+<title>Le Système Solaire — Voyage interactif</title>
+<link rel="icon" type="image/svg+xml" href="favicon-ss.svg" />
+
+<link rel="apple-touch-icon" href="favicon-ss.svg" />
+<style>
+  :root {
+    --bg-deep: #02030a; --bg-mid: #070a1a;
+    --accent: #ffd166; --text: #e8eef9; --muted: #8892b0;
+    --panel: rgba(12, 18, 36, 0.85); --panel-border: rgba(255, 255, 255, 0.08);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    background: radial-gradient(ellipse at center, var(--bg-mid) 0%, var(--bg-deep) 70%);
+    overflow: hidden;
+  }
+  #stage { position: relative; width: 100vw; height: 100vh; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  .topbar {
+    position: absolute; top: 0; left: 0; right: 0;
+    padding: 18px 24px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 18px; pointer-events: none; z-index: 5;
+  }
+  .topbar > div:first-child { transition: opacity 0.2s; }
+  body.earth-view .topbar > div:first-child { display: none; }
+  body.earth-view .topbar { justify-content: flex-end; }
+
+  .titleRow { display: flex; align-items: center; gap: 10px; pointer-events: auto; }
+  .menuBtn {
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 50%; width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text); font-size: 18px; font-weight: 400; line-height: 1;
+    cursor: pointer; padding: 0;
+    transition: background 0.2s, transform 0.25s, color 0.2s;
+    flex-shrink: 0;
+  }
+  .menuBtn:hover { background: rgba(255,255,255,0.08); }
+  .menuBtn.open { background: var(--accent); color: #02030a; transform: rotate(45deg); }
+
+  .menuDropdown {
+    position: absolute; top: 56px; left: 24px; z-index: 9;
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 12px; padding: 6px; min-width: 230px;
+    backdrop-filter: blur(10px); pointer-events: auto;
+    display: none; flex-direction: column; gap: 2px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+  .menuDropdown.open { display: flex; }
+  .menuDropdown .menuHeader {
+    padding: 6px 12px 10px; font-size: 10px; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--panel-border);
+    margin-bottom: 4px;
+  }
+  .menuItem {
+    padding: 10px 12px; border-radius: 8px; color: var(--text);
+    text-decoration: none; font-size: 14px; font-weight: 600;
+    display: flex; align-items: center; gap: 10px;
+    transition: background 0.15s;
+  }
+  .menuItem:hover { background: rgba(255,255,255,0.06); }
+  .menuItem.active {
+    background: rgba(255,209,102,0.12); color: var(--accent);
+    cursor: default;
+  }
+  .menuItem .ext { color: var(--muted); font-size: 11px; margin-left: auto; font-weight: 400; }
+
+  .backBtn {
+    position: absolute; top: 18px; left: 24px; z-index: 7;
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 12px; padding: 10px 16px; font-size: 14px;
+    color: var(--text); cursor: pointer; backdrop-filter: blur(10px);
+    pointer-events: auto; font-weight: 600;
+    display: none; align-items: center; gap: 8px;
+    transition: background 0.15s, transform 0.15s;
+  }
+  .backBtn:hover { background: rgba(255,255,255,0.06); transform: translateX(-2px); }
+  .backBtn.visible { display: inline-flex; }
+  .backBtn .arrow { font-size: 18px; line-height: 1; }
+  .backBtn .titleSmall { font-size: 14px; }
+  .backBtn .planetName { color: var(--accent); font-weight: 700; margin-left: 4px; }
+
+  .earthDataCard {
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 12px; padding: 14px 16px; backdrop-filter: blur(10px);
+    font-size: 12px;
+  }
+  .earthDataCard h3 {
+    margin: 0 0 4px 0; font-size: 16px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .earthDataCard h3 .swatch {
+    width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 8px currentColor;
+  }
+  .earthDataCard .ptype { color: var(--muted); font-size: 11px; margin-bottom: 10px; }
+  .earthDataCard .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-bottom: 10px; }
+  .earthDataCard .stat .label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .earthDataCard .stat .value { font-size: 13px; color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .earthDataCard .stat .sub { font-size: 9px; color: var(--muted); font-weight: 400; }
+  .earthDataCard .efact {
+    background: rgba(255, 209, 102, 0.1); border-left: 2px solid var(--accent);
+    padding: 8px 10px; border-radius: 4px; font-size: 11px;
+    color: #fff5d6; font-style: italic; line-height: 1.4;
+  }
+  .earthDataCard .moonsMini { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--panel-border); }
+  .earthDataCard .moonsMini h4 { margin: 0 0 6px 0; font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; }
+  .earthDataCard .moonRow { display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 2px 0; }
+  .earthDataCard .moonRow .moonDot { width: 7px; height: 7px; border-radius: 50%; background: #d4d4d8; flex-shrink: 0; }
+  .earthDataCard .moonRow .moonName { color: var(--text); font-weight: 600; }
+  .earthDataCard .moonRow .moonInfo { color: var(--muted); font-size: 10px; margin-left: auto; }
+  .title { font-size: 22px; font-weight: 600; letter-spacing: 0.5px; }
+  .title span { color: var(--accent); }
+  .subtitle { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  .tabs {
+    display: inline-flex; margin-top: 10px;
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 10px; padding: 4px; backdrop-filter: blur(10px);
+    pointer-events: auto; flex-wrap: wrap;
+  }
+  .tab {
+    background: transparent; border: none; color: var(--muted);
+    padding: 7px 14px; border-radius: 7px; font-size: 13px;
+    font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s;
+    text-decoration: none; display: inline-block;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { background: var(--accent); color: #02030a; }
+
+  .topRight { display: flex; gap: 10px; align-items: stretch; pointer-events: auto; }
+  .clock {
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 12px; padding: 10px 18px; text-align: right;
+    backdrop-filter: blur(10px); min-width: 160px;
+  }
+  .clock .hour { font-size: 26px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .clock .year { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .iconBtn {
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 12px; width: 44px; height: 44px; align-self: center;
+    color: var(--text); font-size: 18px; cursor: pointer;
+    backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s, background 0.15s;
+  }
+  .iconBtn:hover { background: rgba(255,255,255,0.06); }
+  .iconBtn.gear:hover { transform: rotate(45deg); }
+
+  .settings {
+    position: absolute; top: 90px; right: 24px;
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 12px; padding: 12px; backdrop-filter: blur(10px);
+    z-index: 8; min-width: 260px; display: none; max-height: 80vh; overflow-y: auto;
+  }
+  .settings.open { display: block; }
+  .settings h4 {
+    margin: 4px 6px 8px; font-size: 11px; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px;
+    user-select: none;
+  }
+  .toggle:hover { background: rgba(255,255,255,0.04); }
+  .toggle.disabled { opacity: 0.4; cursor: not-allowed; }
+  .switch {
+    width: 36px; height: 20px; background: rgba(255,255,255,0.15);
+    border-radius: 10px; position: relative; transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .switch::after {
+    content: ''; position: absolute; left: 2px; top: 2px;
+    width: 16px; height: 16px; background: #fff; border-radius: 50%;
+    transition: transform 0.2s;
+  }
+  .toggle.on .switch { background: var(--accent); }
+  .toggle.on .switch::after { transform: translateX(16px); }
+
+  .settingsAction {
+    width: 100%; background: rgba(255,255,255,0.04);
+    color: var(--text); border: 1px solid var(--panel-border);
+    border-radius: 8px; padding: 9px 12px; font-size: 13px;
+    cursor: pointer; margin: 4px 0; text-align: left;
+    font-weight: 600;
+  }
+  .settingsAction:hover { background: rgba(255,255,255,0.08); }
+  .settingsAction.primary {
+    background: var(--accent); color: #02030a; border-color: var(--accent);
+  }
+  .langToggle {
+    display: flex; gap: 4px; padding: 6px 10px;
+  }
+  .langToggle button {
+    flex: 1; background: rgba(255,255,255,0.05);
+    color: var(--muted); border: 1px solid var(--panel-border);
+    border-radius: 7px; padding: 6px 10px; font-size: 13px;
+    cursor: pointer; font-weight: 600;
+  }
+  .langToggle button.active { background: var(--accent); color: #02030a; border-color: var(--accent); }
+
+  .panel {
+    position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 16px; padding: 14px 22px 18px;
+    min-width: min(680px, 92vw); backdrop-filter: blur(10px); z-index: 5;
+  }
+  .sub-toggle {
+    display: none; justify-content: center; gap: 4px;
+    background: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 3px;
+    margin: 0 auto 12px; width: fit-content;
+  }
+  .sub-toggle.visible { display: flex; }
+  .sub-toggle button {
+    background: transparent; color: var(--muted); border: none;
+    padding: 6px 12px; border-radius: 6px; font-size: 12px;
+    cursor: pointer; font-weight: 600;
+  }
+  .sub-toggle button.active { background: var(--accent); color: #02030a; }
+
+  .panel-row { display: flex; align-items: center; gap: 14px; }
+  .play-btn {
+    width: 44px; height: 44px; border-radius: 50%; border: none;
+    background: var(--accent); color: #02030a; font-size: 18px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s; flex-shrink: 0;
+  }
+  .play-btn:hover { transform: scale(1.08); }
+
+  .slider-wrap { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .slider-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 6px;
+    background: linear-gradient(to right, #ff6b6b 0%, #ffd166 25%, #06d6a0 50%, #118ab2 75%, #7b2cbf 100%);
+    border-radius: 3px; outline: none; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 22px; height: 22px;
+    border-radius: 50%; background: #fff; border: 3px solid var(--accent);
+    cursor: grab; box-shadow: 0 0 12px rgba(255, 209, 102, 0.6);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 50%; background: #fff;
+    border: 3px solid var(--accent); cursor: grab; box-shadow: 0 0 12px rgba(255, 209, 102, 0.6);
+  }
+  .speed-toggle {
+    display: flex; gap: 4px; background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px; padding: 3px; flex-shrink: 0;
+  }
+  .speed-toggle button {
+    background: transparent; color: var(--muted); border: none;
+    padding: 6px 10px; border-radius: 6px; font-size: 12px;
+    cursor: pointer; font-weight: 600;
+  }
+  .speed-toggle button.active { background: var(--accent); color: #02030a; }
+
+  .infoCard {
+    position: absolute; top: 150px; left: 24px;
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 12px; padding: 14px 16px; backdrop-filter: blur(10px);
+    z-index: 5; font-size: 12px; max-width: 260px; display: none;
+    max-height: calc(100vh - 250px); overflow-y: auto;
+  }
+  .infoCard.visible { display: block; }
+  .infoCard h3 { margin: 0 0 10px 0; font-size: 13px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+  .infoCard h4 { margin: 12px 0 6px 0; font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; margin: 4px 0; cursor: pointer; padding: 2px 4px; border-radius: 4px; transition: background 0.15s; }
+  .legend-item:hover { background: rgba(255, 255, 255, 0.05); }
+  .legend-item.focused { background: rgba(255, 209, 102, 0.12); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-dot.earthPulse {
+    animation: earthDotPulse 2.2s ease-in-out infinite;
+    position: relative;
+  }
+  @keyframes earthDotPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(74, 158, 255, 0.55); transform: scale(1); }
+    50%      { box-shadow: 0 0 0 4px rgba(74, 158, 255, 0);    transform: scale(1.18); }
+  }
+  .legend-item.earthRow:hover { background: rgba(74, 158, 255, 0.08); }
+
+  .scaleChips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .scaleChips button {
+    background: rgba(255,255,255,0.05); color: var(--muted);
+    border: 1px solid var(--panel-border); border-radius: 7px;
+    padding: 4px 8px; font-size: 11px; font-weight: 600; cursor: pointer;
+  }
+  .scaleChips button:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+  .scaleChips button.active { background: var(--accent); color: #02030a; border-color: var(--accent); }
+
+  .followBadge {
+    margin-top: 8px; padding: 6px 10px; border-radius: 7px;
+    background: rgba(255, 209, 102, 0.1); border: 1px solid rgba(255, 209, 102, 0.3);
+    font-size: 11px; color: #fff5d6; display: none;
+  }
+  .followBadge.visible { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .followBadge button { background: transparent; color: var(--muted); border: none; cursor: pointer; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+  .followBadge button:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+
+  .rightStack {
+    position: absolute; top: 140px; right: 24px;
+    display: none; flex-direction: column; gap: 12px;
+    z-index: 5; width: 220px;
+    max-height: calc(100vh - 170px); overflow-y: auto;
+    padding-right: 2px;
+  }
+  .rightStack.visible { display: flex; }
+  .phaseCard {
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 12px; padding: 14px 16px; backdrop-filter: blur(10px);
+    font-size: 12px; text-align: center;
+  }
+  .phaseCard h3 { margin: 0 0 10px 0; font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+  #phaseCanvas { position: static; width: 90px; height: 90px; display: block; margin: 0 auto 8px; }
+  .phaseName { font-weight: 600; color: var(--text); }
+  .phaseIllumination { color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+  .eclipseBanner {
+    position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
+    background: rgba(120, 30, 30, 0.85); border: 1px solid rgba(255,100,100,0.4);
+    border-radius: 10px; padding: 8px 18px; font-weight: 600;
+    z-index: 7; display: none; backdrop-filter: blur(10px);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  .eclipseBanner.visible { display: block; }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(255,100,100,0.4); }
+    50% { box-shadow: 0 0 20px rgba(255,100,100,0.7); }
+  }
+
+  /* Tour banner */
+  .tourBanner {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--panel); border: 2px solid var(--accent);
+    border-radius: 16px; padding: 20px 26px;
+    max-width: min(520px, 90vw); text-align: center;
+    backdrop-filter: blur(10px); z-index: 18;
+    display: none; box-shadow: 0 10px 40px rgba(255,209,102,0.25);
+  }
+  .tourBanner.visible { display: block; animation: tourIn 0.3s ease-out; }
+  @keyframes tourIn { from { opacity: 0; transform: translate(-50%, -42%); } to { opacity: 1; transform: translate(-50%, -50%); } }
+  .tourBanner .step { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .tourBanner .text { font-size: 17px; line-height: 1.45; margin-bottom: 16px; }
+  .tourBanner .controls { display: flex; gap: 8px; justify-content: center; }
+  .tourBanner .controls button {
+    background: rgba(255,255,255,0.08); color: var(--text); border: 1px solid var(--panel-border);
+    border-radius: 8px; padding: 8px 14px; font-size: 12px; cursor: pointer; font-weight: 600;
+  }
+  .tourBanner .controls button.primary { background: var(--accent); color: #02030a; border-color: var(--accent); }
+  .tourBanner .progress { height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; margin-bottom: 14px; overflow: hidden; }
+  .tourBanner .progressFill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s linear; }
+
+  .tooltip {
+    position: absolute; background: var(--panel);
+    border: 1px solid var(--panel-border); border-radius: 8px;
+    padding: 8px 12px; font-size: 12px; pointer-events: none;
+    backdrop-filter: blur(10px); z-index: 10; opacity: 0; transition: opacity 0.15s;
+  }
+  .tooltip.show { opacity: 1; }
+  .tooltip .name { color: var(--accent); font-weight: 600; margin-bottom: 4px; }
+  .tooltip .info { color: var(--muted); font-size: 11px; }
+
+  .modal {
+    position: absolute; inset: 0; background: rgba(2, 3, 10, 0.7);
+    backdrop-filter: blur(6px); display: none;
+    align-items: center; justify-content: center; z-index: 20;
+  }
+  .modal.visible { display: flex; }
+  .modal-card {
+    background: linear-gradient(135deg, rgba(20,28,52,0.95), rgba(10,15,30,0.95));
+    border: 1px solid var(--panel-border); border-radius: 18px;
+    padding: 28px 32px; max-width: 540px; width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    position: relative; max-height: 88vh; overflow-y: auto;
+  }
+  .modal-card .close {
+    position: absolute; top: 14px; right: 14px;
+    background: transparent; border: none; color: var(--muted);
+    font-size: 22px; cursor: pointer; width: 32px; height: 32px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  }
+  .modal-card .close:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+  .modal-card h2 { margin: 0 0 4px 0; font-size: 26px; display: flex; align-items: center; gap: 12px; }
+  .modal-card h2 .swatch { width: 28px; height: 28px; border-radius: 50%; box-shadow: 0 0 16px currentColor; }
+  .modal-card .type { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+  .modal-card .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; margin-bottom: 16px; }
+  .modal-card .stat .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .modal-card .stat .value { font-size: 15px; color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .modal-card .stat .sub { font-size: 10px; color: var(--muted); font-weight: 400; margin-top: 1px; }
+  .modal-card .fact {
+    background: rgba(255, 209, 102, 0.1); border-left: 3px solid var(--accent);
+    padding: 10px 14px; border-radius: 4px; font-size: 13px;
+    color: #fff5d6; font-style: italic;
+  }
+  .moonsList { margin-top: 14px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; }
+  .moonsList h3 { margin: 0 0 8px 0; font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+  .moonRow { display: flex; align-items: center; gap: 10px; padding: 4px 0; font-size: 13px; }
+  .moonRow .moonDot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .moonRow .moonName { color: var(--text); font-weight: 600; min-width: 90px; }
+  .moonRow .moonInfo { color: var(--muted); font-size: 11px; }
+
+  .modal-card .actions { margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .modal-card .btn { border: none; padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; transition: transform 0.15s; }
+  .modal-card .btn-primary { background: var(--accent); color: #02030a; }
+  .modal-card .btn-primary:hover { transform: translateY(-1px); }
+  .modal-card .btn-ghost { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--panel-border); }
+  .modal-card .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+
+  /* Glossary */
+  .glossary dt { font-weight: 700; color: var(--accent); margin-top: 12px; font-size: 14px; }
+  .glossary dt:first-of-type { margin-top: 0; }
+  .glossary dd { margin: 4px 0 0 0; color: var(--text); font-size: 13px; line-height: 1.45; }
+
+  /* Comparator fly-to bar */
+  .comparePanel {
+    position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 12px; padding: 6px; z-index: 6;
+    backdrop-filter: blur(10px); display: none;
+    max-width: calc(100vw - 24px); overflow-x: auto;
+    white-space: nowrap; -webkit-overflow-scrolling: touch;
+  }
+  .comparePanel.visible { display: flex; gap: 4px; }
+  .flyBtn {
+    background: rgba(255,255,255,0.05); color: var(--text);
+    border: 1px solid var(--panel-border); border-radius: 8px;
+    padding: 6px 10px; font-size: 12px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-weight: 600; white-space: nowrap; transition: all 0.15s;
+  }
+  .flyBtn:hover { background: rgba(255,255,255,0.1); }
+  .flyBtn.active { background: var(--accent); color: #02030a; border-color: var(--accent); }
+  .flyBtn .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 6px currentColor; }
+  .compareHint {
+    position: absolute; bottom: 12px; right: 12px; z-index: 6;
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 8px; padding: 6px 10px; font-size: 11px;
+    color: var(--muted); display: none; pointer-events: none;
+    backdrop-filter: blur(10px);
+  }
+  .compareHint.visible { display: block; }
+
+  /* Real-time card (ISS, etc.) */
+  .liveCard {
+    position: absolute; bottom: 130px; right: 24px;
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 12px; padding: 10px 14px; backdrop-filter: blur(10px);
+    z-index: 5; font-size: 11px; display: none; min-width: 180px;
+  }
+  .liveCard.visible { display: block; }
+  .liveCard h4 { margin: 0 0 6px 0; font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+  .liveCard .row { display: flex; justify-content: space-between; gap: 8px; margin: 2px 0; color: var(--muted); }
+  .liveCard .row b { color: var(--text); font-weight: 600; }
+
+  /* Tablet: hide the right-side stack so cards don't crowd the canvas */
+  @media (max-width: 900px) {
+    .rightStack { display: none !important; }
+  }
+  /* First-visit language picker */
+  .langPicker {
+    position: fixed; inset: 0; z-index: 50;
+    background: radial-gradient(ellipse at center, var(--bg-mid) 0%, var(--bg-deep) 70%);
+    display: none; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .langPicker.visible { display: flex; }
+  .langPickerCard {
+    text-align: center; max-width: 460px; width: 100%;
+    animation: lpIn 0.4s ease-out;
+  }
+  @keyframes lpIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .langPickerCard .icon { font-size: 56px; margin-bottom: 14px; }
+  .langPickerCard .titles { font-size: 20px; font-weight: 600; line-height: 1.6; margin-bottom: 32px; }
+  .langPickerCard .titles div { opacity: 0.85; }
+  .langPickerCard .titles div + div { font-size: 16px; opacity: 0.6; }
+  .langPickerOptions { display: flex; flex-direction: column; gap: 12px; }
+  .langPickerOptions button {
+    background: var(--panel); border: 1.5px solid var(--panel-border);
+    border-radius: 14px; padding: 16px 22px;
+    display: flex; align-items: center; gap: 16px;
+    font-size: 17px; font-weight: 600; color: var(--text);
+    cursor: pointer; text-align: left;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  }
+  .langPickerOptions button:hover {
+    background: rgba(255,255,255,0.06); border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .langPickerOptions button .flag { font-size: 28px; line-height: 1; flex-shrink: 0; }
+  .langPickerOptions button .label { flex: 1; }
+  .langPickerOptions button .arrow { color: var(--muted); font-size: 18px; }
+  @media (max-width: 600px) {
+    .langPickerCard .icon { font-size: 44px; }
+    .langPickerCard .titles { font-size: 17px; margin-bottom: 24px; }
+    .langPickerCard .titles div + div { font-size: 14px; }
+    .langPickerOptions button { padding: 13px 16px; font-size: 15px; }
+    .langPickerOptions button .flag { font-size: 24px; }
+  }
+
+  @media (max-width: 760px) {
+    .infoCard, .phaseCard { display: none !important; }
+    .subtitle { display: none; }
+    .menuBtn { width: 24px; height: 24px; font-size: 16px; }
+    .menuDropdown { top: 50px; left: 10px; min-width: 200px; }
+    .menuItem { font-size: 13px; padding: 9px 11px; }
+    .backBtn { padding: 7px 12px; font-size: 12px; top: 10px; left: 10px; }
+    .backBtn .arrow { font-size: 14px; }
+    .title { font-size: 15px; }
+    .topbar { padding: 8px 10px; gap: 6px; }
+    .tabs { margin-top: 6px; padding: 3px; gap: 0; }
+    .tab { padding: 6px 9px; font-size: 11px; }
+    .clock { padding: 6px 10px; min-width: 0; }
+    .clock .hour { font-size: 16px; }
+    .clock .year { font-size: 10px; }
+    .iconBtn { width: 36px; height: 36px; font-size: 16px; }
+    .eclipseBanner { top: 70px; font-size: 13px; padding: 6px 12px; }
+    .panel { padding: 10px 12px; min-width: calc(100vw - 16px); bottom: 12px; left: 8px; right: 8px; transform: none; }
+    .panel-row { gap: 8px; flex-wrap: wrap; }
+    .play-btn { width: 40px; height: 40px; font-size: 15px; }
+    .slider-wrap { flex: 1 1 100%; order: 1; min-width: 0; }
+    .speed-toggle { order: 2; flex-shrink: 0; }
+    .speed-toggle button { padding: 5px 8px; font-size: 11px; }
+    .sub-toggle { gap: 2px; padding: 2px; max-width: 100%; flex-wrap: wrap; }
+    .sub-toggle button { padding: 5px 8px; font-size: 10px; }
+    .slider-labels { font-size: 10px; }
+    .settings { right: 6px; top: 70px; min-width: 220px; }
+    .modal-card { padding: 22px 18px; }
+    .modal-card .grid { grid-template-columns: 1fr; }
+    .modal-card h2 { font-size: 20px; }
+    .liveCard { display: none !important; }
+    .tourBanner { padding: 16px 18px; }
+    .tourBanner .text { font-size: 15px; }
+  }
+  @media (max-width: 460px) {
+    .tab { padding: 5px 7px; font-size: 10px; }
+    .clock { padding: 5px 8px; }
+    .clock .hour { font-size: 14px; }
+    .clock .year { display: none; }
+    .iconBtn { width: 32px; height: 32px; font-size: 14px; }
+    .sub-toggle button { font-size: 9px; padding: 4px 6px; }
+    .slider-labels span:nth-child(2),
+    .slider-labels span:nth-child(4) { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="langPicker" id="langPicker">
+  <div class="langPickerCard">
+    <div class="icon">🌍</div>
+    <div class="titles">
+      <div>Choisis ta langue</div>
+      <div>Choose your language</div>
+      <div>Обери свою мову</div>
+    </div>
+    <div class="langPickerOptions">
+      <button data-lang="fr"><span class="flag">🇫🇷</span><span class="label">Français</span><span class="arrow">→</span></button>
+      <button data-lang="en"><span class="flag">🇬🇧</span><span class="label">English</span><span class="arrow">→</span></button>
+      <button data-lang="uk"><span class="flag">🇺🇦</span><span class="label">Українська</span><span class="arrow">→</span></button>
+    </div>
+  </div>
+</div>
+
+<div id="stage">
+  <canvas id="canvas"></canvas>
+
+  <div class="topbar">
+    <div>
+      <div class="titleRow">
+        <div class="title">🌞 <span data-i18n="titleA"></span> <span data-i18n="titleB"></span></div>
+        <button class="menuBtn" id="menuBtn" aria-label="Menu">+</button>
+      </div>
+      <div class="subtitle" data-i18n="subtitle"></div>
+      <div class="tabs">
+        <button class="tab active" data-view="solar" data-i18n="tab_solar"></button>
+        <button class="tab" data-view="compare" data-i18n="tab_compare"></button>
+        <a class="tab" href="solaire-quiz.html" data-i18n="tab_quiz"></a>
+      </div>
+    </div>
+    <div class="topRight">
+      <div class="clock">
+        <div class="hour" id="hourLabel">00 h 00</div>
+        <div class="year" id="yearLabel"></div>
+      </div>
+      <button class="iconBtn gear" id="gearBtn" aria-label="Settings">⚙</button>
+    </div>
+  </div>
+
+  <div class="settings" id="settings">
+    <h4 data-i18n="settings_display"></h4>
+    <div class="toggle on" data-key="constellations"><span data-i18n="opt_constellations"></span><div class="switch"></div></div>
+    <div class="toggle on" data-key="milkyway"><span data-i18n="opt_milkyway"></span><div class="switch"></div></div>
+    <div class="toggle on" data-key="comet"><span data-i18n="opt_comet"></span><div class="switch"></div></div>
+    <div class="toggle off" data-key="realPositions"><span data-i18n="opt_realpos"></span><div class="switch"></div></div>
+
+    <h4 data-i18n="settings_earth"></h4>
+    <div class="toggle on" data-key="iss" data-earth-only="1"><span data-i18n="opt_iss"></span><div class="switch"></div></div>
+    <div class="toggle off" data-key="issLive" data-earth-only="1"><span data-i18n="opt_iss_live"></span><div class="switch"></div></div>
+    <div class="toggle on" data-key="clouds" data-earth-only="1"><span data-i18n="opt_clouds"></span><div class="switch"></div></div>
+    <div class="toggle on" data-key="atmosphere" data-earth-only="1"><span data-i18n="opt_atmosphere"></span><div class="switch"></div></div>
+    <div class="toggle on" data-key="tides" data-earth-only="1"><span data-i18n="opt_tides"></span><div class="switch"></div></div>
+
+    <h4 data-i18n="settings_sound"></h4>
+    <div class="toggle off" data-key="sound"><span data-i18n="opt_sound"></span><div class="switch"></div></div>
+
+    <h4 data-i18n="settings_lang"></h4>
+    <div class="langToggle" id="langToggle">
+      <button data-lang="fr">🇫🇷 FR</button>
+      <button data-lang="en">🇬🇧 EN</button>
+      <button data-lang="uk">🇺🇦 УК</button>
+    </div>
+
+    <h4 data-i18n="settings_more"></h4>
+    <button class="settingsAction primary" id="tourBtn">🎬 <span data-i18n="action_tour"></span></button>
+    <button class="settingsAction" id="fullscreenBtn">⛶ <span data-i18n="action_fullscreen"></span></button>
+    <button class="settingsAction" id="glossaryBtn">📖 <span data-i18n="action_glossary"></span></button>
+    <button class="settingsAction" id="installBtn" style="display:none">📲 <span data-i18n="action_install"></span></button>
+  </div>
+
+  <div class="menuDropdown" id="menuDropdown">
+    <div class="menuHeader">MES APPS</div>
+    <a href="index.html" class="menuItem">⚡ <span>Electrolab</span></a>
+    <a href="mecanique.html" class="menuItem">🚀 <span>Mécanik</span></a>
+    <a href="#" class="menuItem active" id="menuItemSolar">🪐 <span>Système Solaire</span></a>
+  </div>
+
+  <button class="backBtn" id="backBtn">
+    <span class="arrow">←</span>
+    <span class="titleSmall" data-i18n="back_to_solar"></span>
+    <span class="planetName" id="backBtnPlanet"></span>
+  </button>
+
+  <div class="eclipseBanner" id="eclipseBanner">🌑 Éclipse en cours</div>
+
+  <div class="infoCard visible" id="solarInfo">
+    <h3 data-i18n="info_planets"></h3>
+    <div id="legendList"></div>
+    <h4 data-i18n="info_speed"></h4>
+    <div class="scaleChips" id="scaleChips">
+      <button data-years="1" class="active" data-i18n="scale_1"></button>
+      <button data-years="12" data-i18n="scale_12"></button>
+      <button data-years="30" data-i18n="scale_30"></button>
+      <button data-years="165" data-i18n="scale_165"></button>
+    </div>
+    <div class="followBadge" id="followBadge">
+      <span id="followLabel"></span>
+      <button id="followReset">×</button>
+    </div>
+    <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--panel-border); font-size:11px; color:var(--muted);" data-i18n="info_hint"></div>
+  </div>
+
+  <div class="infoCard" id="earthInfo">
+    <h3 data-i18n="info_earth_title"></h3>
+    <div style="line-height: 1.6; color: var(--muted);" id="earthInfoBody"></div>
+  </div>
+
+  <div class="rightStack" id="rightStack">
+    <div class="phaseCard" id="phaseCard">
+      <h3 data-i18n="phase_title"></h3>
+      <canvas id="phaseCanvas" width="180" height="180"></canvas>
+      <div class="phaseName" id="phaseName">Nouvelle Lune</div>
+      <div class="phaseIllumination" id="phaseIllum">0 %</div>
+    </div>
+    <div class="earthDataCard" id="earthDataCard"></div>
+  </div>
+
+  <div class="liveCard" id="liveCard">
+    <h4 data-i18n="live_title"></h4>
+    <div id="liveCardBody"></div>
+  </div>
+
+  <div class="tourBanner" id="tourBanner">
+    <div class="progress"><div class="progressFill" id="tourProgress"></div></div>
+    <div class="step" id="tourStep"></div>
+    <div class="text" id="tourText"></div>
+    <div class="controls">
+      <button id="tourPause" data-i18n="tour_pause"></button>
+      <button id="tourSkip" data-i18n="tour_skip"></button>
+      <button class="primary" id="tourNext" data-i18n="tour_next"></button>
+    </div>
+  </div>
+
+  <div class="comparePanel" id="comparePanel"></div>
+  <div class="compareHint" id="compareHint"></div>
+
+  <div class="tooltip" id="tooltip"><div class="name"></div><div class="info"></div></div>
+
+  <!-- Planet/Sun modal -->
+  <div class="modal" id="modal">
+    <div class="modal-card" id="modalCard">
+      <button class="close" id="modalClose" aria-label="Close">×</button>
+      <h2><span class="swatch" id="modalSwatch"></span><span id="modalTitle"></span></h2>
+      <div class="type" id="modalType"></div>
+      <div class="grid" id="modalGrid"></div>
+      <div class="fact" id="modalFact"></div>
+      <div id="modalMoons"></div>
+      <div class="actions" id="modalActions"></div>
+    </div>
+  </div>
+
+  <!-- Glossary modal -->
+  <div class="modal" id="glossaryModal">
+    <div class="modal-card">
+      <button class="close" id="glossaryClose">×</button>
+      <h2>📖 <span data-i18n="glossary_title"></span></h2>
+      <dl class="glossary" id="glossaryList"></dl>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="sub-toggle" id="subToggle">
+      <button data-mode="day" class="active" data-i18n="mode_day"></button>
+      <button data-mode="month" data-i18n="mode_month"></button>
+      <button data-mode="season" data-i18n="mode_season"></button>
+    </div>
+    <div class="panel-row">
+      <button class="play-btn" id="playBtn" aria-label="Play">⏸</button>
+      <div class="slider-wrap">
+        <input type="range" id="slider" min="0" max="1440" value="0" step="1" />
+        <div class="slider-labels" id="sliderLabels"></div>
+      </div>
+      <div class="speed-toggle">
+        <button data-speed="0.5">½×</button>
+        <button data-speed="1" class="active">1×</button>
+        <button data-speed="2">2×</button>
+        <button data-speed="4">4×</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ============ DOM ============
+  const $ = (id) => document.getElementById(id);
+  const canvas = $('canvas'), ctx = canvas.getContext('2d');
+  const slider = $('slider'), playBtn = $('playBtn');
+  const hourLabel = $('hourLabel'), yearLabel = $('yearLabel');
+  const tooltip = $('tooltip'), legendList = $('legendList');
+  const solarInfo = $('solarInfo'), earthInfo = $('earthInfo');
+  const phaseCard = $('phaseCard'), subToggle = $('subToggle');
+  const sliderLabels = $('sliderLabels');
+  const phaseCanvas = $('phaseCanvas'), phaseCtx = phaseCanvas.getContext('2d');
+  const eclipseBanner = $('eclipseBanner');
+  const gearBtn = $('gearBtn'), settingsPanel = $('settings');
+  const modal = $('modal'), modalClose = $('modalClose');
+  const modalSwatch = $('modalSwatch'), modalTitle = $('modalTitle');
+  const modalType = $('modalType'), modalGrid = $('modalGrid');
+  const modalFact = $('modalFact'), modalActions = $('modalActions');
+  const modalMoons = $('modalMoons');
+  const scaleChipsEl = $('scaleChips'), followBadge = $('followBadge');
+  const followLabel = $('followLabel'), followReset = $('followReset');
+  const tourBanner = $('tourBanner'), tourStepEl = $('tourStep');
+  const tourTextEl = $('tourText'), tourProgress = $('tourProgress');
+  const tourPause = $('tourPause'), tourSkip = $('tourSkip'), tourNext = $('tourNext');
+  const glossaryModal = $('glossaryModal'), glossaryClose = $('glossaryClose');
+  const glossaryList = $('glossaryList');
+  const liveCard = $('liveCard'), liveCardBody = $('liveCardBody');
+
+  // ============ i18n ============
+  const I18N = {
+    fr: {
+      titleA: 'Le Système', titleB: 'Solaire',
+      subtitle: 'Déplace le curseur pour voyager dans le temps',
+      tab_solar: '🪐 Système Solaire', tab_earth: '🌍 Terre & Lune',
+      tab_compare: '📏 Comparateur', tab_quiz: '🎯 Quiz',
+      settings_display: 'Affichage', settings_earth: 'Vue Terre', settings_sound: 'Audio',
+      settings_lang: 'Langue', settings_more: 'Plus',
+      opt_constellations: '✨ Constellations', opt_milkyway: '🌌 Voie lactée',
+      opt_comet: '☄ Comète', opt_realpos: '📅 Positions réelles (auj.)',
+      opt_iss: '🛰 ISS (simulée)', opt_iss_live: '📡 ISS en direct',
+      opt_clouds: '☁ Nuages', opt_atmosphere: '🌐 Atmosphère',
+      opt_tides: '🌊 Marées', opt_sound: '🔊 Son d\'ambiance',
+      action_tour: 'Lancer la visite guidée', action_fullscreen: 'Plein écran',
+      action_glossary: 'Glossaire', action_install: 'Installer l\'app',
+      info_planets: 'Les Planètes', info_speed: '⏱ Vitesse du temps',
+      info_hint: '💡 Clique sur une planète ou le Soleil pour voir la fiche',
+      info_earth_title: 'Vue Terre & Lune',
+      scale_1: '1 an', scale_12: '12 ans', scale_30: '30 ans', scale_165: '165 ans',
+      mode_day: '🕐 Journée (24 h)', mode_month: '🌙 Mois (29,5 j)', mode_season: '🍂 Saisons (1 an)',
+      back_to_solar: 'Système Solaire', drag_hint: '🖱 Maintiens la Terre et fais-la glisser sur son orbite',
+      menu_apps: 'Mes apps', menu_solar: 'Système Solaire',
+      phase_title: 'Phase de la Lune',
+      live_title: '📡 ISS en direct',
+      tour_pause: '⏸ Pause', tour_skip: 'Quitter', tour_next: 'Suivant →',
+      glossary_title: 'Glossaire',
+      lyon_night: '🌙 Nuit à Lyon', lyon_dawn: '🌅 Aube à Lyon',
+      lyon_day: '☀ Jour à Lyon', lyon_dusk: '🌇 Crépuscule à Lyon',
+      year_simulated: 'sur {n} ans simulés', year_simulated_one: 'sur 1 an simulé',
+      lunar_cycle: 'Cycle lunaire / 29,5 j', day_n: 'Jour {n}',
+      day_of_year: 'Jour {n} / 365',
+      eclipse_solar: '🌑 Éclipse solaire !', eclipse_lunar: '🌒 Éclipse lunaire !',
+      follow_focus: '🎯 Focus sur', follow_cycle: '1 cycle =',
+      planet_card_diameter: 'Diamètre', planet_card_distance: 'Distance au Soleil',
+      planet_card_day: 'Durée d\'un jour', planet_card_year: 'Durée d\'une année',
+      planet_card_moons: 'Lunes connues', planet_card_rings: 'Anneaux',
+      planet_card_yes: 'Oui ✨', planet_card_no: 'Non',
+      ua_note: 'UA = Unité Astronomique',
+      sun_card_diameter: 'Diamètre', sun_card_mass: 'Masse',
+      sun_card_surface: 'Température (surface)', sun_card_core: 'Température (cœur)',
+      sun_card_age: 'Âge', sun_card_composition: 'Composition',
+      sun_109_earths: '109 fois la Terre',
+      moons_title: 'Lunes principales',
+      btn_follow: '🎯 Suivre {name} sur son orbite', btn_close: 'Fermer',
+      hemisphere_north: 'Hémisphère Nord', hemisphere_south: 'Hémisphère Sud',
+      spring: '🌸 Printemps', summer: '☀ Été', autumn: '🍂 Automne', winter: '❄ Hiver', equinox: '⚖ Équinoxe',
+      compare_title: 'Comparateur de tailles', compare_unit: 'Diamètre',
+      compare_earth_ref: 'Terre = 1', compare_sun_too_big: 'Le Soleil est trop grand pour tenir ici !',
+    },
+    en: {
+      titleA: 'The Solar', titleB: 'System',
+      subtitle: 'Slide the cursor to travel through time',
+      tab_solar: '🪐 Solar System', tab_earth: '🌍 Earth & Moon',
+      tab_compare: '📏 Size Compare', tab_quiz: '🎯 Quiz',
+      settings_display: 'Display', settings_earth: 'Earth view', settings_sound: 'Audio',
+      settings_lang: 'Language', settings_more: 'More',
+      opt_constellations: '✨ Constellations', opt_milkyway: '🌌 Milky Way',
+      opt_comet: '☄ Comet', opt_realpos: '📅 Real positions (today)',
+      opt_iss: '🛰 ISS (simulated)', opt_iss_live: '📡 ISS live',
+      opt_clouds: '☁ Clouds', opt_atmosphere: '🌐 Atmosphere',
+      opt_tides: '🌊 Tides', opt_sound: '🔊 Ambient sound',
+      action_tour: 'Start the guided tour', action_fullscreen: 'Fullscreen',
+      action_glossary: 'Glossary', action_install: 'Install app',
+      info_planets: 'The Planets', info_speed: '⏱ Time speed',
+      info_hint: '💡 Click on a planet or the Sun to see its card',
+      info_earth_title: 'Earth & Moon view',
+      scale_1: '1 yr', scale_12: '12 yrs', scale_30: '30 yrs', scale_165: '165 yrs',
+      mode_day: '🕐 Day (24 h)', mode_month: '🌙 Month (29.5 d)', mode_season: '🍂 Seasons (1 yr)',
+      back_to_solar: 'Solar System', drag_hint: '🖱 Hold Earth and drag it along its orbit',
+      menu_apps: 'My apps', menu_solar: 'Solar System',
+      phase_title: 'Moon phase',
+      live_title: '📡 ISS live',
+      tour_pause: '⏸ Pause', tour_skip: 'Quit', tour_next: 'Next →',
+      glossary_title: 'Glossary',
+      lyon_night: '🌙 Night in Lyon', lyon_dawn: '🌅 Dawn in Lyon',
+      lyon_day: '☀ Day in Lyon', lyon_dusk: '🌇 Dusk in Lyon',
+      year_simulated: 'over {n} simulated yrs', year_simulated_one: 'over 1 simulated yr',
+      lunar_cycle: 'Lunar cycle / 29.5 d', day_n: 'Day {n}',
+      day_of_year: 'Day {n} / 365',
+      eclipse_solar: '🌑 Solar eclipse!', eclipse_lunar: '🌒 Lunar eclipse!',
+      follow_focus: '🎯 Focus on', follow_cycle: '1 cycle =',
+      planet_card_diameter: 'Diameter', planet_card_distance: 'Distance to Sun',
+      planet_card_day: 'Day length', planet_card_year: 'Year length',
+      planet_card_moons: 'Known moons', planet_card_rings: 'Rings',
+      planet_card_yes: 'Yes ✨', planet_card_no: 'No',
+      ua_note: 'AU = Astronomical Unit',
+      sun_card_diameter: 'Diameter', sun_card_mass: 'Mass',
+      sun_card_surface: 'Surface temp.', sun_card_core: 'Core temp.',
+      sun_card_age: 'Age', sun_card_composition: 'Composition',
+      sun_109_earths: '109 times Earth',
+      moons_title: 'Main moons',
+      btn_follow: '🎯 Follow {name} on its orbit', btn_close: 'Close',
+      hemisphere_north: 'Northern Hemisphere', hemisphere_south: 'Southern Hemisphere',
+      spring: '🌸 Spring', summer: '☀ Summer', autumn: '🍂 Autumn', winter: '❄ Winter', equinox: '⚖ Equinox',
+      compare_title: 'Size comparison', compare_unit: 'Diameter',
+      compare_earth_ref: 'Earth = 1', compare_sun_too_big: 'The Sun is too big to fit here!',
+    },
+    uk: {
+      titleA: 'Сонячна', titleB: 'система',
+      subtitle: 'Переміщай повзунок, щоб подорожувати в часі',
+      tab_solar: '🪐 Сонячна система', tab_earth: '🌍 Земля & Місяць',
+      tab_compare: '📏 Порівняння', tab_quiz: '🎯 Вікторина',
+      settings_display: 'Відображення', settings_earth: 'Вид Землі', settings_sound: 'Звук',
+      settings_lang: 'Мова', settings_more: 'Більше',
+      opt_constellations: '✨ Сузір\'я', opt_milkyway: '🌌 Чумацький Шлях',
+      opt_comet: '☄ Комета', opt_realpos: '📅 Реальні позиції (сьогодні)',
+      opt_iss: '🛰 МКС (симуляція)', opt_iss_live: '📡 МКС наживо',
+      opt_clouds: '☁ Хмари', opt_atmosphere: '🌐 Атмосфера',
+      opt_tides: '🌊 Припливи', opt_sound: '🔊 Фонова музика',
+      action_tour: 'Запустити екскурсію', action_fullscreen: 'На весь екран',
+      action_glossary: 'Словник', action_install: 'Встановити додаток',
+      info_planets: 'Планети', info_speed: '⏱ Швидкість часу',
+      info_hint: '💡 Натисни на планету або Сонце, щоб переглянути картку',
+      info_earth_title: 'Вид Земля & Місяць',
+      scale_1: '1 рік', scale_12: '12 років', scale_30: '30 років', scale_165: '165 років',
+      mode_day: '🕐 Доба (24 год)', mode_month: '🌙 Місяць (29,5 д)', mode_season: '🍂 Сезони (1 рік)',
+      phase_title: 'Фаза Місяця',
+      live_title: '📡 МКС наживо',
+      tour_pause: '⏸ Пауза', tour_skip: 'Вийти', tour_next: 'Далі →',
+      glossary_title: 'Словник',
+      lyon_night: '🌙 Ніч у Ліоні', lyon_dawn: '🌅 Світанок у Ліоні',
+      lyon_day: '☀ День у Ліоні', lyon_dusk: '🌇 Сутінки у Ліоні',
+      year_simulated: 'за {n} симульованих років', year_simulated_one: 'за 1 симульований рік',
+      lunar_cycle: 'Місячний цикл / 29,5 д', day_n: 'День {n}',
+      day_of_year: 'День {n} / 365',
+      eclipse_solar: '🌑 Сонячне затемнення!', eclipse_lunar: '🌒 Місячне затемнення!',
+      follow_focus: '🎯 Фокус на', follow_cycle: '1 цикл =',
+      planet_card_diameter: 'Діаметр', planet_card_distance: 'Відстань до Сонця',
+      planet_card_day: 'Тривалість доби', planet_card_year: 'Тривалість року',
+      planet_card_moons: 'Відомі супутники', planet_card_rings: 'Кільця',
+      planet_card_yes: 'Так ✨', planet_card_no: 'Ні',
+      ua_note: 'АО = Астрономічна одиниця',
+      sun_card_diameter: 'Діаметр', sun_card_mass: 'Маса',
+      sun_card_surface: 'Температура (поверхня)', sun_card_core: 'Температура (ядро)',
+      sun_card_age: 'Вік', sun_card_composition: 'Склад',
+      sun_109_earths: 'У 109 разів більше за Землю',
+      moons_title: 'Основні супутники',
+      btn_follow: '🎯 Слідкувати за {name} на її орбіті', btn_close: 'Закрити',
+      hemisphere_north: 'Північна півкуля', hemisphere_south: 'Південна півкуля',
+      spring: '🌸 Весна', summer: '☀ Літо', autumn: '🍂 Осінь', winter: '❄ Зима', equinox: '⚖ Рівнодення',
+      compare_title: 'Порівняння розмірів', compare_unit: 'Діаметр',
+      compare_earth_ref: 'Земля = 1', compare_sun_too_big: 'Сонце занадто велике, щоб вмістити сюди!',
+      back_to_solar: 'Сонячна система', drag_hint: '🖱 Утримуй Землю та переміщай її по орбіті',
+      menu_apps: 'Мої додатки', menu_solar: 'Сонячна система',
+    },
+  };
+  let lang = (() => { const s = localStorage.getItem('lang'); return (s === 'en' || s === 'uk') ? s : 'fr'; })();
+  function t(key, vars) {
+    let s = (I18N[lang][key] || I18N.fr[key] || key);
+    if (vars) for (const k in vars) s = s.replace('{' + k + '}', vars[k]);
+    return s;
+  }
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      el.textContent = t(el.dataset.i18n);
+    });
+    document.querySelectorAll('#langToggle button').forEach(b => {
+      b.classList.toggle('active', b.dataset.lang === lang);
+    });
+    // Re-render dynamic parts
+    buildLegend(); buildGlossary(); updateEarthInfo();
+    if (state.view === 'earth') buildEarthDataCard();
+    if (comparator._inited) buildFlyButtons();
+    const ch = $('compareHint');
+    if (ch && ch.classList.contains('visible')) {
+      ch.textContent = lang === 'en'
+        ? '🖱 Drag to pan · scroll to zoom · tap a planet to focus'
+        : '🖱 Glisse pour bouger · molette pour zoomer · clic sur une planète pour s\'en approcher';
+    }
+    updateSliderLabels(); updateLabels();
+  }
+
+  // ============ State ============
+  const state = {
+    view: 'solar',
+    earthMode: 'day',
+    highlightedPlanet: -1,
+    timeScaleYears: 1,
+    focusedPlanetIdx: null,
+    settings: {
+      constellations: true, milkyway: true, comet: true, realPositions: false,
+      iss: true, issLive: false, clouds: true, atmosphere: true, tides: true,
+      sound: false,
+    },
+    iss: null, // { lat, lon, ts }
+  };
+  // Load saved settings
+  try {
+    const saved = JSON.parse(localStorage.getItem('settings') || '{}');
+    Object.assign(state.settings, saved);
+  } catch {}
+  function saveSettings() {
+    localStorage.setItem('settings', JSON.stringify(state.settings));
+    localStorage.setItem('lang', lang);
+  }
+
+  // ============ Constants ============
+  const LUNAR_MONTH_DAYS = 29.53;
+  const AXIAL_TILT = 23.5 * Math.PI / 180;
+  const VIEW_TILT = 22 * Math.PI / 180;
+  const LYON_LAT = 45.76 * Math.PI / 180;
+  const LYON_LON = 4.83 * Math.PI / 180;
+  const AU_KM = 149_597_870;
+  let EARTH_RADIUS = 64, MOON_RADIUS = 14, MOON_ORBIT_RADIUS = 200;
+  let displayScale = 1;
+
+  // ============ Sun + Planet data ============
+  const SUN = {
+    name: 'Soleil', nameEn: 'Sun', nameUk: 'Сонце', color: '#ffd166',
+    typeFr: 'Étoile naine jaune (type G2V)', typeEn: 'Yellow dwarf star (type G2V)',
+    typeUk: 'Жовтий карлик (тип G2V)',
+    diameter: 1_391_000,
+    age: { fr: '4,6 milliards d\'années', en: '4.6 billion years', uk: '4,6 мільярда років' },
+    surfaceTemp: { fr: '5 500 °C', en: '5,500 °C', uk: '5 500 °C' },
+    coreTemp: { fr: '15 millions °C', en: '15 million °C', uk: '15 мільйонів °C' },
+    mass: { fr: '333 000 fois la Terre', en: '333,000 times Earth', uk: 'У 333 000 разів більше Землі' },
+    composition: { fr: '74 % H · 24 % He', en: '74% H · 24% He', uk: '74 % H · 24 % He' },
+    fact: {
+      fr: 'La lumière du Soleil met 8 minutes et 20 secondes pour arriver jusqu\'à nous !',
+      en: 'Sunlight takes 8 minutes and 20 seconds to reach us!',
+      uk: 'Сонячне світло долітає до нас за 8 хвилин і 20 секунд!'
+    },
+  };
+
+  const PLANETS = [
+    { name: 'Mercure', nameEn: 'Mercury', nameUk: 'Меркурій', color: '#b1a08b', radius: 3, distance: 70, realDistanceAU: 0.39,
+      period: 0.241, diameter: 4879, dayHours: 1408, moons: 0,
+      type: { fr: 'Planète rocheuse', en: 'Rocky planet', uk: 'Кам\'яниста планета' },
+      fact: { fr: 'Une journée sur Mercure dure 59 jours terrestres — plus longue que son année !',
+              en: 'A day on Mercury lasts 59 Earth days — longer than its year!',
+              uk: 'Доба на Меркурії триває 59 земних діб — довше, ніж його рік!' },
+      kepler: { a: 0.387, e: 0.2056, L0: 252.25, peri: 77.46, rate: 149472.67 } },
+    { name: 'Vénus', nameEn: 'Venus', nameUk: 'Венера', color: '#e8c391', radius: 5, distance: 105, realDistanceAU: 0.72,
+      period: 0.615, diameter: 12104, dayHours: 5832, moons: 0,
+      type: { fr: 'Planète rocheuse', en: 'Rocky planet', uk: 'Кам\'яниста планета' },
+      fact: { fr: 'Vénus tourne sur elle-même… à l\'envers ! Le Soleil s\'y lève à l\'ouest.',
+              en: 'Venus spins backwards! The Sun rises in the west there.',
+              uk: 'Венера обертається… у зворотний бік! Сонце там сходить на заході.' },
+      kepler: { a: 0.723, e: 0.0068, L0: 181.98, peri: 131.56, rate: 58517.81 } },
+    { name: 'Terre', nameEn: 'Earth', nameUk: 'Земля', color: '#4a9eff', radius: 5.5, distance: 145, realDistanceAU: 1.0,
+      period: 1.0, diameter: 12742, dayHours: 24, moons: 1,
+      type: { fr: 'Planète rocheuse', en: 'Rocky planet', uk: 'Кам\'яниста планета' },
+      fact: { fr: 'La seule planète connue où la vie existe. Notre maison ! 🌍',
+              en: 'The only planet known to host life. Our home! 🌍',
+              uk: 'Єдина відома планета, де існує життя. Наш дім! 🌍' },
+      moonList: [{ name: 'Lune', nameEn: 'Moon', nameUk: 'Місяць', diameter: 3474, period: 27.3 }],
+      kepler: { a: 1.000, e: 0.0167, L0: 100.46, peri: 102.94, rate: 35999.37 } },
+    { name: 'Mars', nameEn: 'Mars', nameUk: 'Марс', color: '#e07b5a', radius: 4, distance: 185, realDistanceAU: 1.52,
+      period: 1.881, diameter: 6779, dayHours: 24.6, moons: 2,
+      type: { fr: 'Planète rocheuse', en: 'Rocky planet', uk: 'Кам\'яниста планета' },
+      fact: { fr: 'Mars abrite Olympus Mons, le plus grand volcan du système solaire (22 km !)',
+              en: 'Mars hosts Olympus Mons, the largest volcano in the solar system (22 km!)',
+              uk: 'На Марсі знаходиться гора Олімп — найбільший вулкан Сонячної системи (22 км)!' },
+      moonList: [
+        { name: 'Phobos', nameEn: 'Phobos', nameUk: 'Фобос', diameter: 22, period: 0.32 },
+        { name: 'Deimos', nameEn: 'Deimos', nameUk: 'Деймос', diameter: 12, period: 1.26 },
+      ],
+      kepler: { a: 1.524, e: 0.0934, L0: -4.55, peri: -23.94, rate: 19140.30 } },
+    { name: 'Jupiter', nameEn: 'Jupiter', nameUk: 'Юпітер', color: '#d4a574', radius: 14, distance: 270, realDistanceAU: 5.2,
+      period: 11.862, diameter: 139820, dayHours: 9.9, moons: 95,
+      type: { fr: 'Géante gazeuse', en: 'Gas giant', uk: 'Газовий гігант' },
+      fact: { fr: 'Sa Grande Tache Rouge est une tempête qui dure depuis au moins 350 ans !',
+              en: 'Its Great Red Spot is a storm that has lasted at least 350 years!',
+              uk: 'Велика червона пляма — це шторм, що триває принаймні 350 років!' },
+      moonList: [
+        { name: 'Io', nameEn: 'Io', nameUk: 'Іо', diameter: 3643, period: 1.77, orbit: 0.42 },
+        { name: 'Europe', nameEn: 'Europa', nameUk: 'Європа', diameter: 3122, period: 3.55, orbit: 0.67 },
+        { name: 'Ganymède', nameEn: 'Ganymede', nameUk: 'Ганімед', diameter: 5268, period: 7.15, orbit: 1.07 },
+        { name: 'Callisto', nameEn: 'Callisto', nameUk: 'Каллісто', diameter: 4821, period: 16.69, orbit: 1.88 },
+      ],
+      kepler: { a: 5.203, e: 0.0484, L0: 34.40, peri: 14.73, rate: 3034.91 } },
+    { name: 'Saturne', nameEn: 'Saturn', nameUk: 'Сатурн', color: '#e8d39c', radius: 12, distance: 345, realDistanceAU: 9.58,
+      period: 29.457, diameter: 116460, dayHours: 10.7, moons: 146, hasRings: true,
+      type: { fr: 'Géante gazeuse', en: 'Gas giant', uk: 'Газовий гігант' },
+      fact: { fr: 'Saturne flotterait sur l\'eau — sa densité est plus faible que celle d\'un océan !',
+              en: 'Saturn would float on water — its density is less than that of an ocean!',
+              uk: 'Сатурн міг би плавати на воді — його густина менша, ніж в океану!' },
+      moonList: [
+        { name: 'Titan', nameEn: 'Titan', nameUk: 'Титан', diameter: 5151, period: 15.95, orbit: 1.22 },
+        { name: 'Encelade', nameEn: 'Enceladus', nameUk: 'Енцелад', diameter: 504, period: 1.37, orbit: 0.24 },
+        { name: 'Rhéa', nameEn: 'Rhea', nameUk: 'Рея', diameter: 1528, period: 4.52, orbit: 0.53 },
+      ],
+      kepler: { a: 9.537, e: 0.0539, L0: 50.08, peri: 92.43, rate: 1222.11 } },
+    { name: 'Uranus', nameEn: 'Uranus', nameUk: 'Уран', color: '#9fdcd9', radius: 8, distance: 400, realDistanceAU: 19.2,
+      period: 84.011, diameter: 50724, dayHours: 17.2, moons: 28,
+      type: { fr: 'Géante de glace', en: 'Ice giant', uk: 'Льодяний гігант' },
+      fact: { fr: 'Uranus est couchée sur le côté — son axe est incliné à 98° !',
+              en: 'Uranus lies on its side — its axis is tilted at 98°!',
+              uk: 'Уран лежить на боці — його вісь нахилена під кутом 98°!' },
+      kepler: { a: 19.19, e: 0.0473, L0: 314.06, peri: 170.96, rate: 428.49 } },
+    { name: 'Neptune', nameEn: 'Neptune', nameUk: 'Нептун', color: '#4d6dcf', radius: 8, distance: 450, realDistanceAU: 30.05,
+      period: 164.79, diameter: 49244, dayHours: 16.1, moons: 16,
+      type: { fr: 'Géante de glace', en: 'Ice giant', uk: 'Льодяний гігант' },
+      fact: { fr: 'Les vents y soufflent à 2 000 km/h, les plus rapides du système solaire.',
+              en: 'Winds there blow at 2,000 km/h — the fastest in the solar system.',
+              uk: 'Вітри там дмуть зі швидкістю 2 000 км/год — найшвидші в Сонячній системі.' },
+      kepler: { a: 30.07, e: 0.0086, L0: 304.35, peri: 44.97, rate: 218.46 } },
+  ];
+  PLANETS.forEach((p, i) => { p.angleOffset = (i * 0.7 + 0.3) * Math.PI; });
+
+  const ASTEROIDS = [];
+  for (let i = 0; i < 140; i++) {
+    ASTEROIDS.push({
+      distance: 220 + Math.random() * 35, angleOffset: Math.random() * Math.PI * 2,
+      size: 0.4 + Math.random() * 0.9, period: 4 + Math.random() * 3,
+    });
+  }
+
+  // ============ Comparator bodies + state ============
+  // Each body at its real distance from Sun (in km), at real diameter (in km).
+  // Each body is placed at its real orbital distance, at a hand-picked angle
+  // so they're spread around the Sun (top-down map, not all on one line).
+  const COMPARATOR_BODIES = [
+    { id: 'sun',     name: 'Soleil',  nameEn: 'Sun',     nameUk: 'Сонце',    color: '#ffd166', diameter: 1391000, orbitR: 0,                 angle:  0,    isSun: true },
+    { id: 0,         name: 'Mercure', nameEn: 'Mercury', nameUk: 'Меркурій', color: '#b1a08b', diameter: 4879,    orbitR: 0.39  * AU_KM,     angle: -1.20 },
+    { id: 1,         name: 'Vénus',   nameEn: 'Venus',   nameUk: 'Венера',   color: '#e8c391', diameter: 12104,   orbitR: 0.72  * AU_KM,     angle:  0.85 },
+    { id: 2,         name: 'Terre',   nameEn: 'Earth',   nameUk: 'Земля',    color: '#4a9eff', diameter: 12742,   orbitR: 1.00  * AU_KM,     angle: -0.35, hasMoon: true },
+    { id: 3,         name: 'Mars',    nameEn: 'Mars',    nameUk: 'Марс',     color: '#e07b5a', diameter: 6779,    orbitR: 1.52  * AU_KM,     angle:  2.10 },
+    { id: 4,         name: 'Jupiter', nameEn: 'Jupiter', nameUk: 'Юпітер',   color: '#d4a574', diameter: 139820,  orbitR: 5.20  * AU_KM,     angle: -2.55 },
+    { id: 5,         name: 'Saturne', nameEn: 'Saturn',  nameUk: 'Сатурн',   color: '#e8d39c', diameter: 116460,  orbitR: 9.58  * AU_KM,     angle:  1.50, hasRings: true },
+    { id: 6,         name: 'Uranus',  nameEn: 'Uranus',  nameUk: 'Уран',     color: '#9fdcd9', diameter: 50724,   orbitR: 19.20 * AU_KM,     angle:  0.55 },
+    { id: 7,         name: 'Neptune', nameEn: 'Neptune', nameUk: 'Нептун',   color: '#4d6dcf', diameter: 49244,   orbitR: 30.05 * AU_KM,     angle: -1.80 },
+  ];
+  COMPARATOR_BODIES.forEach(b => {
+    b.x = b.orbitR * Math.cos(b.angle);
+    b.y = b.orbitR * Math.sin(b.angle);
+  });
+  // Earth-view drag state (drag Earth along its orbit)
+  const earthDrag = {
+    active: false, moved: false, wasPlaying: true,
+    earthScreen: null, // { x, y, r, orbitR, orbitRy }
+    lastSliderValue: 0,
+  };
+
+  const comparator = {
+    offsetX: 0, offsetY: 0, zoom: 0.005, // px/km
+    targetZoom: 0.005,
+    animating: false, animStart: 0, animDur: 1.2,
+    startState: null, endState: null,
+    dragging: false, dragStartScreen: null, dragStartOffset: null, dragMoved: false,
+    // Inertia tracking
+    velocityX: 0, velocityY: 0,
+    lastDragX: 0, lastDragY: 0, lastDragTime: 0,
+    pinch: null,
+    selected: 2, // Earth by default
+  };
+
+  const CONSTELLATIONS = [
+    { name: 'Grande Ourse', nameEn: 'Big Dipper', nameUk: 'Велика Ведмедиця',
+      pts: [[0.08,0.18],[0.11,0.22],[0.15,0.24],[0.20,0.25],[0.21,0.21],[0.19,0.17],[0.14,0.19]],
+      lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[2,6]] },
+    { name: 'Orion', nameEn: 'Orion', nameUk: 'Оріон',
+      pts: [[0.86,0.20],[0.90,0.24],[0.84,0.30],[0.83,0.34],[0.86,0.34],[0.89,0.34],[0.91,0.36],[0.88,0.42]],
+      lines: [[0,2],[1,2],[2,3],[3,4],[4,5],[5,6],[2,7],[6,1]] },
+    { name: 'Cassiopée', nameEn: 'Cassiopeia', nameUk: 'Кассіопея',
+      pts: [[0.06,0.62],[0.10,0.58],[0.14,0.63],[0.18,0.58],[0.22,0.63]],
+      lines: [[0,1],[1,2],[2,3],[3,4]] },
+    { name: 'Cygne', nameEn: 'Cygnus', nameUk: 'Лебідь',
+      pts: [[0.78,0.68],[0.82,0.72],[0.86,0.76],[0.82,0.66],[0.82,0.78]],
+      lines: [[0,1],[1,2],[3,1],[1,4]] },
+    { name: 'Lyre', nameEn: 'Lyra', nameUk: 'Ліра',
+      pts: [[0.92,0.62],[0.95,0.66],[0.92,0.70],[0.89,0.66]],
+      lines: [[0,1],[1,2],[2,3],[3,0]] },
+  ];
+
+  const GLOSSARY = [
+    { term: 'UA (Unité Astronomique)', termEn: 'AU (Astronomical Unit)', termUk: 'АО (Астрономічна одиниця)',
+      def: { fr: 'Distance moyenne Terre–Soleil, environ 150 millions de km. Sert d\'unité pour mesurer le système solaire.',
+             en: 'Average Earth–Sun distance, about 150 million km. Used as a unit to measure the solar system.',
+             uk: 'Середня відстань Земля–Сонце, близько 150 мільйонів км. Слугує одиницею виміру в Сонячній системі.' } },
+    { term: 'Planète', termEn: 'Planet', termUk: 'Планета',
+      def: { fr: 'Astre qui tourne autour d\'une étoile et qui a nettoyé son orbite.',
+             en: 'A celestial body that orbits a star and has cleared its orbit.',
+             uk: 'Небесне тіло, яке обертається навколо зірки та очистило свою орбіту.' } },
+    { term: 'Satellite (lune)', termEn: 'Satellite (moon)', termUk: 'Супутник (місяць)',
+      def: { fr: 'Astre qui tourne autour d\'une planète. La Lune est le satellite de la Terre.',
+             en: 'A body that orbits a planet. The Moon is Earth\'s satellite.',
+             uk: 'Тіло, яке обертається навколо планети. Місяць — супутник Землі.' } },
+    { term: 'Étoile', termEn: 'Star', termUk: 'Зірка',
+      def: { fr: 'Énorme boule de gaz très chaud (comme le Soleil) qui produit sa propre lumière.',
+             en: 'A huge ball of very hot gas (like the Sun) that produces its own light.',
+             uk: 'Величезна куля дуже гарячого газу (як Сонце), яка випромінює власне світло.' } },
+    { term: 'Galaxie', termEn: 'Galaxy', termUk: 'Галактика',
+      def: { fr: 'Immense regroupement d\'étoiles. Notre galaxie s\'appelle la Voie lactée.',
+             en: 'A huge collection of stars. Our galaxy is called the Milky Way.',
+             uk: 'Величезне скупчення зірок. Наша галактика називається Чумацький Шлях.' } },
+    { term: 'Constellation', termEn: 'Constellation', termUk: 'Сузір\'я',
+      def: { fr: 'Groupe d\'étoiles qui dessine une forme imaginaire dans le ciel.',
+             en: 'A group of stars that forms an imaginary shape in the sky.',
+             uk: 'Група зірок, що утворює уявну форму на небі.' } },
+    { term: 'Éclipse', termEn: 'Eclipse', termUk: 'Затемнення',
+      def: { fr: 'Quand un astre cache un autre. Solaire : la Lune cache le Soleil. Lunaire : la Terre projette son ombre sur la Lune.',
+             en: 'When one body hides another. Solar: the Moon hides the Sun. Lunar: Earth shadows the Moon.',
+             uk: 'Коли одне небесне тіло закриває інше. Сонячне: Місяць закриває Сонце. Місячне: тінь Землі падає на Місяць.' } },
+    { term: 'Phase de la Lune', termEn: 'Moon phase', termUk: 'Фаза Місяця',
+      def: { fr: 'Forme apparente de la Lune selon comment elle est éclairée par le Soleil.',
+             en: 'The Moon\'s apparent shape depending on how it\'s lit by the Sun.',
+             uk: 'Видима форма Місяця залежно від того, як його освітлює Сонце.' } },
+    { term: 'Inclinaison axiale', termEn: 'Axial tilt', termUk: 'Нахил осі',
+      def: { fr: 'Angle entre l\'axe de rotation d\'une planète et la perpendiculaire à son orbite. La Terre est inclinée à 23,5°.',
+             en: 'Angle between a planet\'s rotation axis and the perpendicular to its orbit. Earth is tilted 23.5°.',
+             uk: 'Кут між віссю обертання планети та перпендикуляром до її орбіти. Земля нахилена на 23,5°.' } },
+    { term: 'Astéroïde', termEn: 'Asteroid', termUk: 'Астероїд',
+      def: { fr: 'Petit rocher qui tourne autour du Soleil. La ceinture principale se trouve entre Mars et Jupiter.',
+             en: 'A small rocky body orbiting the Sun. The main belt sits between Mars and Jupiter.',
+             uk: 'Невелике кам\'янисте тіло, що обертається навколо Сонця. Головний пояс розташований між Марсом і Юпітером.' } },
+    { term: 'Comète', termEn: 'Comet', termUk: 'Комета',
+      def: { fr: 'Boule de glace et de poussière qui développe une longue queue quand elle s\'approche du Soleil.',
+             en: 'A ball of ice and dust that grows a long tail when it approaches the Sun.',
+             uk: 'Куля з льоду та пилу, яка відрощує довгий хвіст, наближаючись до Сонця.' } },
+    { term: 'Année-lumière', termEn: 'Light-year', termUk: 'Світловий рік',
+      def: { fr: 'Distance parcourue par la lumière en un an, soit 9 461 milliards de km.',
+             en: 'Distance light travels in one year — about 9.46 trillion km.',
+             uk: 'Відстань, яку світло долає за рік — близько 9 461 мільярдів км.' } },
+    { term: 'Périhélie / Aphélie', termEn: 'Perihelion / Aphelion', termUk: 'Перигелій / Афелій',
+      def: { fr: 'Périhélie : point de l\'orbite le plus proche du Soleil. Aphélie : le plus éloigné.',
+             en: 'Perihelion: closest orbital point to the Sun. Aphelion: farthest.',
+             uk: 'Перигелій: найближча до Сонця точка орбіти. Афелій: найвіддаленіша.' } },
+    { term: 'Voie lactée', termEn: 'Milky Way', termUk: 'Чумацький Шлях',
+      def: { fr: 'Notre galaxie, qui contient plus de 100 milliards d\'étoiles dont notre Soleil.',
+             en: 'Our galaxy — contains over 100 billion stars including our Sun.',
+             uk: 'Наша галактика — містить понад 100 мільярдів зірок, серед яких і наше Сонце.' } },
+  ];
+
+  // ============ Tour script ============
+  const TOUR = [
+    { focus: 'sun', view: 'solar',
+      fr: 'Bienvenue ! Voici le Soleil, notre étoile. Sans lui, pas de vie sur Terre.',
+      en: 'Welcome! Here\'s the Sun, our star. Without it, no life on Earth.',
+      uk: 'Ласкаво просимо! Це Сонце, наша зірка. Без нього на Землі не було б життя.', dur: 6 },
+    { focus: 0, view: 'solar',
+      fr: 'Mercure : la plus petite et la plus proche du Soleil. Il y fait 430 °C le jour, et −180 °C la nuit !',
+      en: 'Mercury: the smallest and closest to the Sun. 430 °C by day, −180 °C at night!',
+      uk: 'Меркурій: найменша і найближча до Сонця планета. Удень там 430 °C, а вночі −180 °C!', dur: 6 },
+    { focus: 1, view: 'solar',
+      fr: 'Vénus : la plus chaude du système solaire (460 °C). Elle tourne à l\'envers !',
+      en: 'Venus: the hottest planet (460 °C). It spins backwards!',
+      uk: 'Венера: найгарячіша планета (460 °C). Вона обертається у зворотний бік!', dur: 6 },
+    { focus: 2, view: 'earth',
+      fr: 'Voilà notre maison : la Terre. Elle tourne sur elle-même en 24 h. Regarde Lyon passer du jour à la nuit !',
+      en: 'Our home: Earth. It spins in 24 h. Watch Lyon move from day to night!',
+      uk: 'Ось наш дім — Земля. Вона обертається навколо своєї осі за 24 години. Подивись, як Ліон переходить з дня в ніч!', dur: 8 },
+    { focus: 'moon', view: 'earth', mode: 'month',
+      fr: 'Et voici la Lune, notre seule lune. Elle fait le tour de la Terre en 29,5 jours.',
+      en: 'And here\'s the Moon. It orbits Earth in 29.5 days.',
+      uk: 'А це Місяць — наш єдиний природний супутник. Він облітає Землю за 29,5 днів.', dur: 7 },
+    { focus: 3, view: 'solar',
+      fr: 'Mars, la planète rouge. Des robots y roulent en ce moment même !',
+      en: 'Mars, the red planet. Rovers are driving there right now!',
+      uk: 'Марс — червона планета. Просто зараз там їздять роботи-марсоходи!', dur: 6 },
+    { focus: 4, view: 'solar',
+      fr: 'Jupiter, la plus grosse. Sa Grande Tache Rouge est une tempête vieille de 350 ans, et elle a au moins 95 lunes !',
+      en: 'Jupiter, the largest. Its Great Red Spot is a 350-year-old storm, and it has at least 95 moons!',
+      uk: 'Юпітер, найбільша планета. Його Велика червона пляма — це шторм віком 350 років, і має щонайменше 95 супутників!', dur: 8 },
+    { focus: 5, view: 'solar',
+      fr: 'Saturne, célèbre pour ses anneaux. Ils sont faits de milliards de morceaux de glace !',
+      en: 'Saturn, famous for its rings. They\'re made of billions of bits of ice!',
+      uk: 'Сатурн, відомий своїми кільцями. Вони складаються з мільярдів шматочків льоду!', dur: 7 },
+    { focus: 6, view: 'solar',
+      fr: 'Uranus, presque couchée sur le côté.',
+      en: 'Uranus, almost lying on its side.',
+      uk: 'Уран, що лежить майже на боці.', dur: 5 },
+    { focus: 7, view: 'solar',
+      fr: 'Et tout au bout : Neptune. Les vents y soufflent à 2 000 km/h. Fin du voyage !',
+      en: 'And at the end: Neptune. Winds blow at 2,000 km/h there. End of the tour!',
+      uk: 'І наприкінці — Нептун. Вітри там дмуть зі швидкістю 2 000 км/год. Кінець мандрівки!', dur: 7 },
+  ];
+
+  // ============ Stars + Milky Way ============
+  let stars = [];
+  function generateStars(w, h) {
+    stars = [];
+    const count = Math.floor((w * h) / 4000);
+    // Milky way band: stars concentrated along a diagonal
+    for (let i = 0; i < count; i++) {
+      let x = Math.random() * w, y = Math.random() * h;
+      stars.push({ x, y, r: Math.random() * 1.3 + 0.2, a: Math.random() * 0.7 + 0.3, twinkle: Math.random() * Math.PI * 2 });
+    }
+    // Extra Milky Way stars along diagonal band
+    if (state.settings.milkyway) {
+      const extra = Math.floor((w * h) / 6000);
+      for (let i = 0; i < extra; i++) {
+        // diagonal band from top-left to bottom-right with some thickness
+        const along = Math.random();
+        const across = (Math.random() - 0.5) * 0.18;
+        const u = along + across;
+        const v = along - across;
+        const x = u * w;
+        const y = v * h;
+        if (x < 0 || x > w || y < 0 || y > h) continue;
+        stars.push({ x, y, r: Math.random() * 0.9 + 0.2, a: Math.random() * 0.6 + 0.25, twinkle: Math.random() * Math.PI * 2, mw: true });
+      }
+    }
+  }
+
+  let shootingStar = null;
+  function maybeSpawnShootingStar(w, h) {
+    if (shootingStar) return;
+    if (Math.random() < 0.003) {
+      shootingStar = { x: Math.random() * w * 0.5, y: Math.random() * h * 0.3,
+        vx: 180 + Math.random() * 120, vy: 80 + Math.random() * 80, life: 1.0 };
+    }
+  }
+
+  let comet = null, cometCooldown = 6;
+  function maybeSpawnComet(w, h, dt) {
+    if (!state.settings.comet || state.view !== 'solar') { comet = null; return; }
+    cometCooldown -= dt;
+    if (comet || cometCooldown > 0) return;
+    if (Math.random() < 0.4) {
+      const side = Math.random() < 0.5 ? -1 : 1;
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.max(w, h) * 0.7;
+      comet = {
+        x: cx + Math.cos(angle) * dist, y: cy + Math.sin(angle) * dist,
+        vx: -Math.cos(angle) * 70 + Math.sin(angle) * 30 * side,
+        vy: -Math.sin(angle) * 70 - Math.cos(angle) * 30 * side, life: 1,
+      };
+      cometCooldown = 12 + Math.random() * 8;
+    } else cometCooldown = 4;
+  }
+
+  // ============ Sizing ============
+  let cx = 0, cy = 0, scale = 1;
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    const w = window.innerWidth, h = window.innerHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx = w / 2; cy = h / 2;
+    const topReserved = w < 760 ? 110 : 130;
+    const bottomReserved = w < 760 ? 130 : 150;
+    const vAvail = h - topReserved - bottomReserved;
+    const hAvail = w - 40;
+    const available = Math.max(120, Math.min(hAvail, vAvail) / 2);
+    scale = available / 450;
+    displayScale = Math.max(0.55, Math.min(1, scale * 1.6));
+    const minDim = Math.min(w, h);
+    const newEarthR = Math.max(38, Math.min(64, Math.floor(minDim * 0.10)));
+    MOON_RADIUS = Math.max(8, Math.floor(newEarthR * 0.22));
+    MOON_ORBIT_RADIUS = Math.max(120, Math.min(220, Math.floor(minDim * 0.30)));
+    if (newEarthR !== EARTH_RADIUS) {
+      EARTH_RADIUS = newEarthR;
+      if (earthTexClear) buildSpherePixels(EARTH_RADIUS, VIEW_TILT);
+    }
+    generateStars(w, h);
+  }
+  window.addEventListener('resize', resize);
+
+  // ============ Legend ============
+  function buildLegend() {
+    legendList.innerHTML = '';
+    PLANETS.forEach((p, i) => {
+      const item = document.createElement('div');
+      item.className = 'legend-item';
+      const isEarth = i === 2;
+      if (isEarth) item.classList.add('earthRow');
+      if (state.focusedPlanetIdx === i) item.classList.add('focused');
+      const name = lname(p);
+      const dotClass = isEarth ? 'legend-dot earthPulse' : 'legend-dot';
+      item.innerHTML = `<span class="${dotClass}" style="background:${p.color}"></span><span>${name}</span>`;
+      item.addEventListener('click', () => {
+        if (isEarth) setView('earth');
+        else openPlanetModal(i);
+      });
+      legendList.appendChild(item);
+    });
+  }
+  function buildGlossary() {
+    glossaryList.innerHTML = '';
+    for (const g of GLOSSARY) {
+      const dt = document.createElement('dt');
+      dt.textContent = (lang === 'uk' && g.termUk) ? g.termUk : (lang === 'en' && g.termEn) ? g.termEn : g.term;
+      const dd = document.createElement('dd');
+      dd.textContent = g.def[lang] || g.def.fr;
+      glossaryList.appendChild(dt);
+      glossaryList.appendChild(dd);
+    }
+  }
+  function updateEarthInfo() {
+    const body = $('earthInfoBody');
+    if (lang === 'fr') {
+      body.innerHTML = `
+        <div><span style="color:#4a9eff">●</span> <b style="color:var(--text)">Terre</b> — un tour en 24 h, axe à 23,5°</div>
+        <div style="margin-top:6px"><span style="color:#d4d4d8">●</span> <b style="color:var(--text)">Lune</b> — orbite en 29,5 jours</div>
+        <div style="margin-top:6px"><span style="color:#ff5050">●</span> <b style="color:var(--text)">Lyon</b> — repère du jour/nuit</div>
+        <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--panel-border); font-size:11px;">
+          ☀ Le Soleil est à droite — la moitié éclairée vit le jour.
+        </div>`;
+    } else {
+      body.innerHTML = `
+        <div><span style="color:#4a9eff">●</span> <b style="color:var(--text)">Earth</b> — spins in 24 h, axis tilted 23.5°</div>
+        <div style="margin-top:6px"><span style="color:#d4d4d8">●</span> <b style="color:var(--text)">Moon</b> — orbits in 29.5 days</div>
+        <div style="margin-top:6px"><span style="color:#ff5050">●</span> <b style="color:var(--text)">Lyon</b> — day/night marker</div>
+        <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--panel-border); font-size:11px;">
+          ☀ The Sun is on the right — the lit half is daytime.
+        </div>`;
+    }
+  }
+
+  // ============ Helpers ============
+  // Helper: pick localized name for any object that has name / nameEn / nameUk
+  function lname(obj) {
+    if (lang === 'uk' && obj.nameUk) return obj.nameUk;
+    if (lang === 'en' && obj.nameEn) return obj.nameEn;
+    return obj.name;
+  }
+
+  function hexA(hex, a) {
+    const c = hex.replace('#', '');
+    return `rgba(${parseInt(c.substring(0,2),16)},${parseInt(c.substring(2,4),16)},${parseInt(c.substring(4,6),16)},${a})`;
+  }
+  function lighten(hex, amount, alpha = 1) {
+    const c = hex.replace('#', '');
+    const r = Math.min(255, parseInt(c.substring(0,2),16) + amount * 255);
+    const g = Math.min(255, parseInt(c.substring(2,4),16) + amount * 255);
+    const b = Math.min(255, parseInt(c.substring(4,6),16) + amount * 255);
+    return `rgba(${r|0},${g|0},${b|0},${alpha})`;
+  }
+  function formatNumber(n) {
+    const locale = lang === 'uk' ? 'uk-UA' : lang === 'en' ? 'en-US' : 'fr-FR';
+    const sep = lang === 'en' ? ',' : ' ';
+    return n.toLocaleString(locale).replace(/,/g, sep);
+  }
+  function formatPeriod(years) {
+    if (years < 1) return `${(years * 365).toFixed(0)} ${lang === 'uk' ? 'днів' : lang === 'en' ? 'days' : 'jours'}`;
+    if (years < 10) return `${years.toFixed(2)} ${lang === 'uk' ? 'р' : lang === 'en' ? 'yrs' : 'ans'}`;
+    return `${years.toFixed(1)} ${lang === 'uk' ? 'р' : lang === 'en' ? 'yrs' : 'ans'}`;
+  }
+  function formatDay(hours) {
+    if (hours < 100) return `${hours.toFixed(1)} h`;
+    return `${(hours / 24).toFixed(0)} ${lang === 'uk' ? 'земних діб' : lang === 'en' ? 'Earth days' : 'j terrestres'}`;
+  }
+  function auToKmShort(au) {
+    const km = au * AU_KM;
+    if (km < 1e9) return `≈ ${(km / 1e6).toFixed(1)} M km`;
+    return `≈ ${(km / 1e9).toFixed(2)} ${lang === 'uk' ? 'млрд' : lang === 'en' ? 'B' : 'Md'} km`;
+  }
+
+  // ============ Real planet positions (simplified Kepler) ============
+  function realHeliocentricLongitude(planet, date) {
+    // Days since J2000.0 (2000 Jan 1.5 TT)
+    const J2000 = Date.UTC(2000, 0, 1, 12, 0, 0);
+    const dCent = (date.getTime() - J2000) / (1000 * 86400 * 36525); // centuries
+    const k = planet.kepler;
+    if (!k) return planet.angleOffset;
+    const L = k.L0 + k.rate * dCent; // deg
+    const M = (L - k.peri) * Math.PI / 180;
+    // Solve Kepler: M = E - e sin E
+    let E = M;
+    for (let i = 0; i < 6; i++) E = E - (E - k.e * Math.sin(E) - M) / (1 - k.e * Math.cos(E));
+    const v = 2 * Math.atan2(Math.sqrt(1 + k.e) * Math.sin(E / 2), Math.sqrt(1 - k.e) * Math.cos(E / 2));
+    const lambda = v + k.peri * Math.PI / 180;
+    return lambda;
+  }
+
+  // ============ Mouse ============
+  const mouse = { x: 0, y: 0, active: false };
+  let hoveredPlanet = null;
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - rect.left; mouse.y = e.clientY - rect.top;
+    mouse.active = true;
+    if (comparator.dragging && state.view === 'compare') {
+      const dx = mouse.x - comparator.dragStartScreen.x;
+      const dy = mouse.y - comparator.dragStartScreen.y;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) comparator.dragMoved = true;
+      comparator.offsetX = comparator.dragStartOffset.x - dx / comparator.zoom;
+      comparator.offsetY = comparator.dragStartOffset.y - dy / comparator.zoom;
+      comparator.animating = false;
+      // Track velocity for inertia
+      const nowT = performance.now() / 1000;
+      const dt = Math.max(0.005, nowT - comparator.lastDragTime);
+      const vx = (mouse.x - comparator.lastDragX) / dt;
+      const vy = (mouse.y - comparator.lastDragY) / dt;
+      // Smooth (EMA) so a tiny final jitter doesn't kill momentum
+      comparator.velocityX = comparator.velocityX * 0.4 + vx * 0.6;
+      comparator.velocityY = comparator.velocityY * 0.4 + vy * 0.6;
+      comparator.lastDragX = mouse.x; comparator.lastDragY = mouse.y;
+      comparator.lastDragTime = nowT;
+    }
+    if (earthDrag.active && state.view === 'earth' && earthDrag.earthScreen) {
+      // Compute new orbital angle from mouse position relative to Sun
+      const es = earthDrag.earthScreen;
+      // Normalize to circle (handle ellipse)
+      const nx = (mouse.x - es.cx) / es.orbitR;
+      const ny = (mouse.y - es.cy) / es.orbitRy;
+      const theta = Math.atan2(ny, nx);
+      // Progress: 0 = top of orbit (angle = -π/2)
+      let progress = (theta + Math.PI / 2) / (Math.PI * 2);
+      while (progress < 0) progress += 1;
+      while (progress > 1) progress -= 1;
+      const newV = progress * 1440;
+      const prevV = earthDrag.lastSliderValue;
+      if (Math.abs(newV - prevV) > 4 && Math.abs(newV - prevV) < 1436) earthDrag.moved = true;
+      slider.value = newV;
+      earthDrag.lastSliderValue = newV;
+      updateLabels();
+    }
+  });
+  canvas.addEventListener('mouseleave', () => { mouse.active = false; });
+  canvas.addEventListener('mousedown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    if (state.view === 'compare') {
+      comparator.dragging = true; comparator.dragMoved = false;
+      comparator.dragStartScreen = { x: mx, y: my };
+      comparator.dragStartOffset = { x: comparator.offsetX, y: comparator.offsetY };
+      comparator.velocityX = 0; comparator.velocityY = 0;
+      comparator.lastDragX = mx; comparator.lastDragY = my;
+      comparator.lastDragTime = performance.now() / 1000;
+      canvas.style.cursor = 'grabbing';
+    } else if (state.view === 'earth' && state.earthMode === 'season' && earthDrag.earthScreen) {
+      // Start Earth drag if mouse is on Earth
+      const es = earthDrag.earthScreen;
+      const dx = mx - es.x, dy = my - es.y;
+      if (dx*dx + dy*dy < (es.r + 14) ** 2) {
+        earthDrag.active = true;
+        earthDrag.moved = false;
+        earthDrag.wasPlaying = playing;
+        earthDrag.lastSliderValue = parseFloat(slider.value);
+        playing = false;
+        playBtn.textContent = '▶';
+        canvas.style.cursor = 'grabbing';
+      }
+    }
+  });
+  window.addEventListener('mouseup', () => {
+    if (comparator.dragging) {
+      comparator.dragging = false;
+      canvas.style.cursor = state.view === 'compare' ? 'grab' : 'default';
+    }
+    if (earthDrag.active) {
+      earthDrag.active = false;
+      if (earthDrag.wasPlaying) { playing = true; playBtn.textContent = '⏸'; }
+      canvas.style.cursor = 'default';
+    }
+  });
+  canvas.addEventListener('click', (e) => {
+    // In compare view, suppress modal opening if it was a drag
+    if (state.view === 'compare' && comparator.dragMoved) { comparator.dragMoved = false; return; }
+    // In earth view, suppress modal if it was a drag
+    if (state.view === 'earth' && earthDrag.moved) { earthDrag.moved = false; return; }
+    if (!hoveredPlanet) return;
+    if (state.view === 'compare') {
+      const id = hoveredPlanet.kind === 'sun' ? 'sun' : hoveredPlanet.planetIndex;
+      compareFlyTo(id);
+      return;
+    }
+    // From solar view: clicking Earth takes you to the Earth detail view
+    if (state.view === 'solar' && hoveredPlanet.kind === 'planet' && hoveredPlanet.planetIndex === 2) {
+      setView('earth');
+      return;
+    }
+    if (hoveredPlanet.kind === 'planet') openPlanetModal(hoveredPlanet.planetIndex);
+    else if (hoveredPlanet.kind === 'sun') openSunModal();
+  });
+  // Wheel to zoom (compare view)
+  canvas.addEventListener('wheel', (e) => {
+    if (state.view !== 'compare') return;
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const w = window.innerWidth, h = window.innerHeight;
+    // Convert mouse position to world coords BEFORE zoom change
+    const before = compareScreenToWorld(mx, my, w, h);
+    const factor = Math.exp(-e.deltaY * 0.001);
+    comparator.zoom = Math.max(1e-11, Math.min(1, comparator.zoom * factor));
+    comparator.animating = false;
+    // Re-anchor: world point under cursor should stay at the same screen position
+    const after = compareScreenToWorld(mx, my, w, h);
+    comparator.offsetX += before.wx - after.wx;
+    comparator.offsetY += before.wy - after.wy;
+  }, { passive: false });
+
+  // Touch handlers (compare view: drag, pinch; other views: hover/click)
+  canvas.addEventListener('touchstart', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    if (e.touches.length === 1) {
+      const tt = e.touches[0];
+      mouse.x = tt.clientX - rect.left; mouse.y = tt.clientY - rect.top;
+      mouse.active = true;
+      if (state.view === 'compare') {
+        comparator.dragging = true; comparator.dragMoved = false;
+        comparator.dragStartScreen = { x: mouse.x, y: mouse.y };
+        comparator.dragStartOffset = { x: comparator.offsetX, y: comparator.offsetY };
+        comparator.velocityX = 0; comparator.velocityY = 0;
+        comparator.lastDragX = mouse.x; comparator.lastDragY = mouse.y;
+        comparator.lastDragTime = performance.now() / 1000;
+        comparator.pinch = null;
+      } else if (state.view === 'earth' && state.earthMode === 'season' && earthDrag.earthScreen) {
+        const es = earthDrag.earthScreen;
+        const dx = mouse.x - es.x, dy = mouse.y - es.y;
+        if (dx*dx + dy*dy < (es.r + 18) ** 2) {
+          earthDrag.active = true;
+          earthDrag.moved = false;
+          earthDrag.wasPlaying = playing;
+          earthDrag.lastSliderValue = parseFloat(slider.value);
+          playing = false;
+          playBtn.textContent = '▶';
+        }
+      }
+    } else if (e.touches.length === 2 && state.view === 'compare') {
+      const t1 = e.touches[0], t2 = e.touches[1];
+      const dx = t1.clientX - t2.clientX, dy = t1.clientY - t2.clientY;
+      const dist = Math.hypot(dx, dy);
+      const midX = (t1.clientX + t2.clientX) / 2 - rect.left;
+      const midY = (t1.clientY + t2.clientY) / 2 - rect.top;
+      comparator.pinch = { dist, midX, midY, startZoom: comparator.zoom,
+        startOffsetX: comparator.offsetX, startOffsetY: comparator.offsetY };
+      comparator.dragging = false;
+    }
+  }, { passive: true });
+  canvas.addEventListener('touchmove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    if (e.touches.length === 1 && comparator.dragging && state.view === 'compare') {
+      const tt = e.touches[0];
+      const x = tt.clientX - rect.left, y = tt.clientY - rect.top;
+      const dx = x - comparator.dragStartScreen.x, dy = y - comparator.dragStartScreen.y;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) comparator.dragMoved = true;
+      comparator.offsetX = comparator.dragStartOffset.x - dx / comparator.zoom;
+      comparator.offsetY = comparator.dragStartOffset.y - dy / comparator.zoom;
+      comparator.animating = false;
+      // Track velocity for inertia
+      const nowT = performance.now() / 1000;
+      const tdt = Math.max(0.005, nowT - comparator.lastDragTime);
+      const vx = (x - comparator.lastDragX) / tdt;
+      const vy = (y - comparator.lastDragY) / tdt;
+      comparator.velocityX = comparator.velocityX * 0.4 + vx * 0.6;
+      comparator.velocityY = comparator.velocityY * 0.4 + vy * 0.6;
+      comparator.lastDragX = x; comparator.lastDragY = y;
+      comparator.lastDragTime = nowT;
+      mouse.x = x; mouse.y = y;
+    } else if (e.touches.length === 1 && earthDrag.active && state.view === 'earth' && earthDrag.earthScreen) {
+      e.preventDefault();
+      const tt = e.touches[0];
+      const x = tt.clientX - rect.left, y = tt.clientY - rect.top;
+      mouse.x = x; mouse.y = y;
+      const es = earthDrag.earthScreen;
+      const nx = (x - es.cx) / es.orbitR;
+      const ny = (y - es.cy) / es.orbitRy;
+      const theta = Math.atan2(ny, nx);
+      let progress = (theta + Math.PI / 2) / (Math.PI * 2);
+      while (progress < 0) progress += 1;
+      while (progress > 1) progress -= 1;
+      const newV = progress * 1440;
+      if (Math.abs(newV - earthDrag.lastSliderValue) > 4 && Math.abs(newV - earthDrag.lastSliderValue) < 1436) earthDrag.moved = true;
+      slider.value = newV;
+      earthDrag.lastSliderValue = newV;
+      updateLabels();
+    } else if (e.touches.length === 2 && comparator.pinch && state.view === 'compare') {
+      e.preventDefault();
+      const t1 = e.touches[0], t2 = e.touches[1];
+      const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+      const factor = dist / comparator.pinch.dist;
+      const w = window.innerWidth, h = window.innerHeight;
+      // Recompute around midpoint
+      const mx = comparator.pinch.midX, my = comparator.pinch.midY;
+      const tempZoom = Math.max(1e-9, Math.min(1, comparator.pinch.startZoom * factor));
+      // Restore pinch start state, then rezoom anchored to midpoint
+      comparator.zoom = comparator.pinch.startZoom;
+      comparator.offsetX = comparator.pinch.startOffsetX;
+      comparator.offsetY = comparator.pinch.startOffsetY;
+      const before = compareScreenToWorld(mx, my, w, h);
+      comparator.zoom = tempZoom;
+      const after = compareScreenToWorld(mx, my, w, h);
+      comparator.offsetX += before.wx - after.wx;
+      comparator.offsetY += before.wy - after.wy;
+      comparator.animating = false;
+    }
+  }, { passive: false });
+  canvas.addEventListener('touchend', (e) => {
+    if (e.touches.length === 0) {
+      if (comparator.dragging) comparator.dragging = false;
+      comparator.pinch = null;
+      if (earthDrag.active) {
+        earthDrag.active = false;
+        if (earthDrag.wasPlaying) { playing = true; playBtn.textContent = '⏸'; }
+      }
+      setTimeout(() => { mouse.active = false; }, 50);
+    }
+  });
+
+  // ============ Background ============
+  function drawBackground(w, h, dt) {
+    ctx.clearRect(0, 0, w, h);
+
+    // Milky way diffuse band
+    if (state.settings.milkyway) {
+      const mwGrad = ctx.createLinearGradient(0, 0, w, h);
+      mwGrad.addColorStop(0, 'rgba(180,200,255,0)');
+      mwGrad.addColorStop(0.45, 'rgba(180,200,255,0.04)');
+      mwGrad.addColorStop(0.55, 'rgba(180,200,255,0.04)');
+      mwGrad.addColorStop(1, 'rgba(180,200,255,0)');
+      ctx.fillStyle = mwGrad;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    for (const s of stars) {
+      if (s.mw && !state.settings.milkyway) continue;
+      s.twinkle += dt * 2;
+      const a = s.a * (0.7 + 0.3 * Math.sin(s.twinkle));
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+    }
+    if (state.settings.constellations) {
+      const compact = w < 760;
+      const yBias = compact ? 0.18 : 0;
+      const yScale = compact ? 0.7 : 1;
+      ctx.strokeStyle = 'rgba(150,180,255,0.18)'; ctx.lineWidth = 1;
+      for (const c of CONSTELLATIONS) {
+        const pts = c.pts.map(p => [p[0] * w, (p[1] * yScale + yBias) * h]);
+        ctx.beginPath();
+        for (const [a, b] of c.lines) { ctx.moveTo(pts[a][0], pts[a][1]); ctx.lineTo(pts[b][0], pts[b][1]); }
+        ctx.stroke();
+        for (const [x, y] of pts) {
+          ctx.fillStyle = 'rgba(220,230,255,0.95)';
+          ctx.beginPath(); ctx.arc(x, y, 1.6, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = 'rgba(180,200,255,0.25)';
+          ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
+        }
+        if (!compact) {
+          ctx.fillStyle = 'rgba(150,180,255,0.35)';
+          ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(lname(c), pts[0][0] + 6, pts[0][1] - 6);
+        }
+      }
+    }
+    maybeSpawnShootingStar(w, h);
+    if (shootingStar) {
+      shootingStar.x += shootingStar.vx * dt;
+      shootingStar.y += shootingStar.vy * dt;
+      shootingStar.life -= dt * 0.8;
+      if (shootingStar.life <= 0 || shootingStar.x > w || shootingStar.y > h) shootingStar = null;
+      else {
+        const grad = ctx.createLinearGradient(shootingStar.x, shootingStar.y,
+          shootingStar.x - shootingStar.vx * 0.3, shootingStar.y - shootingStar.vy * 0.3);
+        grad.addColorStop(0, `rgba(255,255,255,${shootingStar.life})`);
+        grad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.strokeStyle = grad; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(shootingStar.x, shootingStar.y);
+        ctx.lineTo(shootingStar.x - shootingStar.vx * 0.3, shootingStar.y - shootingStar.vy * 0.3);
+        ctx.stroke();
+      }
+    }
+  }
+
+  function updateComet(w, h, dt) {
+    maybeSpawnComet(w, h, dt);
+    if (!comet) return;
+    comet.x += comet.vx * dt; comet.y += comet.vy * dt;
+    if (comet.x < -100 || comet.x > w + 100 || comet.y < -100 || comet.y > h + 100) { comet = null; return; }
+    const dx = comet.x - cx, dy = comet.y - cy;
+    const len = Math.hypot(dx, dy) || 1;
+    const tx = dx / len, ty = dy / len;
+    const tailLen = 110;
+    const grad = ctx.createLinearGradient(comet.x, comet.y, comet.x + tx * tailLen, comet.y + ty * tailLen);
+    grad.addColorStop(0, 'rgba(180,220,255,0.8)');
+    grad.addColorStop(0.4, 'rgba(120,180,255,0.4)');
+    grad.addColorStop(1, 'rgba(120,180,255,0)');
+    ctx.strokeStyle = grad; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(comet.x, comet.y);
+    ctx.lineTo(comet.x + tx * tailLen, comet.y + ty * tailLen); ctx.stroke();
+    ctx.lineCap = 'butt';
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(comet.x, comet.y, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(200,230,255,0.4)';
+    ctx.beginPath(); ctx.arc(comet.x, comet.y, 6, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // ============ Solar System ============
+  function getPlanetAngle(p, simYears) {
+    if (state.settings.realPositions) {
+      // Use real positions today, slowly advancing with slider
+      const baseDate = new Date();
+      const advanceMs = simYears * 365.25 * 86400 * 1000;
+      const date = new Date(baseDate.getTime() + advanceMs);
+      return realHeliocentricLongitude(p, date);
+    }
+    const orbits = simYears / p.period;
+    return p.angleOffset + orbits * Math.PI * 2;
+  }
+
+  function drawSolar(sliderHours, dt) {
+    hoveredPlanet = null;
+    for (let i = 0; i < PLANETS.length; i++) {
+      const p = PLANETS[i];
+      const isFocus = state.highlightedPlanet === -1 || state.highlightedPlanet === i;
+      ctx.strokeStyle = isFocus ? 'rgba(255,255,255,0.13)' : 'rgba(255,255,255,0.03)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(cx, cy, p.distance * scale, 0, Math.PI * 2); ctx.stroke();
+    }
+    const simYears = (sliderHours / 24) * state.timeScaleYears;
+    ctx.fillStyle = 'rgba(200,180,150,0.55)';
+    for (const a of ASTEROIDS) {
+      const orbits = simYears / a.period;
+      const ang = a.angleOffset + orbits * Math.PI * 2;
+      const r = a.distance * scale;
+      const x = cx + Math.cos(ang) * r, y = cy + Math.sin(ang) * r;
+      ctx.beginPath(); ctx.arc(x, y, a.size, 0, Math.PI * 2); ctx.fill();
+    }
+
+    const sunR = Math.max(13, 22 * displayScale);
+    const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, sunR * 4);
+    glow.addColorStop(0, 'rgba(255,209,102,0.6)');
+    glow.addColorStop(0.4, 'rgba(255,140,40,0.25)');
+    glow.addColorStop(1, 'rgba(255,140,40,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(cx, cy, sunR * 4, 0, Math.PI * 2); ctx.fill();
+    const pulse = 1 + 0.04 * Math.sin(performance.now() / 800);
+    const sg = ctx.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, sunR * pulse);
+    sg.addColorStop(0, '#fff5cc'); sg.addColorStop(0.6, '#ffd166'); sg.addColorStop(1, '#ff8c28');
+    ctx.fillStyle = sg;
+    ctx.beginPath(); ctx.arc(cx, cy, sunR * pulse, 0, Math.PI * 2); ctx.fill();
+
+    if (mouse.active) {
+      const dx = mouse.x - cx, dy = mouse.y - cy;
+      if (dx * dx + dy * dy < (sunR + 14) ** 2) {
+        hoveredPlanet = { kind: 'sun', name: lang === 'uk' ? 'Сонце' : lang === 'en' ? 'Sun' : 'Soleil',
+          info: lang === 'uk' ? 'Наша зірка · натисни для деталей' : lang === 'en' ? 'Our star · click for details' : 'Notre étoile · clic pour la fiche',
+          x: cx, y: cy };
+      }
+    }
+
+    for (let i = 0; i < PLANETS.length; i++) {
+      const p = PLANETS[i];
+      const angle = getPlanetAngle(p, simYears);
+      const r = p.distance * scale;
+      const x = cx + Math.cos(angle) * r, y = cy + Math.sin(angle) * r;
+      const isFocus = state.highlightedPlanet === -1 || state.highlightedPlanet === i;
+      const alpha = isFocus ? 1 : 0.25;
+      const pr = Math.max(2.2, p.radius * displayScale);
+
+      const pGlow = ctx.createRadialGradient(x, y, 0, x, y, pr * 3);
+      pGlow.addColorStop(0, hexA(p.color, 0.5 * alpha));
+      pGlow.addColorStop(1, hexA(p.color, 0));
+      ctx.fillStyle = pGlow;
+      ctx.beginPath(); ctx.arc(x, y, pr * 3, 0, Math.PI * 2); ctx.fill();
+
+      if (p.hasRings) {
+        ctx.save();
+        ctx.translate(x, y); ctx.rotate(0.4); ctx.scale(1, 0.35);
+        ctx.strokeStyle = hexA('#e8d39c', 0.65 * alpha); ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(0, 0, pr * 2.1, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = hexA('#c9b478', 0.45 * alpha); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(0, 0, pr * 2.5, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+      }
+
+      const grad = ctx.createRadialGradient(x - pr * 0.4, y - pr * 0.4, 0, x, y, pr);
+      grad.addColorStop(0, lighten(p.color, 0.3, alpha));
+      grad.addColorStop(1, hexA(p.color, alpha));
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(x, y, pr, 0, Math.PI * 2); ctx.fill();
+
+      if (isFocus && window.innerWidth > 460) {
+        const name = lname(p);
+        ctx.fillStyle = `rgba(232,238,249,${0.85 * alpha})`;
+        ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(name, x, y - pr - 8);
+      }
+
+      if (mouse.active && !hoveredPlanet) {
+        const dx = mouse.x - x, dy = mouse.y - y;
+        if (dx * dx + dy * dy < (pr + 12) ** 2) {
+          hoveredPlanet = { kind: 'planet',
+            name: lname(p),
+            info: `${p.type[lang]} · ${lang === 'uk' ? 'натисни для деталей' : lang === 'en' ? 'click for details' : 'clic pour la fiche'}`,
+            x, y, planetIndex: i };
+        }
+      }
+    }
+    updateComet(window.innerWidth, window.innerHeight, dt);
+  }
+
+  // ============ Earth texture ============
+  const TEXTURE_W = 360, TEXTURE_H = 180;
+  let earthTexClear = null, earthTexCloudy = null;
+  function isLand(latDeg, lonDeg) {
+    function inEll(lc, oc, lr, or_) {
+      const dlat = latDeg - lc;
+      let dlon = lonDeg - oc;
+      if (dlon > 180) dlon -= 360; if (dlon < -180) dlon += 360;
+      return (dlat*dlat)/(lr*lr) + (dlon*dlon)/(or_*or_) < 1;
+    }
+    if (inEll(48, -100, 18, 28)) return true;
+    if (inEll(62, -100, 10, 38)) return true;
+    if (inEll(28, -100, 10, 12)) return true;
+    if (inEll(15, -85, 6, 8)) return true;
+    if (inEll(72, -40, 9, 12)) return true;
+    if (inEll(-15, -60, 28, 13)) return true;
+    if (inEll(0, -55, 8, 18)) return true;
+    if (inEll(5, 18, 28, 18)) return true;
+    if (inEll(-15, 25, 18, 13)) return true;
+    if (inEll(50, 15, 14, 22)) return true;
+    if (inEll(63, 50, 10, 38)) return true;
+    if (inEll(50, 90, 18, 50)) return true;
+    if (inEll(60, 100, 12, 45)) return true;
+    if (inEll(22, 80, 12, 15)) return true;
+    if (inEll(30, 105, 12, 22)) return true;
+    if (inEll(0, 110, 6, 16)) return true;
+    if (inEll(-25, 135, 9, 14)) return true;
+    if (latDeg < -65) return true;
+    if (inEll(-20, 47, 6, 3)) return true;
+    if (inEll(54, -3, 5, 5)) return true;
+    if (inEll(37, 138, 7, 4)) return true;
+    if (inEll(-42, 173, 4, 3)) return true;
+    return false;
+  }
+  function isDesert(latDeg, lonDeg) {
+    if (latDeg > 12 && latDeg < 32 && lonDeg > -15 && lonDeg < 40) return true;
+    if (latDeg > 15 && latDeg < 32 && lonDeg > 35 && lonDeg < 60) return true;
+    if (latDeg > -32 && latDeg < -20 && lonDeg > 120 && lonDeg < 145) return true;
+    if (latDeg > 30 && latDeg < 42 && lonDeg > -120 && lonDeg < -105) return true;
+    return false;
+  }
+  function cloudIntensity(latDeg, lonDeg) {
+    const a = Math.sin(latDeg * 0.09 + lonDeg * 0.05) * 0.5
+            + Math.sin(latDeg * 0.18 - lonDeg * 0.12) * 0.5
+            + Math.sin(lonDeg * 0.08 + 1.3) * 0.4
+            + Math.cos(latDeg * 0.12) * 0.3;
+    const eq = Math.exp(-((latDeg) ** 2) / 600) * 0.4;
+    return Math.max(0, Math.min(1, (a * 0.25) + eq));
+  }
+  function buildEarthTextures() {
+    earthTexClear = new Uint8ClampedArray(TEXTURE_W * TEXTURE_H * 4);
+    earthTexCloudy = new Uint8ClampedArray(TEXTURE_W * TEXTURE_H * 4);
+    for (let ty = 0; ty < TEXTURE_H; ty++) {
+      const latDeg = (ty / TEXTURE_H) * 180 - 90;
+      for (let tx = 0; tx < TEXTURE_W; tx++) {
+        const lonDeg = (tx / TEXTURE_W) * 360 - 180;
+        const idx = (ty * TEXTURE_W + tx) * 4;
+        let r, g, b;
+        if (latDeg > 70 || latDeg < -65) {
+          r = 230 + Math.random() * 25; g = 240 + Math.random() * 15; b = 250;
+        } else if (isLand(latDeg, lonDeg)) {
+          if (isDesert(latDeg, lonDeg)) {
+            r = 205 + Math.random() * 25; g = 175 + Math.random() * 25; b = 115 + Math.random() * 20;
+          } else {
+            r = 55 + Math.random() * 30; g = 115 + Math.random() * 35; b = 55 + Math.random() * 25;
+          }
+          if (Math.random() < 0.1) { r -= 25; g -= 25; b -= 15; }
+        } else {
+          const dep = Math.sin(latDeg * 0.1) * Math.cos(lonDeg * 0.1) * 0.5 + 0.5;
+          r = 15 + dep * 12; g = 55 + dep * 25; b = 120 + dep * 40;
+        }
+        earthTexClear[idx]=r; earthTexClear[idx+1]=g; earthTexClear[idx+2]=b; earthTexClear[idx+3]=255;
+        const c = cloudIntensity(latDeg, lonDeg);
+        earthTexCloudy[idx]   = Math.min(255, r * (1 - c * 0.75) + 245 * c * 0.75);
+        earthTexCloudy[idx+1] = Math.min(255, g * (1 - c * 0.75) + 248 * c * 0.75);
+        earthTexCloudy[idx+2] = Math.min(255, b * (1 - c * 0.75) + 252 * c * 0.75);
+        earthTexCloudy[idx+3] = 255;
+      }
+    }
+  }
+
+  let spherePixels = null;
+  function buildSpherePixels(R, viewTilt) {
+    const size = Math.ceil(R * 2) + 2;
+    const cT = Math.cos(viewTilt), sT = Math.sin(viewTilt);
+    const arr = [];
+    for (let py = 0; py < size; py++) {
+      const sy = ((py + 0.5) - size / 2) / R;
+      for (let px = 0; px < size; px++) {
+        const sx = ((px + 0.5) - size / 2) / R;
+        const r2 = sx * sx + sy * sy;
+        if (r2 > 1) continue;
+        const nz = Math.sqrt(1 - r2);
+        const wx = sx;
+        const wy = -sy * cT + nz * sT;
+        const wz = sy * sT + nz * cT;
+        const lit = Math.max(0.13, sx * 0.85 + 0.25);
+        const rimFade = Math.min(1, (1 - r2) * 4);
+        arr.push({ px, py, wx, wy, wz, lit, rimFade });
+      }
+    }
+    spherePixels = { size, arr };
+  }
+  // Off-screen canvas so we can blend the textured sphere onto the main canvas
+  // without putImageData wiping the stars behind the bounding box.
+  let earthOffCanvas = null, earthOffCtx = null;
+  function renderEarthSphere(x0, y0, R, earthRotation, useClouds) {
+    if (!spherePixels) return;
+    const tex = useClouds ? earthTexCloudy : earthTexClear;
+    const size = spherePixels.size;
+    if (!earthOffCanvas || earthOffCanvas.width !== size) {
+      earthOffCanvas = document.createElement('canvas');
+      earthOffCanvas.width = size;
+      earthOffCanvas.height = size;
+      earthOffCtx = earthOffCanvas.getContext('2d');
+    }
+    const img = earthOffCtx.createImageData(size, size);
+    const data = img.data;
+    const cR = Math.cos(earthRotation), sR = Math.sin(earthRotation);
+    const arr = spherePixels.arr;
+    const INV_2PI = 1 / (Math.PI * 2), INV_PI = 1 / Math.PI;
+    for (let i = 0; i < arr.length; i++) {
+      const p = arr[i];
+      const ex = p.wx * cR - p.wz * sR;
+      const ez = p.wx * sR + p.wz * cR;
+      const ey = p.wy;
+      const lat = Math.asin(ey > 1 ? 1 : ey < -1 ? -1 : ey);
+      const lon = Math.atan2(ez, ex);
+      let tx = (lon + Math.PI) * INV_2PI * TEXTURE_W;
+      let ty = (lat + Math.PI / 2) * INV_PI * TEXTURE_H;
+      tx = ((tx | 0) % TEXTURE_W + TEXTURE_W) % TEXTURE_W;
+      ty = ty < 0 ? 0 : (ty >= TEXTURE_H ? TEXTURE_H - 1 : (ty | 0));
+      const tIdx = (ty * TEXTURE_W + tx) * 4;
+      const dIdx = (p.py * size + p.px) * 4;
+      const k = p.lit;
+      data[dIdx]=tex[tIdx]*k; data[dIdx+1]=tex[tIdx+1]*k; data[dIdx+2]=tex[tIdx+2]*k;
+      data[dIdx+3]=255*p.rimFade;
+    }
+    // putImageData on the off-screen — fully replaces (incl. alpha=0 outside disc)
+    earthOffCtx.putImageData(img, 0, 0);
+    // drawImage respects per-pixel alpha → background pixels behind the
+    // square stay intact, only the disc is composited onto the main canvas.
+    ctx.drawImage(earthOffCanvas, Math.round(x0 - size / 2), Math.round(y0 - size / 2));
+  }
+  function projectSurfacePoint(lat, lon, earthRotation, R) {
+    const cl = Math.cos(lat), sl = Math.sin(lat);
+    const xE = cl * Math.cos(lon), zE = cl * Math.sin(lon);
+    const cR = Math.cos(earthRotation), sR = Math.sin(earthRotation);
+    const wx = xE * cR + zE * sR;
+    const wz = -xE * sR + zE * cR;
+    const wy = sl;
+    const cT = Math.cos(VIEW_TILT), sT = Math.sin(VIEW_TILT);
+    const x_ = wx;
+    const y_ = wy * cT - wz * sT;
+    const z_ = wy * sT + wz * cT;
+    return { sx: x_ * R, sy: -y_ * R, visible: z_ > 0, lit: x_ > 0 };
+  }
+
+  // ============ Earth & Moon ============
+  function drawEarth(sliderHours, dt) {
+    hoveredPlanet = null;
+    const progress = sliderHours / 24;
+    let earthRotation, moonAngle;
+    if (state.earthMode === 'day') {
+      earthRotation = ((sliderHours - 12) / 12) * Math.PI + LYON_LON;
+      moonAngle = Math.PI + progress * (Math.PI * 2 / LUNAR_MONTH_DAYS);
+    } else {
+      earthRotation = progress * Math.PI * 2 * 0.05 + LYON_LON;
+      moonAngle = Math.PI + progress * Math.PI * 2;
+    }
+    const w = window.innerWidth;
+    const sunMargin = w < 760 ? 28 : 60;
+    const sunX = Math.min(cx + 380, w - sunMargin);
+    const sunY = cy;
+    drawSunIndicator(sunX, sunY);
+
+    // Moon orbit
+    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+    ctx.setLineDash([3, 5]);
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, MOON_ORBIT_RADIUS, MOON_ORBIT_RADIUS * Math.sin(VIEW_TILT) + 4, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const moonX = cx + Math.cos(moonAngle) * MOON_ORBIT_RADIUS;
+    const moonY = cy + Math.sin(moonAngle) * MOON_ORBIT_RADIUS * Math.sin(VIEW_TILT);
+
+    if (state.settings.tides) drawTides(cx, cy, EARTH_RADIUS, moonAngle);
+    if (state.settings.atmosphere) drawAtmosphere(cx, cy, EARTH_RADIUS);
+
+    renderEarthSphere(cx, cy, EARTH_RADIUS, earthRotation, state.settings.clouds);
+
+    drawCityMarker(cx, cy, EARTH_RADIUS, earthRotation);
+
+    // Axis
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(-AXIAL_TILT);
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.setLineDash([2, 3]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, -EARTH_RADIUS - 16); ctx.lineTo(0, EARTH_RADIUS + 16); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '9px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('23,5°', 6, -EARTH_RADIUS - 6);
+    ctx.restore();
+
+    // ISS
+    if (state.settings.iss && !state.settings.issLive) drawISS(cx, cy, EARTH_RADIUS, sliderHours);
+    if (state.settings.issLive && state.iss) drawLiveISS(cx, cy, EARTH_RADIUS, earthRotation);
+
+    // Eclipse shadow rendering BEFORE moon
+    drawEclipseShadow(cx, cy, EARTH_RADIUS, moonX, moonY, MOON_RADIUS, moonAngle);
+
+    // Moon
+    drawMoonBody(moonX, moonY, MOON_RADIUS);
+
+    ctx.fillStyle = 'rgba(232,238,249,0.85)';
+    ctx.font = '12px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(lang === 'uk' ? 'Земля' : lang === 'en' ? 'Earth' : 'Terre', cx, cy + EARTH_RADIUS + 24);
+    ctx.fillText(lang === 'uk' ? 'Місяць' : lang === 'en' ? 'Moon' : 'Lune', moonX, moonY + MOON_RADIUS + 16);
+
+    if (mouse.active) {
+      const dE = (mouse.x - cx) ** 2 + (mouse.y - cy) ** 2;
+      const dM = (mouse.x - moonX) ** 2 + (mouse.y - moonY) ** 2;
+      if (dE < (EARTH_RADIUS + 8) ** 2) {
+        hoveredPlanet = { kind: 'planet', name: lang === 'uk' ? 'Земля' : lang === 'en' ? 'Earth' : 'Terre',
+          info: lang === 'uk' ? 'Наш дім · натисни для деталей' : lang === 'en' ? 'Our home · click for details' : 'Notre maison · clic pour la fiche',
+          x: cx, y: cy, planetIndex: 2 };
+      } else if (dM < (MOON_RADIUS + 8) ** 2) {
+        const illum = (1 - Math.cos(moonAngle)) / 2;
+        hoveredPlanet = { kind: 'moon', name: lang === 'uk' ? 'Місяць' : lang === 'en' ? 'Moon' : 'Lune',
+          info: `${lang === 'uk' ? 'На відстані 384 400 км' : lang === 'en' ? '384,400 km away' : 'À 384 400 km'} · ${(illum * 100).toFixed(0)}%`,
+          x: moonX, y: moonY };
+      }
+    }
+    drawMoonPhase(moonAngle);
+    detectEclipse(moonAngle);
+  }
+
+  function drawSunIndicator(sunX, sunY) {
+    const sunR = Math.max(20, 36 * displayScale);
+    const rayWidth = Math.min(220, sunX);
+    const rayHeight = Math.min(window.innerHeight * 0.5, 360);
+    const rayGrad = ctx.createLinearGradient(sunX - rayWidth, sunY, sunX, sunY);
+    rayGrad.addColorStop(0, 'rgba(255,209,102,0)');
+    rayGrad.addColorStop(1, 'rgba(255,209,102,0.10)');
+    ctx.fillStyle = rayGrad;
+    ctx.fillRect(sunX - rayWidth, sunY - rayHeight / 2, rayWidth, rayHeight);
+    const glow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunR * 3);
+    glow.addColorStop(0, 'rgba(255,209,102,0.5)');
+    glow.addColorStop(1, 'rgba(255,140,40,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(sunX, sunY, sunR * 3, 0, Math.PI * 2); ctx.fill();
+    const g = ctx.createRadialGradient(sunX - 6, sunY - 6, 2, sunX, sunY, sunR);
+    g.addColorStop(0, '#fff5cc'); g.addColorStop(0.6, '#ffd166'); g.addColorStop(1, '#ff8c28');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,209,102,0.8)';
+    ctx.font = '12px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(lang === 'uk' ? '☀ Сонце' : lang === 'en' ? '☀ Sun' : '☀ Soleil', sunX, sunY + sunR + 18);
+  }
+
+  function drawTides(x, y, R, moonAngle) {
+    ctx.save();
+    ctx.translate(x, y); ctx.rotate(moonAngle);
+    ctx.scale(1, Math.sin(VIEW_TILT) + 0.35);
+    ctx.fillStyle = 'rgba(74, 158, 255, 0.32)';
+    ctx.beginPath(); ctx.ellipse(0, 0, R * 1.12, R * 0.92, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawAtmosphere(x, y, R) {
+    const aGrad = ctx.createRadialGradient(x, y, R, x, y, R * 1.18);
+    aGrad.addColorStop(0, 'rgba(120, 180, 255, 0)');
+    aGrad.addColorStop(0.5, 'rgba(120, 180, 255, 0.25)');
+    aGrad.addColorStop(1, 'rgba(120, 180, 255, 0)');
+    ctx.fillStyle = aGrad;
+    ctx.beginPath(); ctx.arc(x, y, R * 1.18, 0, Math.PI * 2); ctx.fill();
+  }
+
+  function drawCityMarker(x0, y0, R, earthRotation) {
+    const proj = projectSurfacePoint(LYON_LAT, LYON_LON, earthRotation, R);
+    if (!proj.visible) return;
+    const x = x0 + proj.sx, y = y0 + proj.sy;
+    ctx.fillStyle = '#ff5050';
+    ctx.beginPath(); ctx.arc(x, y, 3.2, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = `rgba(255,80,80,${proj.lit ? 0.85 : 0.5})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = `rgba(255,180,180,${proj.lit ? 0.95 : 0.7})`;
+    ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Lyon', x + 8, y + 3);
+  }
+
+  function drawISS(x, y, R, sliderHours) {
+    const issOrbits = state.earthMode === 'month'
+      ? (sliderHours / 24) * LUNAR_MONTH_DAYS * 16
+      : (sliderHours / 24) * 16;
+    const ang = Math.PI / 2 + issOrbits * Math.PI * 2;
+    const r = R + 12;
+    const ix = x + Math.cos(ang) * r;
+    const iy = y + Math.sin(ang) * r * Math.sin(VIEW_TILT) * 2;
+    ctx.strokeStyle = 'rgba(100,200,255,0.18)';
+    ctx.setLineDash([2, 4]);
+    ctx.beginPath();
+    ctx.ellipse(x, y, r, r * Math.sin(VIEW_TILT) * 2, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#9fd9ff';
+    ctx.beginPath(); ctx.arc(ix, iy, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(159,217,255,0.4)';
+    ctx.beginPath(); ctx.arc(ix, iy, 5, 0, Math.PI * 2); ctx.fill();
+  }
+
+  function drawLiveISS(x, y, R, earthRotation) {
+    if (!state.iss) return;
+    const lat = state.iss.lat * Math.PI / 180;
+    const lon = state.iss.lon * Math.PI / 180;
+    const proj = projectSurfacePoint(lat, lon, earthRotation, R + 12);
+    if (!proj.visible) return;
+    const ix = x + proj.sx, iy = y + proj.sy;
+    ctx.strokeStyle = 'rgba(100,200,255,0.18)';
+    ctx.setLineDash([2, 4]);
+    ctx.beginPath();
+    ctx.ellipse(x, y, R + 12, (R + 12) * Math.sin(VIEW_TILT) * 2, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#9fd9ff';
+    ctx.beginPath(); ctx.arc(ix, iy, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(159,217,255,0.5)';
+    ctx.beginPath(); ctx.arc(ix, iy, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#9fd9ff';
+    ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('ISS', ix + 10, iy + 3);
+  }
+
+  function drawEclipseShadow(eX, eY, eR, mX, mY, mR, moonAngle) {
+    // Solar eclipse: moon between earth and sun → moon casts shadow toward earth
+    // We approximate the shadow as a triangle/cone from Moon to Earth direction
+    const a = ((moonAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    const distToNew = Math.min(a, Math.abs(a - Math.PI * 2));
+    const distToFull = Math.abs(a - Math.PI);
+    if (distToNew < 0.18) {
+      // Moon shadow projected toward Earth (left, since sun is right)
+      ctx.save();
+      const cone = ctx.createLinearGradient(mX, mY, eX, eY);
+      cone.addColorStop(0, 'rgba(0,0,15,0.5)');
+      cone.addColorStop(1, 'rgba(0,0,15,0)');
+      ctx.fillStyle = cone;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY - mR * 0.6);
+      ctx.lineTo(eX, eY - eR * 0.4);
+      ctx.lineTo(eX, eY + eR * 0.4);
+      ctx.lineTo(mX, mY + mR * 0.6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    } else if (distToFull < 0.18) {
+      // Lunar eclipse: Earth shadow falls on the moon (reddish)
+      ctx.save();
+      ctx.globalCompositeOperation = 'multiply';
+      const shadow = ctx.createRadialGradient(mX, mY, 0, mX, mY, mR);
+      shadow.addColorStop(0, 'rgba(140,40,30,0.85)');
+      shadow.addColorStop(0.7, 'rgba(80,20,20,0.6)');
+      shadow.addColorStop(1, 'rgba(40,10,10,0.4)');
+      ctx.fillStyle = shadow;
+      ctx.beginPath(); ctx.arc(mX, mY, mR, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawMoonBody(x, y, R) {
+    const glow = ctx.createRadialGradient(x, y, 0, x, y, R * 1.7);
+    glow.addColorStop(0, 'rgba(220,220,220,0.18)');
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(x, y, R * 1.7, 0, Math.PI * 2); ctx.fill();
+    ctx.save();
+    ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = '#cfcfcf'; ctx.fillRect(x - R, y - R, R * 2, R * 2);
+    ctx.fillStyle = 'rgba(120,120,120,0.5)';
+    for (const [dx, dy, s] of [
+      [-0.3,-0.4,0.18],[0.4,0.2,0.22],[-0.1,0.5,0.14],
+      [0.5,-0.5,0.12],[0.1,-0.1,0.1],[-0.5,0.1,0.16]]) {
+      ctx.beginPath(); ctx.arc(x + dx * R, y + dy * R, s * R, 0, Math.PI * 2); ctx.fill();
+    }
+    const shade = ctx.createLinearGradient(x - R, y, x + R, y);
+    shade.addColorStop(0, 'rgba(0,0,15,0.85)');
+    shade.addColorStop(0.45, 'rgba(0,0,15,0.55)');
+    shade.addColorStop(0.55, 'rgba(0,0,15,0)');
+    shade.addColorStop(1, 'rgba(0,0,15,0)');
+    ctx.fillStyle = shade;
+    ctx.fillRect(x - R, y - R, R * 2, R * 2);
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.stroke();
+  }
+
+  // ============ Earth orbit view (formerly "Seasons") ============
+  // Unified view: Earth orbits Sun · Moon orbits Earth · eclipses · drag Earth interactively
+  function drawSeasons(sliderHours) {
+    hoveredPlanet = null;
+    const progress = sliderHours / 24;
+    const sunR = 32;
+    const sunGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, sunR * 3);
+    sunGlow.addColorStop(0, 'rgba(255,209,102,0.5)');
+    sunGlow.addColorStop(1, 'rgba(255,140,40,0)');
+    ctx.fillStyle = sunGlow;
+    ctx.beginPath(); ctx.arc(cx, cy, sunR * 3, 0, Math.PI * 2); ctx.fill();
+    const sg = ctx.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, sunR);
+    sg.addColorStop(0, '#fff5cc'); sg.addColorStop(0.6, '#ffd166'); sg.addColorStop(1, '#ff8c28');
+    ctx.fillStyle = sg;
+    ctx.beginPath(); ctx.arc(cx, cy, sunR, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,209,102,0.8)';
+    ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(lang === 'uk' ? 'Сонце' : lang === 'en' ? 'Sun' : 'Soleil', cx, cy + sunR + 14);
+    const orbitR = Math.min(window.innerWidth, window.innerHeight) * 0.32;
+    const orbitRy = orbitR * 0.45;
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.beginPath(); ctx.ellipse(cx, cy, orbitR, orbitRy, 0, 0, Math.PI * 2); ctx.stroke();
+    const seasons = [
+      { day: 79,  key: 'spring' }, { day: 172, key: 'summer' },
+      { day: 266, key: 'autumn' }, { day: 355, key: 'winter' },
+    ];
+    for (const s of seasons) {
+      const t2 = s.day / 365;
+      const a = -Math.PI / 2 + t2 * Math.PI * 2;
+      const px = cx + Math.cos(a) * orbitR;
+      const py = cy + Math.sin(a) * orbitRy;
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+      const offY = py < cy ? -10 : 16;
+      ctx.fillText(t(s.key), px, py + offY);
+    }
+    const tt2 = progress;
+    const ea = -Math.PI / 2 + tt2 * Math.PI * 2;
+    const ex = cx + Math.cos(ea) * orbitR;
+    const ey = cy + Math.sin(ea) * orbitRy;
+    const earthR = 34;
+    const eg = ctx.createRadialGradient(ex, ey, 0, ex, ey, earthR * 1.6);
+    eg.addColorStop(0, 'rgba(80,140,255,0.25)');
+    eg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = eg;
+    ctx.beginPath(); ctx.arc(ex, ey, earthR * 1.6, 0, Math.PI * 2); ctx.fill();
+    ctx.save();
+    ctx.beginPath(); ctx.arc(ex, ey, earthR, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = '#0e3a7a';
+    ctx.fillRect(ex - earthR, ey - earthR, earthR * 2, earthR * 2);
+    ctx.save();
+    ctx.translate(ex, ey);
+    drawSimpleContinents(earthR);
+    ctx.restore();
+    const dxs = cx - ex, dys = cy - ey;
+    const sunAngleFromEarth = Math.atan2(dys, dxs);
+    ctx.save();
+    ctx.translate(ex, ey);
+    ctx.rotate(sunAngleFromEarth);
+    const shade = ctx.createLinearGradient(-earthR, 0, earthR, 0);
+    shade.addColorStop(0, 'rgba(0,0,15,0.85)');
+    shade.addColorStop(0.45, 'rgba(0,0,15,0.55)');
+    shade.addColorStop(0.55, 'rgba(0,0,15,0)');
+    shade.addColorStop(1, 'rgba(0,0,15,0)');
+    ctx.fillStyle = shade;
+    ctx.fillRect(-earthR, -earthR, earthR * 2, earthR * 2);
+    ctx.restore();
+    ctx.restore();
+    ctx.save();
+    ctx.translate(ex, ey);
+    ctx.rotate(-AXIAL_TILT);
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(0, -earthR - 12); ctx.lineTo(0, earthR + 12); ctx.stroke();
+    ctx.fillStyle = '#9fd9ff';
+    ctx.beginPath(); ctx.arc(0, -earthR - 12, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(232,238,249,0.85)';
+    ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('N', 6, -earthR - 9);
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.beginPath(); ctx.arc(ex, ey, earthR, 0, Math.PI * 2); ctx.stroke();
+    const axisX = Math.sin(AXIAL_TILT), axisY = -Math.cos(AXIAL_TILT);
+    const sxToE = (ex - cx), syToE = (ey - cy);
+    const lenSE = Math.hypot(sxToE, syToE) || 1;
+    const dot = -(axisX * sxToE / lenSE + axisY * syToE / lenSE);
+    let nKey, sKey;
+    if (dot > 0.6) { nKey = 'summer'; sKey = 'winter'; }
+    else if (dot > 0.05) { nKey = 'spring'; sKey = 'autumn'; }
+    else if (dot < -0.6) { nKey = 'winter'; sKey = 'summer'; }
+    else if (dot < -0.05) { nKey = 'autumn'; sKey = 'spring'; }
+    else { nKey = 'equinox'; sKey = 'equinox'; }
+    ctx.fillStyle = 'rgba(232,238,249,0.95)';
+    ctx.font = '12px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${t('hemisphere_north')} : ${t(nKey)}`, ex, ey - earthR - 22);
+    ctx.fillStyle = 'rgba(232,238,249,0.6)';
+    ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(`${t('hemisphere_south')} : ${t(sKey)}`, ex, ey - earthR - 8);
+
+    // ===== Moon orbiting Earth =====
+    const MOONS_PER_YEAR = 12.37; // synodic cycles per Earth year
+    const moonAngleAroundEarth = progress * Math.PI * 2 * MOONS_PER_YEAR;
+    const moonOrbitPx = earthR * 1.9;
+    // Moon orbits in Earth's frame; project flat (small ellipse)
+    const mx = ex + Math.cos(moonAngleAroundEarth) * moonOrbitPx;
+    const my = ey + Math.sin(moonAngleAroundEarth) * moonOrbitPx * 0.35;
+    const moonR = Math.max(4, earthR * 0.18);
+    // Moon orbit ring
+    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+    ctx.setLineDash([2, 4]);
+    ctx.beginPath();
+    ctx.ellipse(ex, ey, moonOrbitPx, moonOrbitPx * 0.35, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Eclipse alignment: in this view, the moon-earth-sun line lines up when moon is between earth and sun (toward sun = positive x direction since sun is at cx, cy)
+    // Direction earth->sun:
+    const eToSunAngle = Math.atan2(cy - ey, cx - ex);
+    // Phase angle: angle between (moon from earth) and (sun from earth)
+    const moonRelAngle = Math.atan2(Math.sin(moonAngleAroundEarth) * 0.35, Math.cos(moonAngleAroundEarth));
+    // Normalised difference
+    let phaseDelta = moonRelAngle - eToSunAngle;
+    while (phaseDelta < -Math.PI) phaseDelta += Math.PI * 2;
+    while (phaseDelta > Math.PI) phaseDelta -= Math.PI * 2;
+    // illumination 0..1: 0 = new (moon at sun side), 1 = full (opposite)
+    const illum = (1 - Math.cos(phaseDelta)) / 2;
+    const waxing = Math.sin(phaseDelta) > 0;
+
+    // Eclipse cone — solar eclipse: moon between earth and sun
+    if (Math.abs(phaseDelta) < 0.18) {
+      ctx.save();
+      const grad = ctx.createLinearGradient(mx, my, ex, ey);
+      grad.addColorStop(0, 'rgba(0,0,15,0.5)');
+      grad.addColorStop(1, 'rgba(0,0,15,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(mx, my - moonR * 0.6);
+      ctx.lineTo(ex, ey - earthR * 0.4);
+      ctx.lineTo(ex, ey + earthR * 0.4);
+      ctx.lineTo(mx, my + moonR * 0.6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Moon body with day/night
+    ctx.save();
+    ctx.beginPath(); ctx.arc(mx, my, moonR, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = '#cfcfcf';
+    ctx.fillRect(mx - moonR, my - moonR, moonR * 2, moonR * 2);
+    // crater
+    ctx.fillStyle = 'rgba(120,120,120,0.5)';
+    ctx.beginPath(); ctx.arc(mx - moonR*0.3, my - moonR*0.4, moonR*0.18, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(mx + moonR*0.4, my + moonR*0.2, moonR*0.22, 0, Math.PI*2); ctx.fill();
+    // Shadow on moon based on sun direction (sun at cx, cy)
+    const sunDirX = (cx - mx), sunDirY = (cy - my);
+    const sunDirLen = Math.hypot(sunDirX, sunDirY) || 1;
+    const sdx = sunDirX / sunDirLen, sdy = sunDirY / sunDirLen;
+    ctx.save();
+    ctx.translate(mx, my);
+    const shadAng = Math.atan2(sdy, sdx);
+    ctx.rotate(shadAng);
+    const moonShade = ctx.createLinearGradient(-moonR, 0, moonR, 0);
+    moonShade.addColorStop(0, 'rgba(0,0,15,0.85)');
+    moonShade.addColorStop(0.45, 'rgba(0,0,15,0.55)');
+    moonShade.addColorStop(0.55, 'rgba(0,0,15,0)');
+    moonShade.addColorStop(1, 'rgba(0,0,15,0)');
+    ctx.fillStyle = moonShade;
+    ctx.fillRect(-moonR, -moonR, moonR * 2, moonR * 2);
+    ctx.restore();
+    // Lunar eclipse — full moon alignment: earth shadow on moon
+    if (Math.abs(Math.abs(phaseDelta) - Math.PI) < 0.18) {
+      const lunShadow = ctx.createRadialGradient(mx, my, 0, mx, my, moonR);
+      lunShadow.addColorStop(0, 'rgba(140,40,30,0.85)');
+      lunShadow.addColorStop(0.7, 'rgba(80,20,20,0.6)');
+      lunShadow.addColorStop(1, 'rgba(40,10,10,0.4)');
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.fillStyle = lunShadow;
+      ctx.beginPath(); ctx.arc(mx, my, moonR, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(255,255,255,0.10)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(mx, my, moonR, 0, Math.PI * 2); ctx.stroke();
+
+    // Moon label
+    if (earthR > 25) {
+      ctx.fillStyle = 'rgba(232,238,249,0.7)';
+      ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(lang === 'uk' ? 'Місяць' : lang === 'en' ? 'Moon' : 'Lune', mx, my + moonR + 12);
+    }
+
+    // Update phase mini-display using the computed phase
+    drawMoonPhase(phaseDelta);
+
+    // Eclipse banner
+    if (Math.abs(phaseDelta) < 0.08) {
+      eclipseBanner.textContent = t('eclipse_solar');
+      eclipseBanner.classList.add('visible');
+    } else if (Math.abs(Math.abs(phaseDelta) - Math.PI) < 0.08) {
+      eclipseBanner.textContent = t('eclipse_lunar');
+      eclipseBanner.classList.add('visible');
+    } else {
+      eclipseBanner.classList.remove('visible');
+    }
+
+    // Save Earth screen geometry for drag handler
+    earthDrag.earthScreen = {
+      x: ex, y: ey, r: earthR,
+      cx: cx, cy: cy,
+      orbitR, orbitRy,
+    };
+
+    // Hover detection on Earth (for cursor + tooltip)
+    if (mouse.active && !earthDrag.active) {
+      const dx = mouse.x - ex, dy = mouse.y - ey;
+      if (dx*dx + dy*dy < (earthR + 10) ** 2) {
+        hoveredPlanet = {
+          kind: 'earthDraggable', name: lang === 'uk' ? 'Земля' : lang === 'en' ? 'Earth' : 'Terre',
+          info: t('drag_hint'), x: ex, y: ey,
+        };
+      }
+    }
+  }
+  function drawSimpleContinents(R) {
+    ctx.fillStyle = '#3d9b4f';
+    const blobs = [
+      [-0.55, -0.15, 0.30, 1.0], [-0.20, -0.30, 0.22, 0.9],
+      [-0.45,  0.30, 0.28, 1.1], [ 0.30, -0.25, 0.32, 1.0],
+      [ 0.55,  0.15, 0.15, 0.9], [ 0.45,  0.45, 0.10, 1.0],
+    ];
+    for (const [bx, by, br, sq] of blobs) {
+      ctx.save();
+      ctx.translate(bx * R, by * R); ctx.scale(1, sq);
+      ctx.beginPath(); ctx.arc(0, 0, br * R, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath(); ctx.arc(0, 0, R * 0.15, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // ============ Comparator (interactive) ============
+  function compareViewFor(body, viewW, viewH) {
+    // Center on body, zoom so the body fills ~35% of the shorter viewport side
+    const target = Math.min(viewW, viewH) * 0.35;
+    const zoom = Math.max(1e-11, target / body.diameter);
+    return { offsetX: body.x, offsetY: body.y, zoom };
+  }
+  function compareViewWhole(viewW, viewH) {
+    // Fit all orbits: Neptune diameter ≈ 60 AU. Center on Sun.
+    const diameterKm = 2.2 * 30.05 * AU_KM;
+    const target = Math.min(viewW, viewH) * 0.85;
+    return { offsetX: 0, offsetY: 0, zoom: target / diameterKm };
+  }
+  function compareFlyTo(bodyId) {
+    const body = COMPARATOR_BODIES.find(b => b.id === bodyId);
+    if (!body) return;
+    const v = compareViewFor(body, window.innerWidth, window.innerHeight);
+    comparator.startState = { offsetX: comparator.offsetX, offsetY: comparator.offsetY, zoom: comparator.zoom };
+    comparator.endState = v;
+    comparator.animStart = performance.now() / 1000;
+    comparator.animating = true;
+    comparator.selected = bodyId;
+    refreshFlyButtons();
+  }
+  function compareTickAnim(now) {
+    if (!comparator.animating) return;
+    const t = (now / 1000 - comparator.animStart) / comparator.animDur;
+    if (t >= 1) {
+      comparator.offsetX = comparator.endState.offsetX;
+      comparator.offsetY = comparator.endState.offsetY;
+      comparator.zoom = comparator.endState.zoom;
+      comparator.animating = false;
+      return;
+    }
+    const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    comparator.offsetX = comparator.startState.offsetX + (comparator.endState.offsetX - comparator.startState.offsetX) * e;
+    comparator.offsetY = comparator.startState.offsetY + (comparator.endState.offsetY - comparator.startState.offsetY) * e;
+    const lz1 = Math.log(comparator.startState.zoom);
+    const lz2 = Math.log(comparator.endState.zoom);
+    comparator.zoom = Math.exp(lz1 + (lz2 - lz1) * e);
+  }
+  function compareWorldToScreen(wx, wy, viewW, viewH) {
+    return { sx: (wx - comparator.offsetX) * comparator.zoom + viewW / 2,
+             sy: (wy - comparator.offsetY) * comparator.zoom + viewH / 2 };
+  }
+  function compareScreenToWorld(sx, sy, viewW, viewH) {
+    return { wx: (sx - viewW / 2) / comparator.zoom + comparator.offsetX,
+             wy: (sy - viewH / 2) / comparator.zoom + comparator.offsetY };
+  }
+
+  function drawCompare() {
+    hoveredPlanet = null;
+    const w = window.innerWidth, h = window.innerHeight;
+    const now = performance.now();
+
+    // Title
+    ctx.fillStyle = 'rgba(232,238,249,0.9)';
+    ctx.font = `bold ${w < 760 ? 14 : 18}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(t('compare_title'), w / 2, w < 760 ? 62 : 100);
+
+    // Sun's screen position
+    const sunScreen = compareWorldToScreen(0, 0, w, h);
+
+    // ===== Orbital rings (drawn first so they're behind the bodies) =====
+    for (const body of COMPARATOR_BODIES) {
+      if (body.isSun) continue;
+      const orbitPx = body.orbitR * comparator.zoom;
+      if (orbitPx < 8) continue; // too small to be useful
+      // Only render the visible arc segment for performance: but Path API
+      // doesn't trivially clip a circle. Skip if obviously off-screen.
+      const maxR = Math.hypot(Math.max(Math.abs(sunScreen.sx), w - sunScreen.sx),
+                              Math.max(Math.abs(sunScreen.sy), h - sunScreen.sy));
+      const minR = Math.max(0,
+        Math.hypot(Math.max(0, Math.max(-sunScreen.sx, sunScreen.sx - w)),
+                   Math.max(0, Math.max(-sunScreen.sy, sunScreen.sy - h))));
+      if (orbitPx < minR - 20) continue; // ring entirely outside viewport
+      if (orbitPx > maxR + 200) continue; // ring entirely beyond viewport reach
+      ctx.strokeStyle = hexA(body.color, 0.18);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(sunScreen.sx, sunScreen.sy, orbitPx, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // ===== Each body =====
+    for (const body of COMPARATOR_BODIES) {
+      const { sx, sy } = compareWorldToScreen(body.x, body.y, w, h);
+      const realSr = body.diameter * comparator.zoom / 2;
+      // Always show at least 3 px so we can spot bodies from far away
+      const minSr = body.isSun ? 5 : 3;
+      const sr = Math.max(minSr, realSr);
+      const usingMinSize = realSr < minSr;
+      // Off-screen?
+      if (sx + sr < -10 || sx - sr > w + 10 || sy + sr < -10 || sy - sr > h + 10) continue;
+
+      // Glow
+      const glow = ctx.createRadialGradient(sx, sy, sr, sx, sy, sr * 2.4);
+      glow.addColorStop(0, hexA(body.color, usingMinSize ? 0.55 : 0.35));
+      glow.addColorStop(1, hexA(body.color, 0));
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(sx, sy, sr * 2.4, 0, Math.PI * 2); ctx.fill();
+
+      // Body itself
+      if (body.isSun) {
+        const pulse = 1 + 0.04 * Math.sin(now / 800);
+        const sg = ctx.createRadialGradient(sx - sr * 0.2, sy - sr * 0.2, sr * 0.1, sx, sy, sr * pulse);
+        sg.addColorStop(0, '#fff5cc'); sg.addColorStop(0.6, '#ffd166'); sg.addColorStop(1, '#ff8c28');
+        ctx.fillStyle = sg;
+        ctx.beginPath(); ctx.arc(sx, sy, sr * pulse, 0, Math.PI * 2); ctx.fill();
+      } else if (body.id === 2 && sr >= 14 && spherePixels && !usingMinSize) {
+        // Realistic Earth when big enough
+        const rot = now / 6000;
+        renderEarthSphere(sx, sy, sr, rot * 2, state.settings.clouds);
+        if (state.settings.atmosphere) drawAtmosphere(sx, sy, sr);
+      } else {
+        const grad = ctx.createRadialGradient(sx - sr * 0.4, sy - sr * 0.4, 0, sx, sy, sr);
+        grad.addColorStop(0, lighten(body.color, 0.3));
+        grad.addColorStop(1, body.color);
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2); ctx.fill();
+        // Rotation hint
+        if (sr > 14 && !usingMinSize) {
+          const rot = now / 6000 + body.x * 0.0000001;
+          ctx.save();
+          ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2); ctx.clip();
+          ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+          ctx.lineWidth = Math.max(1, sr * 0.06);
+          ctx.beginPath();
+          const a1 = rot % (Math.PI * 2);
+          ctx.arc(sx, sy, sr * 0.85, a1, a1 + 0.6);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      // Saturn rings
+      if (body.hasRings && !usingMinSize) {
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate(0.4); ctx.scale(1, 0.35);
+        ctx.strokeStyle = 'rgba(232,211,156,0.75)';
+        ctx.lineWidth = Math.max(1, sr * 0.06);
+        ctx.beginPath(); ctx.arc(0, 0, sr * 1.8, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = 'rgba(232,211,156,0.4)';
+        ctx.lineWidth = Math.max(0.5, sr * 0.04);
+        ctx.beginPath(); ctx.arc(0, 0, sr * 2.15, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+      }
+
+      // Earth's Moon when zoomed in enough
+      if (body.hasMoon && !usingMinSize && sr > 12) {
+        const moonOrbitKm = 384400;
+        const moonOrbitPx = moonOrbitKm * comparator.zoom;
+        if (moonOrbitPx > sr * 1.5) {
+          const moonR = 1737 * comparator.zoom;
+          const ma = now / 4000;
+          const mx = sx + Math.cos(ma) * moonOrbitPx;
+          const my = sy + Math.sin(ma) * moonOrbitPx;
+          ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+          ctx.setLineDash([2, 4]);
+          ctx.beginPath(); ctx.arc(sx, sy, moonOrbitPx, 0, Math.PI * 2); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = '#cfcfcf';
+          ctx.beginPath(); ctx.arc(mx, my, Math.max(1.2, moonR), 0, Math.PI * 2); ctx.fill();
+        }
+      }
+
+      // Labels with LOD
+      const name = lname(body);
+      // Always show name on hover/focus, but suppress when too zoomed in to avoid clutter
+      const showName = !usingMinSize || sr >= minSr; // basically always since min is enforced
+      if (showName) {
+        const labelY = sy + sr + (w < 760 ? 12 : 14);
+        ctx.fillStyle = 'rgba(232,238,249,0.9)';
+        ctx.font = `bold ${w < 760 ? 11 : 13}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(name, sx, labelY);
+        // Extra info when the planet is comfortably visible
+        if (realSr > 8 || (usingMinSize && comparator.selected === body.id)) {
+          ctx.fillStyle = 'rgba(232,238,249,0.5)';
+          ctx.font = `${w < 760 ? 9 : 11}px -apple-system, BlinkMacSystemFont, sans-serif`;
+          ctx.fillText(`⌀ ${formatNumber(body.diameter)} km`, sx, labelY + 14);
+          if (!body.isSun) {
+            const ratio = body.diameter / 12742;
+            const r = ratio < 1 ? ratio.toFixed(2) : ratio.toFixed(1);
+            ctx.fillStyle = 'rgba(255,209,102,0.7)';
+            ctx.fillText(`×${r} 🌍 · ${body.orbitR === 0 ? '' : (body.orbitR / AU_KM).toFixed(2) + ' UA'}`, sx, labelY + 28);
+          }
+        }
+      }
+
+      // Hover hit-test (slightly larger area for small bodies, makes them tappable)
+      if (mouse.active && !hoveredPlanet) {
+        const dx = mouse.x - sx, dy = mouse.y - sy;
+        const hitR = Math.max(sr + 14, 18);
+        if (dx * dx + dy * dy < hitR * hitR) {
+          hoveredPlanet = {
+            kind: body.isSun ? 'sun' : 'planet',
+            name, info: lang === 'uk' ? 'натисни для деталей' : lang === 'en' ? 'click for details' : 'clic pour la fiche',
+            x: sx, y: sy,
+            planetIndex: body.isSun ? null : body.id,
+          };
+        }
+      }
+    }
+
+    // Scale indicator at bottom-right
+    drawCompareScale(w, h);
+
+    // Off-screen arrows for bodies outside the viewport
+    drawCompareArrows(w, h);
+  }
+
+  function drawCompareScale(w, h) {
+    // 100px wide ruler showing what 100px corresponds to in km
+    const lenPx = 100;
+    const km = lenPx / comparator.zoom;
+    let label;
+    if (km > AU_KM * 0.5) label = `${(km / AU_KM).toFixed(2)} UA`;
+    else if (km > 1e6) label = `${(km / 1e6).toFixed(1)} M km`;
+    else if (km > 1e3) label = `${(km / 1e3).toFixed(0)} 000 km`;
+    else label = `${km.toFixed(0)} km`;
+    const y = h - 60;
+    const x = w - lenPx - 24;
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, y); ctx.lineTo(x + lenPx, y);
+    ctx.moveTo(x, y - 4); ctx.lineTo(x, y + 4);
+    ctx.moveTo(x + lenPx, y - 4); ctx.lineTo(x + lenPx, y + 4);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, x + lenPx / 2, y - 8);
+  }
+
+  function drawCompareArrows(w, h) {
+    // For each body off-screen, draw a small arrow at the screen edge pointing toward it
+    for (const body of COMPARATOR_BODIES) {
+      const { sx, sy } = compareWorldToScreen(body.x, body.y, w, h);
+      const sr = Math.max(3, body.diameter * comparator.zoom / 2);
+      if (sx + sr >= 0 && sx - sr <= w && sy + sr >= 0 && sy - sr <= h) continue;
+      // Clamp to viewport edge with margin
+      const margin = 24;
+      const cxV = w / 2, cyV = h / 2;
+      const dx = sx - cxV, dy = sy - cyV;
+      const ang = Math.atan2(dy, dx);
+      const ex = cxV + Math.cos(ang) * (Math.min(w, h) / 2 - margin);
+      const ey = cyV + Math.sin(ang) * (Math.min(w, h) / 2 - margin);
+      ctx.save();
+      ctx.translate(ex, ey);
+      ctx.rotate(ang);
+      ctx.fillStyle = hexA(body.color, 0.85);
+      ctx.beginPath();
+      ctx.moveTo(8, 0); ctx.lineTo(-4, -5); ctx.lineTo(-4, 5);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = hexA(body.color, 0.8);
+      ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.textAlign = 'center';
+      const labelX = ex - Math.cos(ang) * 18;
+      const labelY = ey - Math.sin(ang) * 18;
+      ctx.fillText(lname(body), labelX, labelY + 4);
+    }
+  }
+
+  function buildFlyButtons() {
+    const panel = $('comparePanel');
+    panel.innerHTML = '';
+    for (const body of COMPARATOR_BODIES) {
+      const btn = document.createElement('button');
+      btn.className = 'flyBtn';
+      if (body.id === comparator.selected) btn.classList.add('active');
+      const name = lname(body);
+      btn.innerHTML = `<span class="dot" style="background:${body.color};color:${body.color}"></span>${name}`;
+      btn.addEventListener('click', (e) => { e.stopPropagation(); compareFlyTo(body.id); });
+      panel.appendChild(btn);
+    }
+  }
+  function refreshFlyButtons() {
+    document.querySelectorAll('#comparePanel .flyBtn').forEach((b, i) => {
+      b.classList.toggle('active', COMPARATOR_BODIES[i].id === comparator.selected);
+    });
+  }
+
+  // ============ Moon phase mini-display ============
+  function drawMoonPhase(moonAngle) {
+    const w = phaseCanvas.width, h = phaseCanvas.height;
+    phaseCtx.clearRect(0, 0, w, h);
+    const r = Math.min(w, h) / 2 - 8;
+    const cx2 = w / 2, cy2 = h / 2;
+    phaseCtx.fillStyle = '#1a1a22';
+    phaseCtx.beginPath(); phaseCtx.arc(cx2, cy2, r, 0, Math.PI * 2); phaseCtx.fill();
+    const illum = (1 - Math.cos(moonAngle)) / 2;
+    const waxing = Math.sin(moonAngle) > 0;
+    phaseCtx.save();
+    phaseCtx.beginPath(); phaseCtx.arc(cx2, cy2, r, 0, Math.PI * 2); phaseCtx.clip();
+    phaseCtx.fillStyle = '#e8e8e8';
+    if (illum >= 0.5) {
+      phaseCtx.fillRect(cx2 - r, cy2 - r, r * 2, r * 2);
+      phaseCtx.fillStyle = '#1a1a22';
+      phaseCtx.beginPath();
+      if (waxing) phaseCtx.rect(cx2 - r, cy2 - r, r, r * 2);
+      else phaseCtx.rect(cx2, cy2 - r, r, r * 2);
+      phaseCtx.fill();
+      const ew = r * (1 - 2 * (illum - 0.5)) * 2;
+      phaseCtx.fillStyle = '#e8e8e8';
+      phaseCtx.beginPath(); phaseCtx.ellipse(cx2, cy2, Math.abs(ew) / 2, r, 0, 0, Math.PI * 2); phaseCtx.fill();
+      phaseCtx.fillStyle = '#e8e8e8';
+      phaseCtx.beginPath();
+      if (waxing) phaseCtx.rect(cx2, cy2 - r, r, r * 2);
+      else phaseCtx.rect(cx2 - r, cy2 - r, r, r * 2);
+      phaseCtx.fill();
+    } else {
+      const lit = waxing ? 1 : -1;
+      phaseCtx.beginPath();
+      if (lit === 1) phaseCtx.rect(cx2, cy2 - r, r, r * 2);
+      else phaseCtx.rect(cx2 - r, cy2 - r, r, r * 2);
+      phaseCtx.fill();
+      phaseCtx.fillStyle = '#1a1a22';
+      const ew = r * (1 - 2 * illum) * 2;
+      phaseCtx.beginPath(); phaseCtx.ellipse(cx2, cy2, Math.abs(ew) / 2, r, 0, 0, Math.PI * 2); phaseCtx.fill();
+    }
+    phaseCtx.restore();
+    phaseCtx.strokeStyle = 'rgba(255,255,255,0.2)'; phaseCtx.lineWidth = 1;
+    phaseCtx.beginPath(); phaseCtx.arc(cx2, cy2, r, 0, Math.PI * 2); phaseCtx.stroke();
+    $('phaseName').textContent = phaseName(illum, waxing);
+    $('phaseIllum').textContent = `${(illum * 100).toFixed(0)} % ${lang === 'uk' ? 'освітленості' : lang === 'en' ? 'lit' : 'éclairée'}`;
+  }
+  function phaseName(illum, waxing) {
+    if (lang === 'uk') {
+      if (illum < 0.04) return 'Молодик';
+      if (illum > 0.96) return 'Повний Місяць';
+      if (Math.abs(illum - 0.5) < 0.06) return waxing ? 'Перша чверть' : 'Остання чверть';
+      if (illum < 0.5) return waxing ? 'Молодий серп' : 'Старий серп';
+      return waxing ? 'Зростаюча гібуса' : 'Спадна гібуса';
+    }
+    if (lang === 'en') {
+      if (illum < 0.04) return 'New Moon';
+      if (illum > 0.96) return 'Full Moon';
+      if (Math.abs(illum - 0.5) < 0.06) return waxing ? 'First Quarter' : 'Last Quarter';
+      if (illum < 0.5) return waxing ? 'Waxing Crescent' : 'Waning Crescent';
+      return waxing ? 'Waxing Gibbous' : 'Waning Gibbous';
+    }
+    if (illum < 0.04) return 'Nouvelle Lune';
+    if (illum > 0.96) return 'Pleine Lune';
+    if (Math.abs(illum - 0.5) < 0.06) return waxing ? 'Premier Quartier' : 'Dernier Quartier';
+    if (illum < 0.5) return waxing ? 'Premier Croissant' : 'Dernier Croissant';
+    return waxing ? 'Gibbeuse Croissante' : 'Gibbeuse Décroissante';
+  }
+  function detectEclipse(moonAngle) {
+    const a = ((moonAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    const distToNew = Math.min(a, Math.abs(a - Math.PI * 2));
+    const distToFull = Math.abs(a - Math.PI);
+    if (distToNew < 0.05) { eclipseBanner.textContent = t('eclipse_solar'); eclipseBanner.classList.add('visible'); }
+    else if (distToFull < 0.05) { eclipseBanner.textContent = t('eclipse_lunar'); eclipseBanner.classList.add('visible'); }
+    else eclipseBanner.classList.remove('visible');
+  }
+
+  // ============ Tooltip ============
+  function updateTooltip() {
+    if (hoveredPlanet) {
+      tooltip.classList.add('show');
+      tooltip.querySelector('.name').textContent = hoveredPlanet.name;
+      tooltip.querySelector('.info').textContent = hoveredPlanet.info;
+      tooltip.style.left = (hoveredPlanet.x + 14) + 'px';
+      tooltip.style.top = (hoveredPlanet.y - 10) + 'px';
+      if (hoveredPlanet.kind === 'earthDraggable') canvas.style.cursor = earthDrag.active ? 'grabbing' : 'grab';
+      else canvas.style.cursor = (hoveredPlanet.kind === 'planet' || hoveredPlanet.kind === 'sun') ? 'pointer' : 'default';
+    } else {
+      tooltip.classList.remove('show');
+      canvas.style.cursor = 'default';
+    }
+  }
+
+  // ============ Modals ============
+  function openPlanetModal(idx) {
+    const p = PLANETS[idx];
+    const name = lname(p);
+    modalSwatch.style.background = p.color;
+    modalSwatch.style.color = p.color;
+    modalTitle.textContent = name;
+    modalType.textContent = p.type[lang];
+    modalGrid.innerHTML = `
+      <div class="stat"><div class="label">${t('planet_card_diameter')}</div><div class="value">${formatNumber(p.diameter)} km</div></div>
+      <div class="stat">
+        <div class="label">${t('planet_card_distance')}</div>
+        <div class="value">${p.realDistanceAU} ${lang === 'uk' ? 'АО' : lang === 'en' ? 'AU' : 'UA'}</div>
+        <div class="sub">${t('ua_note')} · ${auToKmShort(p.realDistanceAU)}</div>
+      </div>
+      <div class="stat"><div class="label">${t('planet_card_day')}</div><div class="value">${formatDay(p.dayHours)}</div></div>
+      <div class="stat"><div class="label">${t('planet_card_year')}</div><div class="value">${formatPeriod(p.period)}</div></div>
+      <div class="stat"><div class="label">${t('planet_card_moons')}</div><div class="value">${p.moons}</div></div>
+      <div class="stat"><div class="label">${t('planet_card_rings')}</div><div class="value">${p.hasRings ? t('planet_card_yes') : t('planet_card_no')}</div></div>
+    `;
+    modalFact.textContent = '💡 ' + p.fact[lang];
+    // Moons list
+    modalMoons.innerHTML = '';
+    if (p.moonList && p.moonList.length > 0) {
+      const wrap = document.createElement('div');
+      wrap.className = 'moonsList';
+      wrap.innerHTML = `<h3>🌑 ${t('moons_title')}</h3>` +
+        p.moonList.map(m => `
+          <div class="moonRow">
+            <span class="moonDot" style="background:#d4d4d8"></span>
+            <span class="moonName">${lname(m)}</span>
+            <span class="moonInfo">⌀ ${formatNumber(m.diameter)} km · ${m.period.toFixed(2)} ${lang === 'uk' ? 'д' : lang === 'en' ? 'd' : 'j'}</span>
+          </div>`).join('');
+      modalMoons.appendChild(wrap);
+    }
+    modalActions.innerHTML = '';
+    const followBtn = document.createElement('button');
+    followBtn.className = 'btn btn-primary';
+    followBtn.textContent = t('btn_follow', { name });
+    followBtn.addEventListener('click', () => { followPlanet(idx); modal.classList.remove('visible'); });
+    modalActions.appendChild(followBtn);
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'btn btn-ghost';
+    closeBtn.textContent = t('btn_close');
+    closeBtn.addEventListener('click', () => modal.classList.remove('visible'));
+    modalActions.appendChild(closeBtn);
+    modal.classList.add('visible');
+  }
+  function openSunModal() {
+    modalSwatch.style.background = SUN.color;
+    modalSwatch.style.color = SUN.color;
+    modalTitle.textContent = lname(SUN);
+    modalType.textContent = (lang === 'uk' ? SUN.typeUk : lang === 'en' ? SUN.typeEn : SUN.typeFr);
+    modalGrid.innerHTML = `
+      <div class="stat"><div class="label">${t('sun_card_diameter')}</div><div class="value">${formatNumber(SUN.diameter)} km</div><div class="sub">${t('sun_109_earths')}</div></div>
+      <div class="stat"><div class="label">${t('sun_card_mass')}</div><div class="value">${SUN.mass[lang]}</div></div>
+      <div class="stat"><div class="label">${t('sun_card_surface')}</div><div class="value">${SUN.surfaceTemp[lang]}</div></div>
+      <div class="stat"><div class="label">${t('sun_card_core')}</div><div class="value">${SUN.coreTemp[lang]}</div></div>
+      <div class="stat"><div class="label">${t('sun_card_age')}</div><div class="value">${SUN.age[lang]}</div></div>
+      <div class="stat"><div class="label">${t('sun_card_composition')}</div><div class="value">${SUN.composition[lang]}</div></div>
+    `;
+    modalFact.textContent = '💡 ' + SUN.fact[lang];
+    modalMoons.innerHTML = '';
+    modalActions.innerHTML = '';
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'btn btn-primary';
+    closeBtn.textContent = t('btn_close');
+    closeBtn.addEventListener('click', () => modal.classList.remove('visible'));
+    modalActions.appendChild(closeBtn);
+    modal.classList.add('visible');
+  }
+  // ============ Back button ============
+  $('backBtn').addEventListener('click', () => setView('solar'));
+
+  // ============ App switcher (hamburger menu) ============
+  const menuBtn = $('menuBtn'), menuDropdown = $('menuDropdown');
+  function closeMenu() { menuBtn.classList.remove('open'); menuDropdown.classList.remove('open'); }
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = !menuDropdown.classList.contains('open');
+    menuDropdown.classList.toggle('open', willOpen);
+    menuBtn.classList.toggle('open', willOpen);
+  });
+  document.addEventListener('click', (e) => {
+    if (!menuDropdown.contains(e.target) && e.target !== menuBtn) closeMenu();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+  $('menuItemSolar').addEventListener('click', (e) => { e.preventDefault(); closeMenu(); });
+
+  // ============ Earth data card (right-side, replaces the modal in Earth view) ============
+  function buildEarthDataCard() {
+    const p = PLANETS[2]; // Earth
+    const card = $('earthDataCard');
+    const fact = p.fact[lang];
+    const moonName = lname(p.moonList[0]);
+    const moonInfo = `⌀ ${formatNumber(p.moonList[0].diameter)} km · ${p.moonList[0].period.toFixed(2)} ${lang === 'uk' ? 'д' : lang === 'en' ? 'd' : 'j'}`;
+    card.innerHTML = `
+      <h3><span class="swatch" style="background:${p.color};color:${p.color}"></span>${lname(p)}</h3>
+      <div class="ptype">${p.type[lang]}</div>
+      <div class="stats">
+        <div class="stat"><div class="label">${t('planet_card_diameter')}</div><div class="value">${formatNumber(p.diameter)} km</div></div>
+        <div class="stat"><div class="label">${t('planet_card_distance')}</div><div class="value">${p.realDistanceAU} ${lang === 'uk' ? 'АО' : lang === 'en' ? 'AU' : 'UA'}</div><div class="sub">${auToKmShort(p.realDistanceAU)}</div></div>
+        <div class="stat"><div class="label">${t('planet_card_day')}</div><div class="value">${formatDay(p.dayHours)}</div></div>
+        <div class="stat"><div class="label">${t('planet_card_year')}</div><div class="value">${formatPeriod(p.period)}</div></div>
+        <div class="stat"><div class="label">${t('planet_card_moons')}</div><div class="value">${p.moons}</div></div>
+        <div class="stat"><div class="label">${t('planet_card_rings')}</div><div class="value">${t('planet_card_no')}</div></div>
+      </div>
+      <div class="efact">💡 ${fact}</div>
+      <div class="moonsMini">
+        <h4>🌑 ${t('moons_title')}</h4>
+        <div class="moonRow">
+          <span class="moonDot"></span>
+          <span class="moonName">${moonName}</span>
+          <span class="moonInfo">${moonInfo}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  modalClose.addEventListener('click', () => modal.classList.remove('visible'));
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('visible'); });
+  glossaryClose.addEventListener('click', () => glossaryModal.classList.remove('visible'));
+  glossaryModal.addEventListener('click', (e) => { if (e.target === glossaryModal) glossaryModal.classList.remove('visible'); });
+
+  // ============ Follow planet ============
+  function followPlanet(idx) {
+    const p = PLANETS[idx];
+    state.focusedPlanetIdx = idx;
+    state.highlightedPlanet = idx;
+    state.timeScaleYears = Math.max(p.period, 0.25);
+    document.querySelectorAll('#scaleChips button').forEach(b => b.classList.remove('active'));
+    followBadge.classList.add('visible');
+    const name = lname(p);
+    followLabel.innerHTML = `${t('follow_focus')} <b style="color:#ffd166">${name}</b> · ${t('follow_cycle')} ${formatPeriod(p.period)}`;
+    if (state.view === 'solar') buildLegend();
+    slider.value = 0; updateLabels(); updateSliderLabels();
+    if (!playing) togglePlay();
+  }
+  function clearFocus() {
+    state.focusedPlanetIdx = null;
+    state.highlightedPlanet = -1;
+    followBadge.classList.remove('visible');
+    document.querySelectorAll('#scaleChips button').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.years) === 1));
+    state.timeScaleYears = 1;
+    buildLegend();
+    updateLabels(); updateSliderLabels();
+  }
+  followReset.addEventListener('click', clearFocus);
+  scaleChipsEl.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#scaleChips button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      state.timeScaleYears = parseFloat(b.dataset.years);
+      state.focusedPlanetIdx = null;
+      state.highlightedPlanet = -1;
+      followBadge.classList.remove('visible');
+      buildLegend();
+      updateSliderLabels(); updateLabels();
+    });
+  });
+
+  // ============ Labels ============
+  function updateLabels() {
+    const sliderHours = parseFloat(slider.value) / 60;
+    if (state.view === 'solar') {
+      const simYears = (sliderHours / 24) * state.timeScaleYears;
+      hourLabel.textContent = formatSolarTime(simYears);
+      yearLabel.textContent = state.timeScaleYears === 1
+        ? t('year_simulated_one')
+        : t('year_simulated', { n: state.timeScaleYears });
+    } else if (state.view === 'compare') {
+      hourLabel.textContent = '🌍 1';
+      yearLabel.textContent = t('compare_earth_ref');
+    } else if (state.earthMode === 'day') {
+      const h = Math.floor(sliderHours);
+      const m = Math.floor((sliderHours - h) * 60);
+      hourLabel.textContent = `${String(h).padStart(2, '0')} h ${String(m).padStart(2, '0')}`;
+      let key;
+      if (sliderHours < 5 || sliderHours >= 21) key = 'lyon_night';
+      else if (sliderHours < 8) key = 'lyon_dawn';
+      else if (sliderHours < 18) key = 'lyon_day';
+      else key = 'lyon_dusk';
+      yearLabel.textContent = t(key);
+    } else if (state.earthMode === 'month') {
+      const day = (sliderHours / 24) * LUNAR_MONTH_DAYS;
+      hourLabel.textContent = t('day_n', { n: day.toFixed(1) });
+      yearLabel.textContent = t('lunar_cycle');
+    } else {
+      const day = (sliderHours / 24) * 365;
+      const months = lang === 'en'
+        ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+        : ['Janv','Févr','Mars','Avr','Mai','Juin','Juil','Août','Sept','Oct','Nov','Déc'];
+      const monthIdx = Math.min(11, Math.floor(day / 30.4));
+      hourLabel.textContent = months[monthIdx];
+      yearLabel.textContent = t('day_of_year', { n: day.toFixed(0) });
+    }
+  }
+  function formatSolarTime(years) {
+    if (years < 1) return `${(years * 12).toFixed(1)} ${lang === 'uk' ? 'місяців' : lang === 'en' ? 'months' : 'mois'}`;
+    if (years < 10) return `${years.toFixed(2)} ${lang === 'uk' ? 'р' : lang === 'en' ? 'yrs' : 'ans'}`;
+    return `${years.toFixed(1)} ${lang === 'uk' ? 'р' : lang === 'en' ? 'yrs' : 'ans'}`;
+  }
+  function setView(v) {
+    state.view = v;
+    document.body.classList.toggle('earth-view', v === 'earth');
+    document.querySelectorAll('.tab').forEach(t => { if (t.dataset.view) t.classList.toggle('active', t.dataset.view === v); });
+    solarInfo.classList.toggle('visible', v === 'solar');
+    earthInfo.classList.toggle('visible', false); // legacy card no longer used
+    // Right-side stack (phase + Earth data) visible only in earth view
+    $('rightStack').classList.toggle('visible', v === 'earth');
+    // Back button in earth view
+    $('backBtn').classList.toggle('visible', v === 'earth');
+    // Sub-toggle (day/month/season) still available in earth view
+    subToggle.classList.toggle('visible', v === 'earth');
+    if (v !== 'earth') eclipseBanner.classList.remove('visible');
+    liveCard.classList.toggle('visible', v === 'earth' && state.settings.issLive && !!state.iss);
+    // Earth view defaults to seasons mode (the unified orbital view)
+    if (v === 'earth') {
+      state.earthMode = 'season';
+      document.querySelectorAll('#subToggle button').forEach(b => b.classList.toggle('active', b.dataset.mode === 'season'));
+      buildEarthDataCard();
+    }
+    // Comparator UI
+    const comparePanel = $('comparePanel');
+    const compareHint = $('compareHint');
+    document.querySelector('.panel').style.display = (v === 'compare') ? 'none' : '';
+    if (v === 'compare') {
+      comparePanel.classList.add('visible');
+      compareHint.classList.add('visible');
+      compareHint.textContent = lang === 'en'
+        ? '🖱 Drag to pan · scroll to zoom · tap a planet to focus'
+        : '🖱 Glisse pour bouger · molette pour zoomer · clic sur une planète pour s\'en approcher';
+      canvas.style.cursor = 'grab';
+      // Initialize view if zoom hasn't been set sensibly — show whole system
+      if (!comparator._inited) {
+        const v0 = compareViewWhole(window.innerWidth, window.innerHeight);
+        comparator.offsetX = v0.offsetX; comparator.offsetY = v0.offsetY; comparator.zoom = v0.zoom;
+        comparator.targetZoom = v0.zoom;
+        comparator.selected = null;
+        comparator._inited = true;
+        buildFlyButtons();
+      }
+    } else {
+      comparePanel.classList.remove('visible');
+      compareHint.classList.remove('visible');
+      canvas.style.cursor = 'default';
+    }
+    updateSettingsAvailability();
+    updateSliderLabels(); updateLabels();
+  }
+  function updateSliderLabels() {
+    sliderLabels.innerHTML = '';
+    let labels;
+    if (state.view === 'earth' && state.earthMode === 'month') {
+      labels = lang === 'uk' ? ['0 д', '~7 д', '~15 д', '~22 д', '29,5 д'] : lang === 'en' ? ['0 d', '~7 d', '~15 d', '~22 d', '29.5 d'] : ['0 j', '~7 j', '~15 j', '~22 j', '29,5 j'];
+    } else if (state.view === 'earth' && state.earthMode === 'season') {
+      labels = lang === 'uk' ? ['Січ','Кві','Лип','Жов','Гру'] : lang === 'en' ? ['Jan','Apr','Jul','Oct','Dec'] : ['Janv','Avril','Juillet','Oct','Déc'];
+    } else if (state.view === 'solar') {
+      const y = state.timeScaleYears;
+      const moShort = lang === 'uk' ? 'міс' : lang === 'en' ? 'mo' : 'mois';
+      const yrShort = lang === 'uk' ? 'р' : lang === 'en' ? 'yr' : 'an';
+      const us = lang === 'uk' ? 'р' : lang === 'en' ? 'yrs' : 'ans';
+      if (y < 2) labels = ['0', `3 ${moShort}`, `6 ${moShort}`, `9 ${moShort}`, `1 ${yrShort}`];
+      else labels = ['0', `${(y/4).toFixed(0)} ${us}`, `${(y/2).toFixed(0)} ${us}`, `${(3*y/4).toFixed(0)} ${us}`, `${y} ${us}`];
+    } else if (state.view === 'compare') {
+      labels = ['', '', '', '', ''];
+    } else {
+      labels = ['0 h', '6 h', '12 h', '18 h', '24 h'];
+    }
+    for (const l of labels) {
+      const span = document.createElement('span'); span.textContent = l;
+      sliderLabels.appendChild(span);
+    }
+  }
+
+  // ============ Settings ============
+  function updateSettingsAvailability() {
+    document.querySelectorAll('.toggle[data-earth-only]').forEach(t => {
+      if (state.view !== 'earth') t.classList.add('disabled');
+      else t.classList.remove('disabled');
+    });
+  }
+  function syncToggleVisuals() {
+    document.querySelectorAll('.toggle').forEach(t => {
+      const key = t.dataset.key;
+      t.classList.toggle('on', !!state.settings[key]);
+    });
+  }
+  document.querySelectorAll('.toggle').forEach(tEl => {
+    tEl.addEventListener('click', () => {
+      if (tEl.classList.contains('disabled')) return;
+      const key = tEl.dataset.key;
+      state.settings[key] = !state.settings[key];
+      syncToggleVisuals(); saveSettings();
+      if (key === 'sound') { if (state.settings.sound) startAudio(); else stopAudio(); }
+      if (key === 'milkyway') generateStars(window.innerWidth, window.innerHeight);
+      if (key === 'issLive') {
+        if (state.settings.issLive) startISSPolling();
+        else stopISSPolling();
+      }
+      if (state.view === 'earth') {
+        liveCard.classList.toggle('visible', state.settings.issLive && !!state.iss);
+      }
+    });
+  });
+  document.querySelectorAll('#langToggle button').forEach(b => {
+    b.addEventListener('click', () => {
+      lang = b.dataset.lang;
+      saveSettings();
+      applyLang();
+    });
+  });
+  gearBtn.addEventListener('click', () => settingsPanel.classList.toggle('open'));
+  document.addEventListener('click', (e) => {
+    if (!settingsPanel.contains(e.target) && e.target !== gearBtn) settingsPanel.classList.remove('open');
+  });
+
+  // ============ Glossary ============
+  $('glossaryBtn').addEventListener('click', () => {
+    settingsPanel.classList.remove('open');
+    glossaryModal.classList.add('visible');
+  });
+
+  // ============ Fullscreen ============
+  $('fullscreenBtn').addEventListener('click', () => {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+    else document.exitFullscreen?.();
+  });
+
+  // ============ PWA install prompt ============
+  let installPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    installPrompt = e;
+    $('installBtn').style.display = 'block';
+  });
+  $('installBtn').addEventListener('click', async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    installPrompt = null;
+    $('installBtn').style.display = 'none';
+  });
+
+  // ============ Service Worker ============
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      /* SW disabled to avoid cross-app cache */
+    });
+  }
+
+  // ============ ISS live data ============
+  let issTimer = null;
+  async function fetchISS() {
+    try {
+      const r = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
+      const d = await r.json();
+      state.iss = { lat: d.latitude, lon: d.longitude, alt: d.altitude, vel: d.velocity, ts: Date.now() };
+      updateLiveCard();
+    } catch (e) {
+      console.warn('ISS fetch failed', e);
+    }
+  }
+  function startISSPolling() {
+    fetchISS();
+    if (issTimer) clearInterval(issTimer);
+    issTimer = setInterval(fetchISS, 8000);
+  }
+  function stopISSPolling() {
+    if (issTimer) { clearInterval(issTimer); issTimer = null; }
+    state.iss = null;
+    liveCard.classList.remove('visible');
+  }
+  function updateLiveCard() {
+    if (!state.iss || state.view !== 'earth' || !state.settings.issLive) {
+      liveCard.classList.remove('visible'); return;
+    }
+    liveCard.classList.add('visible');
+    liveCardBody.innerHTML = `
+      <div class="row"><span>${lang === 'uk' ? 'Широта' : 'Latitude'}</span><b>${state.iss.lat.toFixed(2)}°</b></div>
+      <div class="row"><span>${lang === 'uk' ? 'Довгота' : 'Longitude'}</span><b>${state.iss.lon.toFixed(2)}°</b></div>
+      <div class="row"><span>${lang === 'uk' ? 'Висота' : 'Altitude'}</span><b>${state.iss.alt.toFixed(0)} km</b></div>
+      <div class="row"><span>${lang === 'uk' ? 'Швидкість' : lang === 'en' ? 'Speed' : 'Vitesse'}</span><b>${state.iss.vel.toFixed(0)} km/h</b></div>
+    `;
+  }
+
+  // ============ Audio ============
+  let audioCtx = null, audioNodes = null;
+  function startAudio() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      if (audioNodes) return;
+      const masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0; masterGain.connect(audioCtx.destination);
+      masterGain.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 1.5);
+      const o1 = audioCtx.createOscillator(); o1.type = 'sine'; o1.frequency.value = 60;
+      const o2 = audioCtx.createOscillator(); o2.type = 'sine'; o2.frequency.value = 90;
+      const o3 = audioCtx.createOscillator(); o3.type = 'triangle'; o3.frequency.value = 220; o3.detune.value = 8;
+      const filt = audioCtx.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 600;
+      const g1 = audioCtx.createGain(); g1.gain.value = 0.6;
+      const g2 = audioCtx.createGain(); g2.gain.value = 0.4;
+      const g3 = audioCtx.createGain(); g3.gain.value = 0.06;
+      o1.connect(g1).connect(filt); o2.connect(g2).connect(filt);
+      o3.connect(g3).connect(masterGain); filt.connect(masterGain);
+      const lfo = audioCtx.createOscillator(); lfo.frequency.value = 0.07;
+      const lfoGain = audioCtx.createGain(); lfoGain.gain.value = 200;
+      lfo.connect(lfoGain).connect(filt.frequency);
+      o1.start(); o2.start(); o3.start(); lfo.start();
+      audioNodes = { masterGain, oscs: [o1, o2, o3, lfo] };
+    } catch (e) { console.warn('Audio failed:', e); }
+  }
+  function stopAudio() {
+    if (!audioNodes || !audioCtx) return;
+    const tt = audioCtx.currentTime;
+    audioNodes.masterGain.gain.cancelScheduledValues(tt);
+    audioNodes.masterGain.gain.setValueAtTime(audioNodes.masterGain.gain.value, tt);
+    audioNodes.masterGain.gain.linearRampToValueAtTime(0, tt + 0.6);
+    setTimeout(() => {
+      if (!audioNodes) return;
+      for (const o of audioNodes.oscs) try { o.stop(); } catch {}
+      audioNodes = null;
+    }, 700);
+  }
+
+  // ============ Tour ============
+  let tourState = { idx: 0, paused: false, elapsed: 0 };
+  function startTour() {
+    tourState = { idx: 0, paused: false, elapsed: 0 };
+    settingsPanel.classList.remove('open');
+    tourBanner.classList.add('visible');
+    applyTourStep();
+  }
+  function applyTourStep() {
+    const step = TOUR[tourState.idx];
+    if (!step) { endTour(); return; }
+    tourStepEl.textContent = `${tourState.idx + 1} / ${TOUR.length}`;
+    tourTextEl.textContent = step[lang];
+    tourProgress.style.width = '0%';
+    if (step.view && step.view !== state.view) setView(step.view);
+    if (step.mode && step.mode !== state.earthMode) {
+      state.earthMode = step.mode;
+      document.querySelectorAll('#subToggle button').forEach(b => b.classList.toggle('active', b.dataset.mode === step.mode));
+      updateSliderLabels(); updateLabels();
+      phaseCard.classList.toggle('visible', state.view === 'earth' && state.earthMode !== 'season');
+    }
+    if (typeof step.focus === 'number') { state.highlightedPlanet = step.focus; buildLegend(); }
+    else { state.highlightedPlanet = -1; buildLegend(); }
+    if (!playing) togglePlay();
+    tourState.elapsed = 0;
+  }
+  function endTour() {
+    tourBanner.classList.remove('visible');
+    state.highlightedPlanet = -1;
+    buildLegend();
+  }
+  function tourTick(dt) {
+    if (!tourBanner.classList.contains('visible') || tourState.paused) return;
+    const step = TOUR[tourState.idx];
+    if (!step) return;
+    tourState.elapsed += dt;
+    tourProgress.style.width = Math.min(100, (tourState.elapsed / step.dur) * 100) + '%';
+    if (tourState.elapsed >= step.dur) {
+      tourState.idx++;
+      if (tourState.idx >= TOUR.length) endTour();
+      else applyTourStep();
+    }
+  }
+  $('tourBtn').addEventListener('click', startTour);
+  tourPause.addEventListener('click', () => {
+    tourState.paused = !tourState.paused;
+    tourPause.textContent = tourState.paused ? (lang === 'uk' ? '▶ Продовжити' : lang === 'en' ? '▶ Resume' : '▶ Reprendre') : t('tour_pause');
+  });
+  tourSkip.addEventListener('click', endTour);
+  tourNext.addEventListener('click', () => {
+    tourState.idx++;
+    if (tourState.idx >= TOUR.length) endTour();
+    else applyTourStep();
+  });
+
+  // ============ Events ============
+  document.querySelectorAll('.tab[data-view]').forEach(tab => {
+    tab.addEventListener('click', (e) => { e.preventDefault(); setView(tab.dataset.view); });
+  });
+  subToggle.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      subToggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.earthMode = btn.dataset.mode;
+      updateSliderLabels(); updateLabels();
+    });
+  });
+  slider.addEventListener('input', () => { updateLabels(); });
+  let playing = true, speed = 1;
+  function togglePlay() {
+    playing = !playing;
+    playBtn.textContent = playing ? '⏸' : '▶';
+  }
+  playBtn.addEventListener('click', togglePlay);
+  document.querySelectorAll('.speed-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.speed-toggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      speed = parseFloat(btn.dataset.speed);
+    });
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { modal.classList.remove('visible'); glossaryModal.classList.remove('visible'); }
+  });
+
+  // ============ Main loop ============
+  let prev = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - prev) / 1000);
+    prev = now;
+    const w = canvas.width / (window.devicePixelRatio || 1);
+    const h = canvas.height / (window.devicePixelRatio || 1);
+    if (playing) {
+      const advance = (1440 / 30) * speed * dt;
+      let v = parseFloat(slider.value) + advance;
+      if (v >= 1440) v = 0;
+      slider.value = v;
+      updateLabels();
+    }
+    drawBackground(w, h, dt);
+    if (state.view === 'compare') {
+      compareTickAnim(now);
+      // Apply pan inertia after release
+      if (!comparator.dragging && !comparator.animating) {
+        const speed2 = comparator.velocityX * comparator.velocityX + comparator.velocityY * comparator.velocityY;
+        if (speed2 > 4) {
+          comparator.offsetX -= comparator.velocityX * dt / comparator.zoom;
+          comparator.offsetY -= comparator.velocityY * dt / comparator.zoom;
+          // Exponential decay (~ -85%/sec)
+          const decay = Math.pow(0.04, dt);
+          comparator.velocityX *= decay;
+          comparator.velocityY *= decay;
+        } else {
+          comparator.velocityX = 0; comparator.velocityY = 0;
+        }
+      }
+    }
+    if (state.view === 'solar') drawSolar(parseFloat(slider.value) / 60, dt);
+    else if (state.view === 'compare') drawCompare();
+    else if (state.earthMode === 'season') drawSeasons(parseFloat(slider.value) / 60);
+    else drawEarth(parseFloat(slider.value) / 60, dt);
+    updateTooltip();
+    tourTick(dt);
+    requestAnimationFrame(loop);
+  }
+
+  // ============ First-visit language picker ============
+  (function maybeShowLangPicker() {
+    if (localStorage.getItem('lang')) return; // user already chose
+    const picker = $('langPicker');
+    picker.classList.add('visible');
+    picker.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        lang = btn.dataset.lang;
+        localStorage.setItem('lang', lang);
+        applyLang();
+        picker.classList.remove('visible');
+      });
+    });
+  })();
+
+  // ============ Init ============
+  resize();
+  buildEarthTextures();
+  buildSpherePixels(EARTH_RADIUS, VIEW_TILT);
+  applyLang();
+  syncToggleVisuals();
+  updateSettingsAvailability();
+  if (state.settings.issLive) startISSPolling();
+  if (state.settings.sound) startAudio();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
