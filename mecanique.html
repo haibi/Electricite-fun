@@ -124,7 +124,7 @@ header.topbar {
 }
 .app-switcher-btn:hover { border-color: var(--electric); box-shadow: var(--shadow-elec); transform: rotate(90deg); }
 .app-menu {
-  position: absolute; top: calc(100% + 10px); left: 0;
+  position: absolute; top: calc(100% + 10px); right: 0;
   background: var(--panel-solid);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -707,6 +707,13 @@ canvas.mini-chart {
       Mécanik
       <div><small>POUR EVAN · 13 ANS</small></div>
     </div>
+  </div>
+  <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
+    <button class="sound-toggle" id="soundToggle" title="Activer/couper le son">🔊</button>
+    <button class="badges-counter" id="openBadges">
+      <span style="font-size:16px;">🏅</span>
+      <span><span id="badgeCount">0</span>/8 badges</span>
+    </button>
     <div class="app-switcher">
       <button class="app-switcher-btn" id="appSwitcherBtn" title="Autres apps" aria-label="Menu des applications">+</button>
       <div class="app-menu" id="appMenu">
@@ -769,13 +776,6 @@ canvas.mini-chart {
         </a>
       </div>
     </div>
-  </div>
-  <div style="display:flex; align-items:center;">
-    <button class="sound-toggle" id="soundToggle" title="Activer/couper le son">🔊</button>
-    <button class="badges-counter" id="openBadges">
-      <span style="font-size:16px;">🏅</span>
-      <span><span id="badgeCount">0</span>/8 badges</span>
-    </button>
   </div>
 </header>
 
@@ -961,15 +961,6 @@ canvas.mini-chart {
   </div>
 </div>
 
-<!-- Slot props popover -->
-<div class="props-popover" id="propsPop">
-  <h4 id="propsTitle">Réglages</h4>
-  <div id="propsBody"></div>
-  <div class="pop-row">
-    <button id="propsFiche">📘 Fiche</button>
-    <button id="propsRemove" style="background:rgba(255,71,87,0.15); border-color:var(--red); color:var(--red);">Retirer</button>
-  </div>
-</div>
 
 <!-- Toast -->
 <div class="toast" id="toast">
