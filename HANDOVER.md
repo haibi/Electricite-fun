@@ -34,6 +34,7 @@ Dernière mise à jour : 2026-05-20
 | `reflex.html`    | ⚡ Reflex               | ~1 350 |
 | `volcan.html`    | 🌋 Volcan               | ~1 520 |
 | `callab.html`    | 🧪 CalLab               | ~1 430 |
+| `machine.html`   | ⚙️ Réac Lab             | ~2 500 |
 
 ### Identité Git locale (dans le dépôt)
 ```
