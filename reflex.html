@@ -981,9 +981,10 @@ function soundSuccess() {
    ============================================================ */
 const MAX_ROUNDS = 5;
 
-let state        = 'idle';  // idle | waiting | go | result | too-early | done
-let goTimer      = null;    // setTimeout du délai aléatoire
-let startTime    = null;    // Date.now() quand le carré devient vert
+let state          = 'idle';  // idle | waiting | go | result | too-early | done
+let goTimer        = null;    // setTimeout du délai aléatoire
+let tooEarlyTimer  = null;    // setTimeout du délai "trop tôt" (1200ms)
+let startTime      = null;    // Date.now() quand le carré devient vert
 let attempts     = [];      // tableau des ms valides
 let currentRound = 0;       // numéro du round en cours (1–5)
 let waitingOver  = false;   // true quand le carré est déjà vert
@@ -1066,6 +1067,12 @@ function setSquareState(newState) {
 function startRound() {
   if (state === 'done') return;
 
+  // Annuler tout timer en cours (double-clic, timer fantôme)
+  clearTimeout(goTimer);
+  clearTimeout(tooEarlyTimer);
+  goTimer       = null;
+  tooEarlyTimer = null;
+
   // Masquer le bouton start pendant le round
   actionsEl.style.display = 'none';
 
@@ -1103,9 +1110,11 @@ square.addEventListener('pointerdown', (e) => {
   if (state === 'waiting') {
     // Clic trop tôt
     clearTimeout(goTimer);
+    goTimer = null;
     setSquareState('too-early');
     // Retour en waiting après 1200ms, puis relancer
-    setTimeout(() => {
+    tooEarlyTimer = setTimeout(() => {
+      tooEarlyTimer = null;
       setSquareState('waiting');
       waitingOver = false;
       const delay = 1500 + Math.random() * 2500;
@@ -1230,6 +1239,9 @@ function showSummary() {
    ============================================================ */
 function resetGame() {
   clearTimeout(goTimer);
+  clearTimeout(tooEarlyTimer);
+  goTimer       = null;
+  tooEarlyTimer = null;
   attempts      = [];
   currentRound  = 0;
   state         = 'idle';

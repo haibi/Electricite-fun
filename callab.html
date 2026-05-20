@@ -1233,6 +1233,19 @@ function runMixAnimation(vals, onComplete) {
   }
 
   animFrame = requestAnimationFrame(frame);
+
+  // Failsafe : si RAF ne fire pas (env. headless / tab arrière-plan)
+  // → forcer la complétion après totalDuration + 500ms
+  setTimeout(() => {
+    if (isAnimating) {
+      cancelAnimationFrame(animFrame);
+      const W = simCanvas.width, H = simCanvas.height;
+      ctx2d.clearRect(0, 0, W, H);
+      drawGlass(ctx2d, gRx, glassY, gRw, glassH, fillR, Tf, 'Mélange final', 1, 0, 0);
+      isAnimating = false;
+      onComplete();
+    }
+  }, totalDuration + 500);
 }
 
 function easeInOut(t) {

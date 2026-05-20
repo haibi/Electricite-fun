@@ -685,6 +685,7 @@ function resizeCanvas() {
   const sz = wrap.getBoundingClientRect().width;
   canvas.width = sz * window.devicePixelRatio;
   canvas.height = sz * window.devicePixelRatio;
+  ctx.setTransform(1, 0, 0, 1, 0, 0); // reset avant d'appliquer le scale (évite l'accumulation)
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
   canvas.style.width = sz + 'px';
   canvas.style.height = sz + 'px';
@@ -756,6 +757,7 @@ function updateMirrorCounter() {
    et si la cible a été touchée.
    ============================================================ */
 function traceRay() {
+  if (!grid.length) return { path: [], targetHit: false, loop: false }; // grille non initialisée
   const lvl = LEVELS[currentLevel];
   const N = lvl.size;
   const dr = {RIGHT:0, LEFT:0, UP:-1, DOWN:1};
@@ -1051,7 +1053,7 @@ function animLoop() {
   render();
   animFrame = requestAnimationFrame(animLoop);
 }
-animLoop();
+// animLoop() est démarré après initLevel() dans la section LANCEMENT ci-dessous
 
 /* ============================================================
    INTERACTION : CLIC / TAP SUR LE CANVAS
@@ -1115,6 +1117,7 @@ function checkWin() {
     const elapsed = (Date.now() - startTime) / 1000;
     const mirrorCount = updateMirrorCounter();
 
+    render(); // afficher immédiatement la cible en vert sans attendre le prochain RAF
     Audio.playWin();
     setStatus('🎉 Niveau réussi ! Bravo !', 'win');
     document.getElementById('btn-next').disabled = currentLevel >= LEVELS.length - 1;
@@ -1246,7 +1249,8 @@ pedaBtn.addEventListener('click', () => {
    ============================================================ */
 // Reprendre au niveau max atteint (ou 0)
 const savedLevel = Math.min(maxProgress, LEVELS.length - 1);
-initLevel(savedLevel);
+initLevel(savedLevel); // grid initialisée AVANT le démarrage de la boucle d'animation
+animLoop();            // démarrer la boucle seulement après que la grille est prête
 </script>
 </body>
 </html>
