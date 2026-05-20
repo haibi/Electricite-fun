@@ -89,7 +89,7 @@ Le seul "admin" est le propriétaire du repo GitHub (haibi) qui peut push sur `m
 ### 4. Liens externes depuis le app switcher
 Dans le bouton `+` de la topbar Electrolab :
 - ⚡ Electrolab (current, non-cliquable)
-- 🪐 Système Solaire → https://haibi.github.io/Systeme-solaire/ (même onglet)
+- 🪐 Système Solaire → `solaire.html` (page locale dans le même repo)
 
 ### 5. Quiz : questions hardcodées
 - Le quiz Électricité contient 24 questions hardcodées dans `const QUESTIONS = [...]`.
