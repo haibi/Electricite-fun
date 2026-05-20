@@ -287,12 +287,17 @@ main {
   transition: transform 0.4s ease, opacity 0.4s ease;
 }
 
-/* État IDLE – attente avant de démarrer */
+/* État IDLE – tap pour démarrer */
 #game-square.state-idle {
   background: var(--panel-solid);
-  border-color: rgba(255,107,53,0.3);
-  box-shadow: 0 0 40px rgba(0,0,0,0.4);
-  cursor: default;
+  border-color: rgba(255,107,53,0.5);
+  box-shadow: 0 0 40px rgba(255,107,53,0.12), 0 0 0 0 rgba(255,107,53,0);
+  cursor: pointer;
+  animation: idlePulse 2.5s ease-in-out infinite;
+}
+@keyframes idlePulse {
+  0%, 100% { border-color: rgba(255,107,53,0.3); }
+  50%       { border-color: rgba(255,107,53,0.7); box-shadow: 0 0 55px rgba(255,107,53,0.2); }
 }
 
 /* État WAITING – délai en cours, ne pas cliquer */
@@ -709,37 +714,37 @@ main {
     <button class="sound-btn" id="sound-btn" title="Son on/off">🔊</button>
 
     <!-- App switcher -->
-    <div class="app-switcher">
-      <button class="app-switcher-btn" id="app-switcher-btn" title="Applications">＋</button>
-      <div class="app-menu" id="app-menu">
-        <div class="app-menu-header">Applications</div>
+    <div class="app-switcher" id="appSwitcher">
+      <button class="app-switcher-btn" id="appSwitcherBtn" title="Changer d'app">＋</button>
+      <div class="app-menu" id="appMenu">
+        <div class="app-menu-header">Mes apps</div>
         <a class="app-menu-item" href="index.html">
-          <span class="ico">⚡</span>
-          <div><div class="title">Electrolab</div><div class="sub">Électricité interactive</div></div>
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #FFD700, #b78b00); color:#1a1a1a;">⚡</span>
+          <div><div class="title">Electrolab</div><div class="sub">Électricité &amp; circuits</div></div>
         </a>
         <a class="app-menu-item" href="mecanique.html">
-          <span class="ico">🚀</span>
-          <div><div class="title">Mécanik</div><div class="sub">Lanceur de projectiles</div></div>
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #FFC56B, #FF6B35);">🚀</span>
+          <div><div class="title">Mécanik</div><div class="sub">Forces &amp; mouvement</div></div>
         </a>
         <a class="app-menu-item" href="solaire.html">
-          <span class="ico">🪐</span>
-          <div><div class="title">Système Solaire</div><div class="sub">Planètes en orbite</div></div>
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #c0a3e8, #7a4ec5);">🪐</span>
+          <div><div class="title">Système Solaire</div><div class="sub">Planètes &amp; quiz</div></div>
         </a>
         <a class="app-menu-item" href="laser.html">
-          <span class="ico">🔴</span>
-          <div><div class="title">Laser Maze</div><div class="sub">Labyrinthe à miroirs</div></div>
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #FF3333, #8B0000);">🔴</span>
+          <div><div class="title">Laser Maze</div><div class="sub">Optique &amp; lumière</div></div>
         </a>
-        <a class="app-menu-item current" href="reflex.html">
-          <span class="ico">🏃</span>
-          <div><div class="title">Reflex</div><div class="sub">Teste tes réflexes</div></div>
+        <a class="app-menu-item current">
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #39FF14, #006400); color:#000;">⚡</span>
+          <div><div class="title">Reflex</div><div class="sub">Système nerveux</div></div>
         </a>
         <a class="app-menu-item" href="volcan.html">
-          <span class="ico">🌋</span>
-          <div><div class="title">Volcan</div><div class="sub">Éruption simulée</div></div>
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #FF6B35, #8B0000);">🌋</span>
+          <div><div class="title">Volcan</div><div class="sub">Géologie &amp; viscosité</div></div>
         </a>
         <a class="app-menu-item" href="callab.html">
-          <span class="ico">🧪</span>
-          <div><div class="title">CalLab</div><div class="sub">Calculs de chimie</div></div>
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #00C9FF, #0047AB);">🧪</span>
+          <div><div class="title">CalLab</div><div class="sub">Thermodynamique</div></div>
         </a>
       </div>
     </div>
@@ -761,10 +766,10 @@ main {
   <div class="game-area">
 
     <!-- Grand carré central -->
-    <div id="game-square" class="state-idle" role="button" aria-label="Carré de jeu – cliquer quand vert">
-      <div class="square-emoji" id="square-emoji">🏃</div>
-      <div class="square-label" id="square-label">Prêt à jouer ?</div>
-      <div class="square-sub"  id="square-sub">Clique Démarrer</div>
+    <div id="game-square" class="state-idle" role="button" aria-label="Carré de jeu – tap pour démarrer, cliquer quand vert">
+      <div class="square-emoji" id="square-emoji">▶</div>
+      <div class="square-label" id="square-label">Tap pour démarrer !</div>
+      <div class="square-sub"  id="square-sub">Attends que le carré devienne vert</div>
     </div>
 
     <!-- Affichage du dernier temps -->
@@ -775,9 +780,9 @@ main {
 
   </div>
 
-  <!-- Boutons action -->
-  <div class="actions" id="actions">
-    <button class="btn-primary" id="btn-start" onclick="startRound()">▶ Démarrer</button>
+  <!-- Boutons action (le bouton démarrer est maintenant dans le carré) -->
+  <div class="actions" id="actions" style="display:none;">
+    <button class="btn-primary" id="btn-start" style="display:none;">▶ Démarrer</button>
   </div>
 
   <!-- Barre de comparaison influx nerveux -->
@@ -919,14 +924,14 @@ main {
 /* ============================================================
    APP SWITCHER
    ============================================================ */
-const appSwitcherBtn = document.getElementById('app-switcher-btn');
-const appMenu        = document.getElementById('app-menu');
-
-appSwitcherBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  appMenu.classList.toggle('open');
-});
-document.addEventListener('click', () => appMenu.classList.remove('open'));
+// App switcher
+(function() {
+  const btn = document.getElementById('appSwitcherBtn');
+  const menu = document.getElementById('appMenu');
+  if (!btn || !menu) return;
+  btn.addEventListener('click', e => { e.stopPropagation(); menu.classList.toggle('open'); });
+  document.addEventListener('click', () => menu.classList.remove('open'));
+})();
 
 /* ============================================================
    SON – Web Audio API (pas de fichier externe)
@@ -1028,9 +1033,9 @@ function setSquareState(newState) {
 
   switch (newState) {
     case 'idle':
-      squareEmoji.textContent = '🏃';
-      squareLabel.textContent  = 'Prêt à jouer ?';
-      squareSub.textContent    = 'Clique Démarrer';
+      squareEmoji.textContent = '▶';
+      squareLabel.textContent  = 'Tap pour démarrer !';
+      squareSub.textContent    = 'Attends que le carré devienne vert';
       break;
 
     case 'waiting':
@@ -1102,7 +1107,13 @@ square.addEventListener('pointerdown', (e) => {
   void square.offsetWidth; // force reflow
   square.classList.add('ripple');
 
-  if (state === 'idle' || state === 'result' || state === 'done') {
+  if (state === 'idle') {
+    // Tap sur le carré en idle → démarrer
+    startRound();
+    return;
+  }
+
+  if (state === 'result' || state === 'done') {
     // Pas d'action
     return;
   }
@@ -1165,13 +1176,12 @@ function recordResult(ms) {
     // Jeu terminé
     setTimeout(() => showSummary(), 800);
   } else {
-    // Prochain round après 1.2s
+    // Prochain round après 1.2s — afficher le texte dans le carré
     setTimeout(() => {
       setSquareState('idle');
-      squareEmoji.textContent = '🏃';
+      squareEmoji.textContent = '▶';
       squareLabel.textContent  = `Round ${attempts.length + 1} / ${MAX_ROUNDS}`;
-      squareSub.textContent    = 'Clique Démarrer';
-      actionsEl.style.display  = 'flex';
+      squareSub.textContent    = 'Tap pour continuer !';
     }, 1200);
   }
 }
@@ -1255,16 +1265,14 @@ function resetGame() {
 
   summaryEl.classList.remove('visible');
   actionsReplay.style.display = 'none';
-  actionsEl.style.display     = 'flex';
-
-  btnStart.disabled = false;
+  // actionsEl reste caché — le démarrage se fait via le carré
 
   buildHistoryDots();
 
   setSquareState('idle');
-  squareEmoji.textContent = '🏃';
-  squareLabel.textContent  = 'Prêt à jouer ?';
-  squareSub.textContent    = 'Clique Démarrer';
+  squareEmoji.textContent = '▶';
+  squareLabel.textContent  = 'Tap pour démarrer !';
+  squareSub.textContent    = 'Attends que le carré devienne vert';
 }
 
 /* ============================================================

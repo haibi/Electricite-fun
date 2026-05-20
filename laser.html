@@ -340,37 +340,37 @@ header.topbar {
   <div class="topbar-right">
     <button id="btn-mute" title="Muet / Son" aria-label="Activer/désactiver le son">🔊</button>
 
-    <div class="app-switcher">
-      <button class="app-switcher-btn" id="app-btn" aria-label="Changer d'app">+</button>
-      <div class="app-menu" id="app-menu">
-        <div class="app-menu-header">🚀 Electrolab — Apps</div>
-        <a href="index.html" class="app-menu-item">
-          <span class="ico">⚡</span>
-          <div><div class="title">Electrolab</div><div class="sub">Circuits électriques</div></div>
+    <div class="app-switcher" id="appSwitcher">
+      <button class="app-switcher-btn" id="appSwitcherBtn" title="Changer d'app">＋</button>
+      <div class="app-menu" id="appMenu">
+        <div class="app-menu-header">Mes apps</div>
+        <a class="app-menu-item" href="index.html">
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #FFD700, #b78b00); color:#1a1a1a;">⚡</span>
+          <div><div class="title">Electrolab</div><div class="sub">Électricité &amp; circuits</div></div>
         </a>
-        <a href="mecanique.html" class="app-menu-item">
-          <span class="ico">🚀</span>
-          <div><div class="title">Mécanik</div><div class="sub">Lanceur & trajectoires</div></div>
+        <a class="app-menu-item" href="mecanique.html">
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #FFC56B, #FF6B35);">🚀</span>
+          <div><div class="title">Mécanik</div><div class="sub">Forces &amp; mouvement</div></div>
         </a>
-        <a href="solaire.html" class="app-menu-item">
-          <span class="ico">🪐</span>
-          <div><div class="title">Système Solaire</div><div class="sub">Planètes & orbites</div></div>
+        <a class="app-menu-item" href="solaire.html">
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #c0a3e8, #7a4ec5);">🪐</span>
+          <div><div class="title">Système Solaire</div><div class="sub">Planètes &amp; quiz</div></div>
         </a>
-        <a href="laser.html" class="app-menu-item current">
-          <span class="ico">🔴</span>
-          <div><div class="title">Laser Maze</div><div class="sub">Optique & miroirs</div></div>
+        <a class="app-menu-item current">
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #FF3333, #8B0000);">🔴</span>
+          <div><div class="title">Laser Maze</div><div class="sub">Optique &amp; lumière</div></div>
         </a>
-        <a href="reflex.html" class="app-menu-item">
-          <span class="ico">🏃</span>
-          <div><div class="title">Reflex</div><div class="sub">Temps de réaction</div></div>
+        <a class="app-menu-item" href="reflex.html">
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #39FF14, #006400); color:#000;">⚡</span>
+          <div><div class="title">Reflex</div><div class="sub">Système nerveux</div></div>
         </a>
-        <a href="volcan.html" class="app-menu-item">
-          <span class="ico">🌋</span>
-          <div><div class="title">Volcan</div><div class="sub">Géologie explosive</div></div>
+        <a class="app-menu-item" href="volcan.html">
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #FF6B35, #8B0000);">🌋</span>
+          <div><div class="title">Volcan</div><div class="sub">Géologie &amp; viscosité</div></div>
         </a>
-        <a href="callab.html" class="app-menu-item">
-          <span class="ico">🧪</span>
-          <div><div class="title">CalLab</div><div class="sub">Calculateur scientifique</div></div>
+        <a class="app-menu-item" href="callab.html">
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #00C9FF, #0047AB);">🧪</span>
+          <div><div class="title">CalLab</div><div class="sub">Thermodynamique</div></div>
         </a>
       </div>
     </div>
@@ -585,79 +585,104 @@ const LEVELS = [
   { size:4, source:{r:0,c:2,dir:'DOWN'}, target:{r:3,c:0} },
 
   /* --- Niveaux 6-10 : 5×5, 2 miroirs à placer --- */
-  // N6 : haut-gauche → droite, cible bas-droite
-  { size:5, source:{r:0,c:0,dir:'RIGHT'}, target:{r:4,c:4} },
-  // N7 : haut-droite → bas, cible bas-gauche
-  { size:5, source:{r:0,c:4,dir:'DOWN'}, target:{r:4,c:0} },
-  // N8 : milieu-gauche → droite, cible haut milieu
-  { size:5, source:{r:2,c:0,dir:'RIGHT'}, target:{r:0,c:2} },
-  // N9 : bas-milieu → haut, cible milieu-droite
-  { size:5, source:{r:4,c:2,dir:'UP'}, target:{r:1,c:4} },
-  // N10 : haut gauche+1 → bas, cible milieu-droite
-  { size:5, source:{r:0,c:1,dir:'DOWN'}, target:{r:3,c:4} },
+  // N6 : haut-gauche → droite, cible bas-droite — murs créent un couloir central
+  { size:5, source:{r:0,c:0,dir:'RIGHT'}, target:{r:4,c:4},
+    walls:[{r:1,c:2},{r:3,c:2}] },
+  // N7 : haut-droite → bas, cible bas-gauche — murs sur les diagonales
+  { size:5, source:{r:0,c:4,dir:'DOWN'}, target:{r:4,c:0},
+    walls:[{r:2,c:1},{r:2,c:3}] },
+  // N8 : milieu-gauche → droite, cible haut milieu — mur bloque la ligne directe
+  { size:5, source:{r:2,c:0,dir:'RIGHT'}, target:{r:0,c:2},
+    walls:[{r:2,c:3},{r:1,c:0}] },
+  // N9 : bas-milieu → haut, cible milieu-droite — couloir latéral
+  { size:5, source:{r:4,c:2,dir:'UP'}, target:{r:1,c:4},
+    walls:[{r:3,c:2},{r:1,c:1}] },
+  // N10 : haut gauche+1 → bas, cible milieu-droite — deux murs en quinconce
+  { size:5, source:{r:0,c:1,dir:'DOWN'}, target:{r:3,c:4},
+    walls:[{r:2,c:1},{r:1,c:3}] },
 
   /* --- Niveaux 11-15 : 6×6, 2-3 miroirs --- */
-  // N11
-  { size:6, source:{r:0,c:0,dir:'RIGHT'}, target:{r:5,c:5} },
-  // N12 : diagonale inverse
-  { size:6, source:{r:0,c:5,dir:'DOWN'}, target:{r:5,c:0} },
-  // N13
-  { size:6, source:{r:3,c:0,dir:'RIGHT'}, target:{r:0,c:3} },
-  // N14
-  { size:6, source:{r:5,c:3,dir:'UP'}, target:{r:2,c:5} },
-  // N15
-  { size:6, source:{r:0,c:2,dir:'DOWN'}, target:{r:4,c:5} },
+  // N11 — murs bloquent la diagonale directe
+  { size:6, source:{r:0,c:0,dir:'RIGHT'}, target:{r:5,c:5},
+    walls:[{r:2,c:3},{r:3,c:2}] },
+  // N12 : diagonale inverse — murs en croix centrale
+  { size:6, source:{r:0,c:5,dir:'DOWN'}, target:{r:5,c:0},
+    walls:[{r:1,c:2},{r:4,c:3}] },
+  // N13 — murs forcent un détour par le bas
+  { size:6, source:{r:3,c:0,dir:'RIGHT'}, target:{r:0,c:3},
+    walls:[{r:3,c:2},{r:2,c:3}] },
+  // N14 — murs créent un corridor en S
+  { size:6, source:{r:5,c:3,dir:'UP'}, target:{r:2,c:5},
+    walls:[{r:4,c:3},{r:3,c:4}] },
+  // N15 — couloir forcé verticalement puis horizontalement
+  { size:6, source:{r:0,c:2,dir:'DOWN'}, target:{r:4,c:5},
+    walls:[{r:2,c:2},{r:3,c:4}] },
 
   /* --- Niveaux 16-20 : 6×6 avec miroirs fixes --- */
   // N16 : 1 miroir fixe SLASH en (2,2), joueur doit ajouter 2 miroirs
   { size:6, source:{r:0,c:0,dir:'RIGHT'}, target:{r:5,c:5},
-    fixedMirrors:[{r:2,c:2,type:'SLASH'}] },
+    fixedMirrors:[{r:2,c:2,type:'SLASH'}],
+    walls:[{r:4,c:1},{r:1,c:4}] },
   // N17 : miroir fixe BACK en (1,4)
   { size:6, source:{r:0,c:4,dir:'DOWN'}, target:{r:5,c:0},
-    fixedMirrors:[{r:1,c:4,type:'BACK'}] },
+    fixedMirrors:[{r:1,c:4,type:'BACK'}],
+    walls:[{r:3,c:3},{r:4,c:1}] },
   // N18 : miroir fixe SLASH en (3,3)
   { size:6, source:{r:3,c:0,dir:'RIGHT'}, target:{r:0,c:5},
-    fixedMirrors:[{r:3,c:3,type:'SLASH'}] },
+    fixedMirrors:[{r:3,c:3,type:'SLASH'}],
+    walls:[{r:1,c:1},{r:4,c:4}] },
   // N19 : deux miroirs fixes
   { size:6, source:{r:0,c:0,dir:'RIGHT'}, target:{r:4,c:3},
-    fixedMirrors:[{r:0,c:3,type:'BACK'},{r:2,c:3,type:'SLASH'}] },
+    fixedMirrors:[{r:0,c:3,type:'BACK'},{r:2,c:3,type:'SLASH'}],
+    walls:[{r:1,c:1},{r:3,c:5}] },
   // N20
   { size:6, source:{r:5,c:0,dir:'UP'}, target:{r:0,c:5},
-    fixedMirrors:[{r:2,c:0,type:'SLASH'},{r:2,c:5,type:'BACK'}] },
+    fixedMirrors:[{r:2,c:0,type:'SLASH'},{r:2,c:5,type:'BACK'}],
+    walls:[{r:4,c:2},{r:1,c:3}] },
 
   /* --- Niveaux 21-25 : 7×7, 3-4 miroirs --- */
-  // N21
-  { size:7, source:{r:0,c:0,dir:'RIGHT'}, target:{r:6,c:6} },
-  // N22
-  { size:7, source:{r:0,c:6,dir:'DOWN'}, target:{r:6,c:0} },
-  // N23 : source milieu-gauche
-  { size:7, source:{r:3,c:0,dir:'RIGHT'}, target:{r:0,c:6} },
-  // N24
-  { size:7, source:{r:6,c:3,dir:'UP'}, target:{r:0,c:6} },
-  // N25 : avec miroir fixe
+  // N21 — murs en L forcent un zigzag
+  { size:7, source:{r:0,c:0,dir:'RIGHT'}, target:{r:6,c:6},
+    walls:[{r:2,c:2},{r:4,c:4},{r:1,c:5}] },
+  // N22 — couloir en S avec 3 murs
+  { size:7, source:{r:0,c:6,dir:'DOWN'}, target:{r:6,c:0},
+    walls:[{r:2,c:4},{r:3,c:2},{r:5,c:4}] },
+  // N23 : source milieu-gauche — barrière centrale
+  { size:7, source:{r:3,c:0,dir:'RIGHT'}, target:{r:0,c:6},
+    walls:[{r:3,c:3},{r:1,c:2},{r:5,c:4}] },
+  // N24 — murs obligent à contourner par la gauche
+  { size:7, source:{r:6,c:3,dir:'UP'}, target:{r:0,c:6},
+    walls:[{r:4,c:3},{r:2,c:4},{r:1,c:2}] },
+  // N25 : avec miroir fixe — murs resserrent le couloir
   { size:7, source:{r:0,c:0,dir:'RIGHT'}, target:{r:6,c:4},
-    fixedMirrors:[{r:0,c:4,type:'BACK'},{r:4,c:4,type:'SLASH'}] },
+    fixedMirrors:[{r:0,c:4,type:'BACK'},{r:4,c:4,type:'SLASH'}],
+    walls:[{r:2,c:2},{r:5,c:1},{r:3,c:6}] },
 
   /* --- Niveaux 26-30 : 8×8, 4-5 miroirs --- */
-  // N26
-  { size:8, source:{r:0,c:0,dir:'RIGHT'}, target:{r:7,c:7} },
-  // N27
-  { size:8, source:{r:0,c:7,dir:'DOWN'}, target:{r:7,c:0} },
-  // N28 : chemin en zigzag
-  { size:8, source:{r:4,c:0,dir:'RIGHT'}, target:{r:0,c:7} },
+  // N26 — obstacles en croix décalée
+  { size:8, source:{r:0,c:0,dir:'RIGHT'}, target:{r:7,c:7},
+    walls:[{r:2,c:3},{r:3,c:5},{r:5,c:2},{r:6,c:4}] },
+  // N27 — barrière centrale avec 4 murs
+  { size:8, source:{r:0,c:7,dir:'DOWN'}, target:{r:7,c:0},
+    walls:[{r:2,c:5},{r:4,c:3},{r:5,c:5},{r:3,c:1}] },
+  // N28 : chemin en zigzag — murs créent des canaux précis
+  { size:8, source:{r:4,c:0,dir:'RIGHT'}, target:{r:0,c:7},
+    walls:[{r:4,c:3},{r:2,c:3},{r:2,c:6},{r:1,c:4}] },
   // N29 : miroir fixe + chemin complexe
   { size:8, source:{r:0,c:0,dir:'RIGHT'}, target:{r:7,c:5},
-    fixedMirrors:[{r:0,c:4,type:'BACK'},{r:4,c:4,type:'SLASH'},{r:4,c:7,type:'BACK'}] },
-  // N30 : niveau ultime
+    fixedMirrors:[{r:0,c:4,type:'BACK'},{r:4,c:4,type:'SLASH'},{r:4,c:7,type:'BACK'}],
+    walls:[{r:2,c:2},{r:6,c:2},{r:3,c:6},{r:5,c:5}] },
+  // N30 : niveau ultime — labyrinthe de murs
   { size:8, source:{r:0,c:0,dir:'RIGHT'}, target:{r:7,c:7},
-    fixedMirrors:[{r:0,c:3,type:'BACK'},{r:3,c:3,type:'SLASH'},{r:3,c:6,type:'BACK'},{r:6,c:6,type:'SLASH'}] },
+    fixedMirrors:[{r:0,c:3,type:'BACK'},{r:3,c:3,type:'SLASH'},{r:3,c:6,type:'BACK'},{r:6,c:6,type:'SLASH'}],
+    walls:[{r:1,c:1},{r:2,c:5},{r:5,c:2},{r:6,c:4},{r:4,c:1}] },
 ];
 
 /* ============================================================
    ÉTAT DU JEU
    ============================================================ */
 let currentLevel = 0; // index (0-based)
-let grid = [];        // grille : 'EMPTY' | 'SLASH' | 'BACK' | 'SOURCE' | 'TARGET' | 'FIXED_SLASH' | 'FIXED_BACK'
+let grid = [];        // grille : 'EMPTY' | 'SLASH' | 'BACK' | 'SOURCE' | 'TARGET' | 'FIXED_SLASH' | 'FIXED_BACK' | 'WALL'
 let won = false;
 let startTime = null;
 let hintStep = 0;     // 0=pas d'indice, 1=indice affiché
@@ -728,6 +753,13 @@ function initLevel(idx) {
     }
   }
 
+  // Placer les murs
+  if (lvl.walls) {
+    for (const w of lvl.walls) {
+      grid[w.r][w.c] = 'WALL';
+    }
+  }
+
   // UI
   document.getElementById('lvl-num').textContent = idx + 1;
   document.getElementById('btn-prev').disabled = idx === 0;
@@ -787,6 +819,9 @@ function traceRay() {
 
     // Cible atteinte
     if (cell === 'TARGET') { targetHit = true; break; }
+
+    // Mur → arrêter le rayon
+    if (cell === 'WALL') { break; }
 
     // Miroirs
     if (cell === 'SLASH' || cell === 'FIXED_SLASH') {
@@ -881,6 +916,8 @@ function render() {
         drawMirror(ctx, x, y, cs, 'SLASH', cell === 'FIXED_SLASH');
       } else if (cell === 'BACK' || cell === 'FIXED_BACK') {
         drawMirror(ctx, x, y, cs, 'BACK', cell === 'FIXED_BACK');
+      } else if (cell === 'WALL') {
+        drawWall(ctx, x, y, cs);
       }
     }
   }
@@ -1044,6 +1081,48 @@ function drawMirror(ctx, x, y, cs, type, isFixed) {
   ctx.restore();
 }
 
+/* --- Dessin mur --- */
+function drawWall(ctx, x, y, cs) {
+  ctx.save();
+
+  // Corps principal – gris anthracite
+  const inset = cs * 0.06;
+  ctx.fillStyle = '#2a2a3a';
+  ctx.fillRect(x + inset, y + inset, cs - inset * 2, cs - inset * 2);
+
+  // Bord haut / gauche (clair) — relief 3D
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x + inset, y + cs - inset);
+  ctx.lineTo(x + inset, y + inset);
+  ctx.lineTo(x + cs - inset, y + inset);
+  ctx.stroke();
+
+  // Bord bas / droite (sombre)
+  ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x + cs - inset, y + inset);
+  ctx.lineTo(x + cs - inset, y + cs - inset);
+  ctx.lineTo(x + inset, y + cs - inset);
+  ctx.stroke();
+
+  // Motif hachures discrètes pour signaler que c'est solide
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  const step = cs * 0.22;
+  for (let i = 1; i < 4; i++) {
+    const o = i * step;
+    ctx.beginPath();
+    ctx.moveTo(x + inset + o, y + inset);
+    ctx.lineTo(x + inset, y + inset + o);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
 /* ============================================================
    ANIMATION (boucle pour la cible clignotante)
    ============================================================ */
@@ -1081,8 +1160,8 @@ canvas.addEventListener('pointerdown', function(e) {
 
   // Cas des miroirs fixes → ignorer
   if (cell === 'FIXED_SLASH' || cell === 'FIXED_BACK') return;
-  // Source et cible → ignorer
-  if (cell === 'SOURCE' || cell === 'TARGET') return;
+  // Source, cible et murs → ignorer
+  if (cell === 'SOURCE' || cell === 'TARGET' || cell === 'WALL') return;
 
   // Cycle : EMPTY → SLASH → BACK → EMPTY
   if (cell === 'EMPTY') {
@@ -1228,13 +1307,13 @@ function dirFr(d) {
 }
 
 /* --- App switcher --- */
-const appBtn = document.getElementById('app-btn');
-const appMenu = document.getElementById('app-menu');
-appBtn.addEventListener('click', e => {
-  e.stopPropagation();
-  appMenu.classList.toggle('open');
-});
-document.addEventListener('click', () => appMenu.classList.remove('open'));
+(function() {
+  const btn = document.getElementById('appSwitcherBtn');
+  const menu = document.getElementById('appMenu');
+  if (!btn || !menu) return;
+  btn.addEventListener('click', e => { e.stopPropagation(); menu.classList.toggle('open'); });
+  document.addEventListener('click', () => menu.classList.remove('open'));
+})();
 
 /* --- Pédago toggle --- */
 const pedaBtn = document.getElementById('pedago-toggle');

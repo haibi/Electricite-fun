@@ -1074,20 +1074,21 @@ document.addEventListener('click', (e) => {
   if (!appMenu.contains(e.target) && e.target !== appSwitcherBtn) appMenu.classList.remove('open');
 });
 
-/* ---------- 2. TABS (scoped per subject-block) ---------- */
-document.querySelectorAll('.subject-block').forEach(block => {
-  const tabs = block.querySelectorAll('.tab');
-  const views = block.querySelectorAll('.view');
+/* ---------- 2. TABS ---------- */
+(function() {
+  const tabs = document.querySelectorAll('nav.tabs .tab');
+  const views = document.querySelectorAll('main .view');
   tabs.forEach(btn => {
     btn.addEventListener('click', () => {
       tabs.forEach(b => b.classList.remove('active'));
       views.forEach(v => v.classList.remove('active'));
       btn.classList.add('active');
-      block.querySelector('#view-' + btn.dataset.view).classList.add('active');
+      const target = document.getElementById('view-' + btn.dataset.view);
+      if (target) target.classList.add('active');
       if (typeof closeProps === 'function') closeProps();
     });
   });
-});
+})();
 
 /* ---------- 3. BADGES ---------- */
 const BADGES = {

@@ -474,6 +474,59 @@ input[type=checkbox] {
 .toast-text .toast-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
 
 /* ═══════════════════════════════════════════════
+   INFOS EN TEMPS RÉEL
+═══════════════════════════════════════════════ */
+.live-info {
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: rgba(0,201,255,0.05);
+  border: 1px solid rgba(0,201,255,0.15);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  line-height: 1.6;
+}
+.live-info .live-val { color: var(--neon); font-weight: 700; }
+.live-info .live-result {
+  width: 100%;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--electric);
+}
+
+/* ═══════════════════════════════════════════════
+   MODE DÉFI
+═══════════════════════════════════════════════ */
+.defi-card { border-color: rgba(57,255,20,0.3); background: rgba(57,255,20,0.04); }
+.defi-card .card-title { color: var(--violet); }
+.defi-question { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 14px; line-height: 1.5; }
+.defi-hint { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+.defi-tolerance {
+  display: inline-block; padding: 2px 8px;
+  background: rgba(57,255,20,0.1); border: 1px solid rgba(57,255,20,0.3);
+  border-radius: 6px; color: var(--violet); font-weight: 700; font-size: 12px;
+}
+.defi-status {
+  margin-top: 14px; padding: 10px 14px;
+  border-radius: 8px; font-size: 14px; font-weight: 700;
+  text-align: center; display: none;
+}
+.defi-status.success { display: block; background: rgba(57,255,20,0.12); border: 1px solid rgba(57,255,20,0.4); color: var(--violet); }
+.defi-status.fail    { display: block; background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.3); color: var(--red); }
+.defi-nav { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+
+/* ═══════════════════════════════════════════════
+   GRAPHIQUE DE REFROIDISSEMENT
+═══════════════════════════════════════════════ */
+.cooling-wrap { margin-top: 18px; display: none; }
+.cooling-wrap.visible { display: block; }
+.cooling-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--neon); margin-bottom: 10px; }
+#coolingCanvas { width: 100%; max-width: 500px; height: auto; display: block; border-radius: 8px; margin: 0 auto; }
+
+/* ═══════════════════════════════════════════════
    SCROLLBAR
 ═══════════════════════════════════════════════ */
 ::-webkit-scrollbar { width: 6px; }
@@ -509,36 +562,36 @@ input[type=checkbox] {
     </div>
 
     <!-- App-switcher -->
-    <div class="app-switcher">
-      <button class="app-switcher-btn" id="appSwitcherBtn" title="Changer d'app">+</button>
+    <div class="app-switcher" id="appSwitcher">
+      <button class="app-switcher-btn" id="appSwitcherBtn" title="Changer d'app">＋</button>
       <div class="app-menu" id="appMenu">
-        <div class="app-menu-header">Laboratoires d'Evan</div>
+        <div class="app-menu-header">Mes apps</div>
         <a class="app-menu-item" href="index.html">
-          <div class="ico">⚡</div>
-          <div><div class="title">Electrolab</div><div class="sub">Circuits électriques</div></div>
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #FFD700, #b78b00); color:#1a1a1a;">⚡</span>
+          <div><div class="title">Electrolab</div><div class="sub">Électricité &amp; circuits</div></div>
         </a>
         <a class="app-menu-item" href="mecanique.html">
-          <div class="ico">🚀</div>
-          <div><div class="title">Mécanik</div><div class="sub">Physique du mouvement</div></div>
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #FFC56B, #FF6B35);">🚀</span>
+          <div><div class="title">Mécanik</div><div class="sub">Forces &amp; mouvement</div></div>
         </a>
         <a class="app-menu-item" href="solaire.html">
-          <div class="ico">🪐</div>
-          <div><div class="title">Système Solaire</div><div class="sub">Exploration spatiale</div></div>
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #c0a3e8, #7a4ec5);">🪐</span>
+          <div><div class="title">Système Solaire</div><div class="sub">Planètes &amp; quiz</div></div>
         </a>
         <a class="app-menu-item" href="laser.html">
-          <div class="ico">🔴</div>
-          <div><div class="title">Laser Maze</div><div class="sub">Optique géométrique</div></div>
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #FF3333, #8B0000);">🔴</span>
+          <div><div class="title">Laser Maze</div><div class="sub">Optique &amp; lumière</div></div>
         </a>
         <a class="app-menu-item" href="reflex.html">
-          <div class="ico">🏃</div>
-          <div><div class="title">Reflex</div><div class="sub">Temps de réaction</div></div>
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #39FF14, #006400); color:#000;">⚡</span>
+          <div><div class="title">Reflex</div><div class="sub">Système nerveux</div></div>
         </a>
         <a class="app-menu-item" href="volcan.html">
-          <div class="ico">🌋</div>
-          <div><div class="title">Volcan</div><div class="sub">Géologie &amp; éruptions</div></div>
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #FF6B35, #8B0000);">🌋</span>
+          <div><div class="title">Volcan</div><div class="sub">Géologie &amp; viscosité</div></div>
         </a>
-        <a class="app-menu-item current" href="callab.html">
-          <div class="ico">🧪</div>
+        <a class="app-menu-item current">
+          <span class="ico" style="background:radial-gradient(circle at 30% 30%, #00C9FF, #0047AB);">🧪</span>
           <div><div class="title">CalLab</div><div class="sub">Thermodynamique</div></div>
         </a>
       </div>
@@ -622,6 +675,13 @@ input[type=checkbox] {
         </div>
       </div>
     </div>
+
+    <!-- INFOS EN TEMPS RÉEL -->
+    <div class="live-info" id="liveInfo">
+      <div>Énergie apportée par Verre 1 : <span class="live-val" id="liE1">--</span> kJ</div>
+      <div>Énergie apportée par Verre 2 : <span class="live-val" id="liE2">--</span> kJ</div>
+      <div class="live-result">Résultat estimé : <span id="liTf">--.-</span>°C</div>
+    </div>
   </div>
 
   <!-- CANVAS ANIMATION -->
@@ -642,6 +702,25 @@ input[type=checkbox] {
     <div class="result-label">Température finale après mélange</div>
     <div class="result-formula" id="resultFormula">
       Lance un mélange pour voir le calcul…
+    </div>
+
+    <!-- GRAPHIQUE DE REFROIDISSEMENT -->
+    <div class="cooling-wrap" id="coolingWrap">
+      <div class="cooling-title">Courbe de refroidissement (Loi de Newton)</div>
+      <canvas id="coolingCanvas" width="500" height="160"></canvas>
+    </div>
+  </div>
+
+  <!-- MODE DÉFI -->
+  <div class="card defi-card" id="defiCard" style="display:none;">
+    <div class="card-title">🎯 Mode Défi</div>
+    <div class="defi-question" id="defiQuestion"></div>
+    <div class="defi-hint" id="defiHint"></div>
+    <div id="defiStatus" class="defi-status"></div>
+    <div class="defi-nav">
+      <button id="btnDefiCheck">✅ Vérifier ma réponse</button>
+      <button id="btnDefiNext">Défi suivant →</button>
+      <button id="btnDefiSkip" style="opacity:.5; font-size:12px;">Passer</button>
     </div>
   </div>
 
@@ -860,6 +939,7 @@ btnSound.addEventListener('click', () => {
 /* ═══════════════════════════════════════
    4. SLIDERS — lecture des valeurs
 ═══════════════════════════════════════ */
+
 const slT1 = document.getElementById('slT1');
 const slT2 = document.getElementById('slT2');
 const slV1 = document.getElementById('slV1');
@@ -962,137 +1042,207 @@ function calcMix({ T1, T2, V1, V2, iceOn, mIce }) {
 const simCanvas = document.getElementById('simCanvas');
 const ctx2d = simCanvas.getContext('2d');
 
-// Utilitaire : coin arrondi en bas
-function roundedRectBottom(ctx, x, y, w, h, r) {
+// Animation clock pour les bulles
+let _bubbleTime = 0;
+let _bubbleRAF = null;
+function tickBubbles() {
+  _bubbleTime += 0.016;
+  _bubbleRAF = requestAnimationFrame(tickBubbles);
+}
+tickBubbles();
+
+// Utilitaire : tracé verre avec bord arrondi en bas uniquement
+function glassPath(ctx, x, y, w, h, r) {
   ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  // légère trapezoïde : bord supérieur plus large de 4px de chaque côté
+  const splay = 4;
+  ctx.moveTo(x - splay, y);
+  ctx.lineTo(x + w + splay, y);
   ctx.lineTo(x + w, y + h - r);
   ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
   ctx.lineTo(x + r, y + h);
   ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
 }
 
-// Couleur du liquide selon température
+// Couleur liquide selon T (renvoie { top, mid, bot } pour un triple gradient)
 function liquidColor(T) {
-  if (T <= 0) return { top: '#a8d8ea', bot: '#7ec8e3' };      // glace
-  if (T <= 15) return { top: '#00c9ff', bot: '#0066ff' };     // très froid
-  if (T <= 25) return { top: '#56d6ff', bot: '#00a8cc' };     // frais
-  if (T <= 40) return { top: '#78e08f', bot: '#38ada9' };     // tiède
-  if (T <= 60) return { top: '#ffc864', bot: '#ff8c42' };     // chaud
-  if (T <= 80) return { top: '#ff6b35', bot: '#ff2600' };     // très chaud
-  return { top: '#ff4757', bot: '#c40000' };                  // brûlant
+  if (T <= 10)  return { top: '#00AAFF', mid: '#0088DD', bot: '#0055AA' };
+  if (T <= 30)  return { top: '#02C39A', mid: '#00A896', bot: '#007A6F' };
+  if (T <= 60)  return { top: '#FFD700', mid: '#FFBB00', bot: '#FF8C00' };
+  if (T <= 80)  return { top: '#FF8C00', mid: '#FF6B35', bot: '#CC3300' };
+  return         { top: '#FF4444', mid: '#DD1111', bot: '#CC0000' };
 }
 
 // Dessiner un verre avec son liquide
 function drawGlass(ctx, x, y, w, h, fillRatio, temp, label, alpha = 1, tilt = 0, iceRatio = 0) {
   ctx.save();
-  ctx.globalAlpha = alpha;
+  ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
 
-  // Pivotement autour du bas du verre (pour l'animation de versement)
+  // Pivotement autour du bas-centre du verre
+  const pivotX = x + w / 2;
+  const pivotY = y + h;
   if (tilt !== 0) {
-    ctx.translate(x + w / 2, y + h);
+    ctx.translate(pivotX, pivotY);
     ctx.rotate(tilt);
-    ctx.translate(-(x + w / 2), -(y + h));
+    ctx.translate(-pivotX, -pivotY);
   }
 
   const fillH = h * Math.max(0, Math.min(1, fillRatio));
   const fillY = y + h - fillH;
+  const r = 10;
 
-  // Fond du verre (verre transparent)
-  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-  ctx.lineWidth = 2;
-  roundedRectBottom(ctx, x, y, w, h, 10);
-  ctx.stroke();
+  // ---- Ombre portée du verre ----
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.4)';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 6;
+  glassPath(ctx, x, y, w, h, r);
+  ctx.fillStyle = 'rgba(10,10,30,0.3)';
+  ctx.fill();
+  ctx.restore();
 
-  // Liquide
+  // ---- Liquide avec triple gradient ----
   if (fillH > 2) {
-    const { top, bot } = liquidColor(temp);
+    const { top, mid, bot } = liquidColor(temp);
     const grad = ctx.createLinearGradient(x, fillY, x, y + h);
-    grad.addColorStop(0, top);
+    grad.addColorStop(0, top + 'DD');    // surface : un peu translucide
+    grad.addColorStop(0.4, mid);
     grad.addColorStop(1, bot);
 
     ctx.save();
-    roundedRectBottom(ctx, x, y, w, h, 10);
+    glassPath(ctx, x, y, w, h, r);
     ctx.clip();
     ctx.fillStyle = grad;
-    ctx.fillRect(x, fillY, w, fillH);
-    // Reflet brillant
-    ctx.fillStyle = 'rgba(255,255,255,0.07)';
-    ctx.fillRect(x + 4, fillY, 6, fillH * 0.8);
-    ctx.restore();
+    ctx.fillRect(x - 6, fillY, w + 12, fillH);
 
-    // Petit cercle de bulles en surface (animation idle)
-    for (let i = 0; i < 3; i++) {
-      const bx = x + 10 + i * (w / 3);
-      const by = fillY + 6;
-      ctx.beginPath();
-      ctx.arc(bx, by, 2, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-  }
+    // Reflet latéral gauche (brillance verre)
+    const refGrad = ctx.createLinearGradient(x, 0, x + w * 0.4, 0);
+    refGrad.addColorStop(0, 'rgba(255,255,255,0.18)');
+    refGrad.addColorStop(0.4, 'rgba(255,255,255,0.04)');
+    refGrad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = refGrad;
+    ctx.fillRect(x - 6, fillY, w * 0.45, fillH);
 
-  // Cube de glace
-  if (iceRatio > 0.05) {
-    const iceSize = Math.min(w * 0.4, fillH * 0.6) * iceRatio;
-    const ix = x + w / 2 - iceSize / 2;
-    const iy = y + h - fillH * 0.3 - iceSize;
-    ctx.save();
-    roundedRectBottom(ctx, x, y, w, h, 10);
-    ctx.clip();
-    // Cube
-    ctx.fillStyle = 'rgba(200,235,255,0.75)';
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    // Ligne de surface (effet eau)
+    ctx.beginPath();
+    ctx.moveTo(x - 6, fillY);
+    ctx.lineTo(x + w + 6, fillY);
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
     ctx.lineWidth = 1.5;
-    ctx.fillRect(ix, iy, iceSize, iceSize);
-    ctx.strokeRect(ix, iy, iceSize, iceSize);
-    // Reflet glace
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.fillRect(ix + 3, iy + 3, iceSize * 0.35, iceSize * 0.35);
+    ctx.stroke();
+
+    // ---- Bulles animées (si T > 60°C) ----
+    if (temp > 60) {
+      const numBulles = temp > 80 ? 5 : 3;
+      for (let i = 0; i < numBulles; i++) {
+        const bPhase = _bubbleTime * 0.7 + i * 2.1;
+        const bx = x + 14 + (i * (w - 28) / (numBulles - 1 || 1));
+        // montée de bas en haut, boucle toutes les 2s
+        const bRise = (bPhase % 2) / 2; // 0→1
+        const by = fillY + fillH * 0.9 - bRise * fillH * 0.85;
+        const bSize = 2 + Math.sin(bPhase * 3.1) * 1.2;
+        if (by > fillY && by < y + h) {
+          ctx.beginPath();
+          ctx.arc(bx, by, Math.max(0.5, bSize), 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+    }
+
     ctx.restore();
   }
 
-  // Label sous le verre
-  ctx.fillStyle = 'rgba(232,238,249,0.65)';
-  ctx.font = '12px Inter, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(label, x + w / 2, y + h + 18);
+  // ---- Contour du verre (semi-transparent, brillant) ----
+  ctx.save();
+  glassPath(ctx, x, y, w, h, r);
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // Liseré intérieur gauche (verre épais)
+  ctx.beginPath();
+  ctx.moveTo(x + 3, y + 4);
+  ctx.lineTo(x + 3, y + h - 4);
+  ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
 
-  // Température affichée
+  // ---- Cube de glace ----
+  if (iceRatio > 0.05 && fillH > 10) {
+    const iceSize = Math.min(w * 0.38, fillH * 0.55) * iceRatio;
+    const ix = x + w / 2 - iceSize / 2;
+    const iy = y + h - fillH * 0.28 - iceSize;
+    ctx.save();
+    glassPath(ctx, x, y, w, h, r);
+    ctx.clip();
+    // Face principale du cube
+    ctx.fillStyle = 'rgba(190,230,255,0.72)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 1.5;
+    // Légère rotation 3D (isométrique simplifié)
+    ctx.beginPath();
+    ctx.rect(ix, iy, iceSize, iceSize);
+    ctx.fill();
+    ctx.stroke();
+    // Face supérieure (parallélogramme)
+    ctx.beginPath();
+    ctx.moveTo(ix, iy);
+    ctx.lineTo(ix + iceSize * 0.35, iy - iceSize * 0.25);
+    ctx.lineTo(ix + iceSize + iceSize * 0.35, iy - iceSize * 0.25);
+    ctx.lineTo(ix + iceSize, iy);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(220,245,255,0.65)';
+    ctx.fill();
+    ctx.stroke();
+    // Reflet brillant
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.fillRect(ix + 3, iy + 3, iceSize * 0.3, iceSize * 0.3);
+    ctx.restore();
+  }
+
+  // ---- Étiquette sous le verre ----
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+  ctx.fillStyle = 'rgba(232,238,249,0.7)';
+  ctx.font = '11px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(label, x + w / 2, y + h + 20);
   const tempStr = temp.toFixed(1) + '°C';
-  ctx.fillStyle = liquidColor(temp).top;
+  const { top } = liquidColor(temp);
+  ctx.fillStyle = top;
   ctx.font = 'bold 13px Inter, sans-serif';
-  ctx.fillText(tempStr, x + w / 2, y + h + 33);
+  ctx.fillText(tempStr, x + w / 2, y + h + 36);
+  ctx.restore();
 
   ctx.restore();
 }
 
-// Flèche de versement
-function drawArrow(ctx, fromX, fromY, toX, toY, alpha = 1) {
+// Flux de liquide visible (arc épais coloré)
+function drawFlow(ctx, fromX, fromY, toX, toY, color, alpha, thickness = 6) {
   ctx.save();
-  ctx.globalAlpha = alpha;
-  ctx.strokeStyle = 'rgba(255,200,100,0.7)';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([6, 4]);
+  ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+  const cpX = (fromX + toX) / 2;
+  const cpY = Math.min(fromY, toY) - 40;
+  ctx.lineCap = 'round';
+  // Lueur douce autour du flux
   ctx.beginPath();
   ctx.moveTo(fromX, fromY);
-  ctx.bezierCurveTo(fromX + 30, fromY - 40, toX - 30, toY - 40, toX, toY);
+  ctx.quadraticCurveTo(cpX, cpY, toX, toY);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = thickness + 8;
+  ctx.globalAlpha = Math.max(0, Math.min(1, alpha * 0.3));
   ctx.stroke();
-  // Pointe de flèche
-  ctx.setLineDash([]);
-  ctx.fillStyle = 'rgba(255,200,100,0.7)';
+  // Flux principal
   ctx.beginPath();
-  ctx.moveTo(toX, toY);
-  ctx.lineTo(toX - 8, toY - 12);
-  ctx.lineTo(toX + 8, toY - 12);
-  ctx.closePath();
-  ctx.fill();
+  ctx.moveTo(fromX, fromY);
+  ctx.quadraticCurveTo(cpX, cpY, toX, toY);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = thickness;
+  ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+  ctx.stroke();
   ctx.restore();
 }
 
@@ -1106,31 +1256,32 @@ function drawStatic(vals) {
   const fill1 = V1 / maxV;
   const fill2 = V2 / maxV;
 
-  const glassW = Math.min(W * 0.24, 120);
-  const glassH = Math.min(H * 0.65, 200);
-  const glassY = H / 2 - glassH / 2;
+  const glassW = Math.min(W * 0.22, 110);
+  const glassH = Math.min(H * 0.62, 190);
+  const glassY = H / 2 - glassH / 2 - 10;
 
   // Verre 1 (gauche)
-  const g1x = W * 0.15 - glassW / 2;
-  drawGlass(ctx2d, g1x, glassY, glassW, glassH, fill1, T1, `Verre 1 · ${V1} mL`);
+  const g1x = W * 0.13 - glassW / 2;
+  drawGlass(ctx2d, g1x, glassY, glassW, glassH, fill1, T1, `Verre 1 · ${V1} mL · ${T1}°C`);
 
   // Verre 2 (droite)
-  const g2x = W * 0.85 - glassW / 2;
-  drawGlass(ctx2d, g2x, glassY, glassW, glassH, fill2, T2, `Verre 2 · ${V2} mL`, 1, 0, iceOn && mIce > 0 ? 1 : 0);
+  const g2x = W * 0.87 - glassW / 2;
+  drawGlass(ctx2d, g2x, glassY, glassW, glassH, fill2, T2, `Verre 2 · ${V2} mL · ${T2}°C`, 1, 0, iceOn && mIce > 0 ? 1 : 0);
 
   // Verre résultat (centre) — fantôme
   const gRx = W / 2 - glassW * 0.6;
+  const gRw = glassW * 1.2;
   ctx2d.save();
-  ctx2d.strokeStyle = 'rgba(255,255,255,0.06)';
+  glassPath(ctx2d, gRx, glassY, gRw, glassH, 10);
+  ctx2d.strokeStyle = 'rgba(255,255,255,0.07)';
   ctx2d.lineWidth = 2;
-  roundedRectBottom(ctx2d, gRx, glassY, glassW * 1.2, glassH, 10);
   ctx2d.stroke();
-  ctx2d.fillStyle = 'rgba(255,255,255,0.02)';
+  ctx2d.fillStyle = 'rgba(255,255,255,0.015)';
   ctx2d.fill();
   ctx2d.fillStyle = 'rgba(136,146,176,0.4)';
   ctx2d.font = '11px Inter, sans-serif';
   ctx2d.textAlign = 'center';
-  ctx2d.fillText('résultat', gRx + glassW * 0.6, glassY + glassH + 18);
+  ctx2d.fillText('résultat', gRx + gRw / 2, glassY + glassH + 20);
   ctx2d.restore();
 }
 
@@ -1149,83 +1300,87 @@ function runMixAnimation(vals, onComplete) {
   const maxV = 500;
   const fill1 = V1 / maxV;
   const fill2 = V2 / maxV;
-  const fillR = (V1 + V2) / (maxV * 1.4); // verre résultat légèrement plus large
+  const fillR = Math.min((V1 + V2) / (maxV * 1.3), 0.95);
 
   const W = simCanvas.width, H = simCanvas.height;
-  const glassW = Math.min(W * 0.24, 120);
-  const glassH = Math.min(H * 0.65, 200);
-  const glassY = H / 2 - glassH / 2;
+  const glassW = Math.min(W * 0.22, 110);
+  const glassH = Math.min(H * 0.62, 190);
+  const glassY = H / 2 - glassH / 2 - 10;
 
-  const g1x = W * 0.15 - glassW / 2;
-  const g2x = W * 0.85 - glassW / 2;
+  const g1x = W * 0.13 - glassW / 2;
+  const g2x = W * 0.87 - glassW / 2;
   const gRx = W / 2 - glassW * 0.6;
   const gRw = glassW * 1.2;
 
-  // Animation en 4 phases :
-  // Phase 0 (0→0.3) : verre 1 se penche
-  // Phase 1 (0.3→0.6) : liquide se transvase vers le centre
-  // Phase 2 (0.6→0.8) : verre 2 se penche, liquide se transvase
-  // Phase 3 (0.8→1.0) : résultat apparaît
-  const totalDuration = 2000; // ms
-  const startTime = performance.now();
+  // Couleurs des flux
+  const color1 = liquidColor(T1).mid;
+  const color2 = liquidColor(T2).mid;
 
-  // Fonte progressive du glaçon (0 → 0 si tout fond, 0 → partiel)
-  const { Tf: TfCheck } = calcMix(vals);
-  const iceFondsComplet = iceOn && mIce > 0 && TfCheck > 0;
+  // Phases :
+  // 0.00→0.35 : verre 1 penche, flux 1 apparaît
+  // 0.15→0.60 : verre résultat se remplit (depuis V1)
+  // 0.35→0.70 : verre 2 penche, flux 2 apparaît
+  // 0.60→1.00 : tout se finalise
+  const totalDuration = 2000;
+  const startTime = performance.now();
 
   function frame(now) {
     const elapsed = now - startTime;
-    const p = Math.min(elapsed / totalDuration, 1); // 0 → 1
-    const W = simCanvas.width, H = simCanvas.height;
-    ctx2d.clearRect(0, 0, W, H);
-
+    const p = Math.min(elapsed / totalDuration, 1);
+    const W2 = simCanvas.width, H2 = simCanvas.height;
+    ctx2d.clearRect(0, 0, W2, H2);
     const eased = easeInOut(p);
 
-    // --- Phase 0-0.3 : verre 1 penche (vers la droite) ---
-    const tilt1Phase = Math.min(p / 0.3, 1); // 0→1 sur phase 0-0.3
-    const tiltAngle1 = easeInOut(tilt1Phase) * (Math.PI * 0.55); // jusqu'à ~100°
+    // ---- Verre 1 : penche vers droite (0→0.35) ----
+    const tilt1t = Math.min(p / 0.35, 1);
+    const tiltAngle1 = easeInOut(tilt1t) * (Math.PI * 0.52);
+    const fill1Curr = fill1 * Math.max(0, 1 - Math.max(0, (p - 0.18) / 0.32));
+    const alpha1 = p < 0.60 ? 1 : Math.max(0, 1 - (p - 0.60) / 0.15);
+    drawGlass(ctx2d, g1x, glassY, glassW, glassH, Math.max(0, fill1Curr), T1,
+              `Verre 1 · ${V1} mL · ${T1}°C`, alpha1, tiltAngle1);
 
-    // Verre 1 : disparaît progressivement après tilt complet
-    const fill1Curr = fill1 * (1 - Math.max(0, (p - 0.2) / 0.3));
-    const alpha1 = p < 0.55 ? 1 : 1 - (p - 0.55) / 0.15;
-    drawGlass(ctx2d, g1x, glassY, glassW, glassH, Math.max(0, fill1Curr), T1, `Verre 1 · ${V1} mL`, Math.max(0, alpha1), tiltAngle1);
-
-    // --- Flèche versement 1 → centre ---
-    if (p > 0.15 && p < 0.65) {
-      const arrowA = Math.min((p - 0.15) / 0.15, 1) * (1 - Math.max(0, (p - 0.55) / 0.1));
-      drawArrow(ctx2d, g1x + glassW, glassY + 30, gRx, glassY + 20, arrowA);
+    // ---- Flux 1 → centre ----
+    if (p > 0.12 && p < 0.62) {
+      const fa = Math.min((p - 0.12) / 0.12, 1) * Math.max(0, 1 - (p - 0.52) / 0.10);
+      // Point de sortie du verre 1 (penché) → bord gauche du verre résultat
+      const srcX = g1x + glassW + 8;
+      const srcY = glassY + glassH * 0.35;
+      const dstX = gRx;
+      const dstY = glassY + glassH * 0.25;
+      drawFlow(ctx2d, srcX, srcY, dstX, dstY, color1, fa * 0.85, 5);
     }
 
-    // --- Verre résultat (centre) : se remplit ---
-    const fillRCurr = fillR * Math.min(eased * 1.4, 1);
-    const alphaR = Math.min(p / 0.3, 1);
-    // Température du résultat : interpolation progressive
-    const Tf_display = T1 + (Tf - T1) * Math.min(eased * 1.6, 1);
-    // Glaçon fond progressivement
-    const iceRatioAnim = (iceOn && mIce > 0) ? Math.max(0, 1 - eased * 1.5) : 0;
-    drawGlass(ctx2d, gRx, glassY, gRw, glassH, Math.max(0, fillRCurr), Tf_display, 'Mélange', alphaR, 0, iceRatioAnim);
+    // ---- Verre résultat (centre) : se remplit ----
+    const fillRCurr = fillR * Math.min(easeInOut(Math.max(0, (p - 0.08) / 0.75)), 1);
+    const alphaR = Math.min(p / 0.25, 1);
+    const TfDisplay = T1 + (Tf - T1) * Math.min(easeInOut(Math.max(0, (p - 0.1) / 0.7)), 1);
+    const iceRatioAnim = (iceOn && mIce > 0) ? Math.max(0, 1 - easeInOut(p) * 1.8) : 0;
+    drawGlass(ctx2d, gRx, glassY, gRw, glassH, Math.max(0, fillRCurr),
+              Math.max(0, Math.min(100, TfDisplay)), 'Mélange', alphaR, 0, iceRatioAnim);
 
-    // --- Phase 0.4-0.7 : verre 2 penche (vers la gauche) ---
-    const tilt2Phase = Math.max(0, Math.min((p - 0.4) / 0.3, 1));
-    const tiltAngle2 = -easeInOut(tilt2Phase) * (Math.PI * 0.45); // penche vers gauche
+    // ---- Verre 2 : penche vers gauche (0.35→0.70) ----
+    const tilt2t = Math.max(0, Math.min((p - 0.35) / 0.35, 1));
+    const tiltAngle2 = -easeInOut(tilt2t) * (Math.PI * 0.50);
+    const fill2Curr = fill2 * Math.max(0, 1 - Math.max(0, (p - 0.45) / 0.32));
+    const alpha2 = p > 0.78 ? Math.max(0, 1 - (p - 0.78) / 0.15) : 1;
+    const iceRatio2 = (iceOn && mIce > 0) ? Math.max(0, 1 - tilt2t * 2) : 0;
+    drawGlass(ctx2d, g2x, glassY, glassW, glassH, Math.max(0, fill2Curr), T2,
+              `Verre 2 · ${V2} mL · ${T2}°C`, alpha2, tiltAngle2, iceRatio2);
 
-    // Verre 2 : se vide progressivement
-    const fill2Curr = fill2 * (1 - Math.max(0, (p - 0.45) / 0.3));
-    const alpha2 = p > 0.8 ? 1 - (p - 0.8) / 0.15 : 1;
-    const iceRatio2 = (iceOn && mIce > 0) ? Math.max(0, 1 - Math.max(0, (p - 0.4) / 0.3) * 2) : 0;
-    drawGlass(ctx2d, g2x, glassY, glassW, glassH, Math.max(0, fill2Curr), T2, `Verre 2 · ${V2} mL`, Math.max(0, alpha2), tiltAngle2, iceRatio2);
-
-    // --- Flèche versement 2 → centre ---
-    if (p > 0.45 && p < 0.85) {
-      const arrowA2 = Math.min((p - 0.45) / 0.15, 1) * (1 - Math.max(0, (p - 0.75) / 0.1));
-      drawArrow(ctx2d, g2x, glassY + 30, gRx + gRw, glassY + 20, arrowA2);
+    // ---- Flux 2 → centre ----
+    if (p > 0.40 && p < 0.82) {
+      const fa2 = Math.min((p - 0.40) / 0.12, 1) * Math.max(0, 1 - (p - 0.72) / 0.10);
+      const srcX2 = g2x - 8;
+      const srcY2 = glassY + glassH * 0.35;
+      const dstX2 = gRx + gRw;
+      const dstY2 = glassY + glassH * 0.25;
+      drawFlow(ctx2d, srcX2, srcY2, dstX2, dstY2, color2, fa2 * 0.85, 5);
     }
 
     if (p < 1) {
       animFrame = requestAnimationFrame(frame);
     } else {
-      // Dessin final figé
-      ctx2d.clearRect(0, 0, W, H);
+      ctx2d.clearRect(0, 0, W2, H2);
       drawGlass(ctx2d, gRx, glassY, gRw, glassH, fillR, Tf, 'Mélange final', 1, 0, 0);
       isAnimating = false;
       onComplete();
@@ -1234,13 +1389,12 @@ function runMixAnimation(vals, onComplete) {
 
   animFrame = requestAnimationFrame(frame);
 
-  // Failsafe : si RAF ne fire pas (env. headless / tab arrière-plan)
-  // → forcer la complétion après totalDuration + 500ms
+  // Failsafe (tab arrière-plan, env. headless)
   setTimeout(() => {
     if (isAnimating) {
       cancelAnimationFrame(animFrame);
-      const W = simCanvas.width, H = simCanvas.height;
-      ctx2d.clearRect(0, 0, W, H);
+      const W2 = simCanvas.width, H2 = simCanvas.height;
+      ctx2d.clearRect(0, 0, W2, H2);
       drawGlass(ctx2d, gRx, glassY, gRw, glassH, fillR, Tf, 'Mélange final', 1, 0, 0);
       isAnimating = false;
       onComplete();
@@ -1364,8 +1518,9 @@ function showToast(ico, title, sub) {
 /* ═══════════════════════════════════════
    10. AFFICHAGE DU RÉSULTAT
 ═══════════════════════════════════════ */
+let firstMixDone = false;
+
 function displayResult(vals) {
-  const { T1, T2, V1, V2, iceOn, mIce } = vals;
   const { Tf, steps } = calcMix(vals);
 
   const tempEl = document.getElementById('resultTemp');
@@ -1385,6 +1540,18 @@ function displayResult(vals) {
   formulaEl.innerHTML = steps.map((s, i) =>
     `<strong class="accent">${i === 0 ? '📐 ' : '❄️ '}</strong> ${s}`
   ).join('<br>');
+
+  // ---- Graphique de refroidissement ----
+  const coolingWrap = document.getElementById('coolingWrap');
+  coolingWrap.classList.add('visible');
+  drawCoolingCurve(Tf);
+
+  // ---- Mode défi (après le 1er mélange) ----
+  if (!firstMixDone) {
+    firstMixDone = true;
+    showDefi(0);
+    showToast('🎯', 'Mode Défi débloqué !', 'Relève les défis de thermodynamique !');
+  }
 
   // Son selon température
   if (!isMuted) {
@@ -1431,6 +1598,255 @@ function resizeCanvas() {
 
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
+
+/* ═══════════════════════════════════════
+   13. INFOS EN TEMPS RÉEL
+═══════════════════════════════════════ */
+function updateLiveInfo() {
+  const vals = getValues();
+  const { T1, T2, V1, V2 } = vals;
+  const c = 4.186; // kJ/(kg·°C)
+  // Énergie "absolue" de chaque verre (référence 0°C)
+  const E1 = (V1 / 1000) * c * T1;  // kJ (masse en kg)
+  const E2 = (V2 / 1000) * c * T2;
+  const { Tf } = calcMix(vals);
+
+  document.getElementById('liE1').textContent = E1.toFixed(2);
+  document.getElementById('liE2').textContent = E2.toFixed(2);
+  const tfEl = document.getElementById('liTf');
+  tfEl.textContent = Tf.toFixed(1);
+  // Colorer selon température
+  const { top } = liquidColor(Tf);
+  tfEl.style.color = top;
+}
+
+// Brancher sur les sliders
+[slT1, slT2, slV1, slV2, slIce].forEach(s => s.addEventListener('input', updateLiveInfo));
+chkIce.addEventListener('change', updateLiveInfo);
+updateLiveInfo();
+
+/* ═══════════════════════════════════════
+   14. GRAPHIQUE DE REFROIDISSEMENT
+═══════════════════════════════════════ */
+const coolingCanvas = document.getElementById('coolingCanvas');
+const ctxCool = coolingCanvas.getContext('2d');
+
+function drawCoolingCurve(Tf) {
+  const W = coolingCanvas.width, H = coolingCanvas.height;
+  ctxCool.clearRect(0, 0, W, H);
+
+  const Tamb = 20; // °C ambiance
+  const tau = 300; // constante de temps en secondes (~5 min)
+  const totalTime = 30 * 60; // 30 minutes en secondes
+  const steps = 200;
+
+  // Marges
+  const mx = 48, my = 18, bm = 36, rm = 16;
+  const cw = W - mx - rm, ch = H - my - bm;
+
+  const T0 = Tf;
+  // Calcul min/max
+  const Tmin = Math.min(Tamb - 2, Tf > Tamb ? Tamb - 2 : Tf);
+  const Tmax = Math.max(Tf + 2, Tamb + 2);
+
+  // Fond
+  ctxCool.fillStyle = 'rgba(0,0,0,0.3)';
+  ctxCool.fillRect(0, 0, W, H);
+
+  // Axe ambiance
+  const yAmb = my + ch - (Tamb - Tmin) / (Tmax - Tmin) * ch;
+  ctxCool.save();
+  ctxCool.strokeStyle = 'rgba(136,146,176,0.3)';
+  ctxCool.setLineDash([4, 4]);
+  ctxCool.lineWidth = 1;
+  ctxCool.beginPath();
+  ctxCool.moveTo(mx, yAmb);
+  ctxCool.lineTo(mx + cw, yAmb);
+  ctxCool.stroke();
+  ctxCool.setLineDash([]);
+  ctxCool.restore();
+
+  // Grille légère
+  ctxCool.save();
+  ctxCool.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctxCool.lineWidth = 1;
+  for (let ti = 0; ti <= 6; ti++) {
+    const gx = mx + ti * cw / 6;
+    ctxCool.beginPath();
+    ctxCool.moveTo(gx, my);
+    ctxCool.lineTo(gx, my + ch);
+    ctxCool.stroke();
+  }
+  ctxCool.restore();
+
+  // Courbe de Newton : T(t) = Tamb + (T0-Tamb)*e^(-t/tau)
+  ctxCool.save();
+  ctxCool.beginPath();
+  for (let i = 0; i <= steps; i++) {
+    const t = (i / steps) * totalTime;
+    const T = Tamb + (T0 - Tamb) * Math.exp(-t / tau);
+    const px = mx + (i / steps) * cw;
+    const py = my + ch - (T - Tmin) / (Tmax - Tmin) * ch;
+    if (i === 0) ctxCool.moveTo(px, py);
+    else ctxCool.lineTo(px, py);
+  }
+  // Gradient de la courbe selon sens (chaud→froid ou froid→chaud)
+  const lineGrad = ctxCool.createLinearGradient(mx, 0, mx + cw, 0);
+  if (T0 > Tamb) {
+    lineGrad.addColorStop(0, '#FF6B35');
+    lineGrad.addColorStop(0.5, '#FFD700');
+    lineGrad.addColorStop(1, '#00C9FF');
+  } else {
+    lineGrad.addColorStop(0, '#00C9FF');
+    lineGrad.addColorStop(0.5, '#78e08f');
+    lineGrad.addColorStop(1, '#8892b0');
+  }
+  ctxCool.strokeStyle = lineGrad;
+  ctxCool.lineWidth = 2.5;
+  ctxCool.lineJoin = 'round';
+  ctxCool.stroke();
+  ctxCool.restore();
+
+  // Points remarquables : mi-chemin (τ) et équilibre (~3τ)
+  const tauT = Tamb + (T0 - Tamb) * Math.exp(-1);       // T à t=τ (63% de décroissance)
+  const halfT = Tamb + (T0 - Tamb) * 0.5;               // mi-chemin
+  const halfTau = -tau * Math.log(0.5);                  // temps pour mi-chemin
+
+  [[halfTau, halfT, 'mi-chemin'], [tau, tauT, 'τ=5min']].forEach(([t, T, lbl]) => {
+    if (t > totalTime) return;
+    const px = mx + (t / totalTime) * cw;
+    const py = my + ch - (T - Tmin) / (Tmax - Tmin) * ch;
+    ctxCool.save();
+    ctxCool.beginPath();
+    ctxCool.arc(px, py, 4, 0, Math.PI * 2);
+    ctxCool.fillStyle = '#FFD700';
+    ctxCool.fill();
+    ctxCool.strokeStyle = '#fff';
+    ctxCool.lineWidth = 1;
+    ctxCool.stroke();
+    ctxCool.fillStyle = 'rgba(255,215,0,0.9)';
+    ctxCool.font = 'bold 10px Inter, sans-serif';
+    ctxCool.textAlign = 'center';
+    ctxCool.fillText(lbl, px, py - 8);
+    ctxCool.fillText(T.toFixed(0) + '°C', px, py - 18);
+    ctxCool.restore();
+  });
+
+  // Axes
+  ctxCool.save();
+  ctxCool.fillStyle = 'rgba(136,146,176,0.7)';
+  ctxCool.font = '10px Inter, sans-serif';
+  ctxCool.textAlign = 'right';
+  // Axe Y : quelques graduations
+  for (let step = 0; step <= 4; step++) {
+    const T = Tmin + step * (Tmax - Tmin) / 4;
+    const py = my + ch - step * ch / 4;
+    ctxCool.fillText(T.toFixed(0) + '°', mx - 4, py + 3);
+    ctxCool.beginPath();
+    ctxCool.strokeStyle = 'rgba(136,146,176,0.2)';
+    ctxCool.lineWidth = 1;
+    ctxCool.moveTo(mx - 3, py);
+    ctxCool.lineTo(mx + cw, py);
+    ctxCool.stroke();
+  }
+  // Axe X : 0, 10, 20, 30 min
+  ctxCool.textAlign = 'center';
+  for (let m = 0; m <= 30; m += 10) {
+    const px = mx + (m / 30) * cw;
+    ctxCool.fillText(m + 'min', px, my + ch + 14);
+  }
+  // Label axes
+  ctxCool.fillStyle = 'rgba(0,201,255,0.6)';
+  ctxCool.font = 'bold 10px Inter, sans-serif';
+  ctxCool.textAlign = 'center';
+  ctxCool.fillText('Temp. (°C)', mx - 30, my + ch / 2);
+  ctxCool.fillText('Temps', mx + cw / 2, my + ch + 28);
+  // Étiquette ambiance
+  ctxCool.fillStyle = 'rgba(136,146,176,0.5)';
+  ctxCool.font = '10px Inter, sans-serif';
+  ctxCool.textAlign = 'left';
+  ctxCool.fillText('Tamb = ' + Tamb + '°C', mx + 4, yAmb - 4);
+  ctxCool.restore();
+}
+
+/* ═══════════════════════════════════════
+   15. MODE DÉFI
+═══════════════════════════════════════ */
+const DEFIS = [
+  {
+    id: 0,
+    question: 'Trouve les volumes pour obtenir exactement <strong>40°C</strong> en mélangeant T1 = 80°C et T2 = 10°C.',
+    hint: 'Utilise la formule : T = (V1×T1 + V2×T2) / (V1+V2). Règle T1=80, T2=10 et joue sur les volumes.',
+    target: 40,
+    tolerance: 2,
+    check(vals) { return Math.abs(vals.T1 - 80) < 5 && Math.abs(vals.T2 - 10) < 5; }
+  },
+  {
+    id: 1,
+    question: 'Refroidis <strong>400 mL à 90°C</strong> jusqu\'à environ <strong>50°C</strong> en ajoutant de l\'eau froide (T2 = 5°C). Trouve le volume d\'eau froide nécessaire.',
+    hint: 'Règle V1=400 T1=90, T2=5 puis ajuste V2 jusqu\'à approcher 50°C.',
+    target: 50,
+    tolerance: 3,
+    check(vals) { return Math.abs(vals.T1 - 90) < 5 && Math.abs(vals.T2 - 5) < 5 && vals.V1 >= 350; }
+  },
+  {
+    id: 2,
+    question: 'Utilise un glaçon pour refroidir <strong>300 mL à 75°C</strong> jusqu\'à moins de <strong>25°C</strong>. Quelle masse de glace minimum ?',
+    hint: 'Active le glaçon, règle V1=300 T1=75 et augmente la masse de glace progressivement.',
+    target: 25,
+    tolerance: 5,
+    check(vals) { return vals.iceOn && Math.abs(vals.T1 - 75) < 5 && vals.V1 >= 250; }
+  },
+  {
+    id: 3,
+    question: 'Défi ultime : Obtiens exactement <strong>0°C</strong> (glace fondante) ! Toute combinaison est permise avec glaçons.',
+    hint: 'Utilise beaucoup de glace (200g) avec peu d\'eau chaude. La fonte absorbe Q = m×334 J/g.',
+    target: 0,
+    tolerance: 1,
+    check(vals) { return vals.iceOn; }
+  },
+];
+
+let currentDefiIdx = 0;
+let defiUnlocked = false;
+
+function showDefi(idx) {
+  const defi = DEFIS[idx % DEFIS.length];
+  const card = document.getElementById('defiCard');
+  card.style.display = '';
+  document.getElementById('defiQuestion').innerHTML =
+    `<span class="defi-tolerance">Défi ${idx % DEFIS.length + 1}/${DEFIS.length}</span> &nbsp;${defi.question} <span class="defi-tolerance">±${defi.tolerance}°C</span>`;
+  document.getElementById('defiHint').textContent = '💡 Indice : ' + defi.hint;
+  document.getElementById('defiStatus').className = 'defi-status';
+}
+
+function checkDefi() {
+  const defi = DEFIS[currentDefiIdx % DEFIS.length];
+  const vals = getValues();
+  const { Tf } = calcMix(vals);
+  const statusEl = document.getElementById('defiStatus');
+  const condOk = defi.check(vals);
+  const tempOk = Math.abs(Tf - defi.target) <= defi.tolerance;
+
+  if (condOk && tempOk) {
+    statusEl.className = 'defi-status success';
+    statusEl.textContent = `Bravo ! Tu as obtenu ${Tf.toFixed(1)}°C — dans la tolérance de ±${defi.tolerance}°C !`;
+    showToast('🎯', 'Défi réussi !', `Tf = ${Tf.toFixed(1)}°C`);
+  } else {
+    statusEl.className = 'defi-status fail';
+    statusEl.textContent = `Pas encore… Tu obtiens ${Tf.toFixed(1)}°C. Cible : ${defi.target}°C ±${defi.tolerance}°C.`;
+  }
+}
+
+document.getElementById('btnDefiCheck').addEventListener('click', checkDefi);
+document.getElementById('btnDefiNext').addEventListener('click', () => {
+  currentDefiIdx++;
+  showDefi(currentDefiIdx);
+});
+document.getElementById('btnDefiSkip').addEventListener('click', () => {
+  currentDefiIdx++;
+  showDefi(currentDefiIdx);
+});
 
 /* ═══════════════════════════════════════
    13. INITIALISATION
