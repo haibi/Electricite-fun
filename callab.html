@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🧪 CalLab – Evan</title>
+<style>
+/* ═══════════════════════════════════════════════
+   VARIABLES & RESET
+═══════════════════════════════════════════════ */
+:root {
+  --bg: #0a0a1a;
+  --bg-deep: #050510;
+  --panel: rgba(20, 28, 56, 0.72);
+  --panel-solid: #131a33;
+  --border: rgba(255, 107, 53, 0.25);
+  --electric: #FF6B35;
+  --neon: #00C9FF;
+  --violet: #39FF14;
+  --red: #ff4757;
+  --green: #2ed573;
+  --text: #e8eef9;
+  --muted: #8892b0;
+  --shadow-elec: 0 0 18px rgba(255, 107, 53, 0.5);
+  --shadow-neon: 0 0 18px rgba(0, 201, 255, 0.45);
+  --shadow-violet: 0 0 18px rgba(57, 255, 20, 0.5);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════════════
+   FOND ETOILÉ (canvas fixe derrière tout)
+═══════════════════════════════════════════════ */
+#stars {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  display: block;
+}
+
+a, button { font-family: inherit; }
+
+/* ═══════════════════════════════════════════════
+   BOUTONS
+═══════════════════════════════════════════════ */
+button {
+  background: linear-gradient(135deg, rgba(0,201,255,0.15), rgba(255,107,53,0.15));
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  transition: all .2s ease;
+}
+button:hover {
+  border-color: var(--electric);
+  box-shadow: var(--shadow-elec);
+  transform: translateY(-1px);
+}
+button:active { transform: translateY(0); }
+button:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--electric), var(--neon));
+  border-color: transparent;
+  color: #fff;
+  font-size: 16px;
+  padding: 14px 32px;
+}
+.btn-primary:hover {
+  box-shadow: var(--shadow-elec), var(--shadow-neon);
+  border-color: transparent;
+}
+
+/* ═══════════════════════════════════════════════
+   TOPBAR
+═══════════════════════════════════════════════ */
+header.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  background: linear-gradient(180deg, rgba(10,10,26,0.92), rgba(10,10,26,0.55));
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+
+.logo {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 20px; font-weight: 800; letter-spacing: 0.5px;
+}
+.logo .bolt {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 10px;
+  background: radial-gradient(circle at 30% 30%, #56d6ff, var(--neon));
+  box-shadow: var(--shadow-neon);
+  font-size: 22px;
+  animation: boltPulse 2.4s ease-in-out infinite;
+}
+@keyframes boltPulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(0,201,255,0.5); }
+  50%       { box-shadow: 0 0 28px rgba(0,201,255,0.9); }
+}
+.logo small {
+  font-weight: 500; font-size: 12px; color: var(--muted); letter-spacing: 1px;
+}
+
+/* App switcher */
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.app-switcher { position: relative; margin-left: 4px; }
+.app-switcher-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 20px; font-weight: 300; line-height: 1;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0;
+  transition: all .2s;
+}
+.app-switcher-btn:hover { border-color: var(--electric); box-shadow: var(--shadow-elec); transform: rotate(90deg); }
+
+.app-menu {
+  position: absolute; top: calc(100% + 10px); right: 0;
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px;
+  min-width: 260px;
+  display: none;
+  z-index: 100;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,107,53,0.1);
+}
+.app-menu.open { display: block; animation: fadeIn .2s ease; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+
+.app-menu-header {
+  font-size: 10px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1.5px;
+  padding: 8px 12px 6px;
+}
+.app-menu-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text); text-decoration: none;
+  cursor: pointer;
+  transition: background .15s;
+}
+.app-menu-item:hover { background: rgba(255,107,53,0.08); }
+.app-menu-item .ico {
+  width: 34px; height: 34px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.app-menu-item .title { font-weight: 700; font-size: 14px; }
+.app-menu-item .sub { font-size: 11px; color: var(--muted); }
+.app-menu-item.current { background: rgba(0,201,255,0.07); cursor: default; }
+.app-menu-item.current::after { content: '✓'; margin-left: auto; color: var(--neon); font-weight: 700; }
+
+/* Bouton son */
+.btn-sound {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 15px; padding: 0; cursor: pointer;
+  transition: all .2s;
+}
+.btn-sound:hover { border-color: var(--neon); box-shadow: var(--shadow-neon); transform: translateY(-1px); }
+
+/* Compteur badges */
+.badges-counter {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px; background: var(--panel); border: 1px solid var(--border);
+  border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 600;
+  transition: all .2s;
+}
+.badges-counter:hover { border-color: var(--neon); box-shadow: var(--shadow-neon); }
+
+/* ═══════════════════════════════════════════════
+   LAYOUT PRINCIPAL
+═══════════════════════════════════════════════ */
+main {
+  padding: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ═══════════════════════════════════════════════
+   PANNEAU (carte semi-transparente)
+═══════════════════════════════════════════════ */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 32px rgba(0,0,0,0.3);
+}
+.card-title {
+  font-size: 13px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--electric);
+  margin-bottom: 18px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* ═══════════════════════════════════════════════
+   SLIDERS
+═══════════════════════════════════════════════ */
+.controls-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 560px) { .controls-grid { grid-template-columns: 1fr; } }
+
+.glass-panel { display: flex; flex-direction: column; gap: 14px; }
+.glass-title {
+  font-size: 15px; font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+}
+.glass-title .dot {
+  width: 10px; height: 10px; border-radius: 50%;
+}
+.dot-hot { background: radial-gradient(#ff6b35, #ff2600); box-shadow: 0 0 8px #ff6b35; }
+.dot-cold { background: radial-gradient(#00c9ff, #0066ff); box-shadow: 0 0 8px #00c9ff; }
+
+.slider-row {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.slider-label {
+  display: flex; justify-content: space-between;
+  font-size: 13px; color: var(--muted);
+}
+.slider-label span { color: var(--text); font-weight: 700; font-size: 14px; }
+
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%; height: 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.08);
+  outline: none;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--electric);
+  box-shadow: 0 0 8px var(--electric);
+  cursor: grab;
+  transition: box-shadow .15s;
+}
+input[type=range]::-webkit-slider-thumb:active { cursor: grabbing; box-shadow: 0 0 16px var(--electric); }
+input[type=range]::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--electric);
+  border: none;
+  box-shadow: 0 0 8px var(--electric);
+  cursor: grab;
+}
+
+/* Slider froid = bleu */
+.cold-slider::-webkit-slider-thumb { background: var(--neon); box-shadow: 0 0 8px var(--neon); }
+.cold-slider::-moz-range-thumb { background: var(--neon); box-shadow: 0 0 8px var(--neon); }
+
+/* ═══════════════════════════════════════════════
+   SECTION GLAÇON
+═══════════════════════════════════════════════ */
+.ice-section {
+  margin-top: 6px;
+  padding: 14px;
+  border: 1px solid rgba(0,201,255,0.2);
+  border-radius: 12px;
+  background: rgba(0,201,255,0.04);
+}
+.ice-toggle {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  user-select: none;
+}
+input[type=checkbox] {
+  width: 18px; height: 18px; cursor: pointer;
+  accent-color: var(--neon);
+}
+.ice-slider-wrap {
+  margin-top: 12px;
+  display: none;
+}
+.ice-slider-wrap.visible { display: block; }
+
+/* ═══════════════════════════════════════════════
+   CANVAS ANIMATION
+═══════════════════════════════════════════════ */
+.canvas-wrap {
+  display: flex; justify-content: center;
+  padding: 8px 0;
+}
+#simCanvas {
+  border-radius: 12px;
+  width: 100%; max-width: 640px;
+  height: auto;
+  display: block;
+}
+
+/* ═══════════════════════════════════════════════
+   BOUTON MÉLANGER
+═══════════════════════════════════════════════ */
+.mix-wrap {
+  display: flex; justify-content: center;
+}
+
+/* ═══════════════════════════════════════════════
+   RÉSULTAT
+═══════════════════════════════════════════════ */
+.result-card {
+  text-align: center;
+}
+.result-temp {
+  font-size: 52px; font-weight: 900; letter-spacing: -1px;
+  line-height: 1.1;
+  transition: color .5s;
+}
+.result-temp.cold  { color: var(--neon); text-shadow: 0 0 30px rgba(0,201,255,0.5); }
+.result-temp.cool  { color: #56d6ff; }
+.result-temp.warm  { color: #ffc864; text-shadow: 0 0 20px rgba(255,200,100,0.4); }
+.result-temp.hot   { color: var(--electric); text-shadow: 0 0 30px rgba(255,107,53,0.6); }
+.result-temp.boil  { color: var(--red); text-shadow: 0 0 30px rgba(255,71,87,0.7); }
+
+.result-label { font-size: 14px; color: var(--muted); margin-top: 4px; }
+.result-formula {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--muted);
+  font-family: 'Courier New', monospace;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  text-align: left;
+  line-height: 1.8;
+}
+.result-formula strong { color: var(--text); }
+.result-formula .accent { color: var(--neon); }
+
+/* ═══════════════════════════════════════════════
+   SECTION PÉDAGOGIE
+═══════════════════════════════════════════════ */
+.pedago-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 560px) { .pedago-grid { grid-template-columns: 1fr; } }
+
+.pedago-block {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.pedago-block h3 {
+  font-size: 13px; font-weight: 700;
+  color: var(--neon); margin-bottom: 8px;
+}
+.pedago-block p { font-size: 13px; color: var(--muted); line-height: 1.7; }
+.pedago-formula {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: var(--text);
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 10px 0 4px;
+  text-align: center;
+}
+.highlight-orange { color: var(--electric); font-weight: 700; }
+.highlight-blue   { color: var(--neon); font-weight: 700; }
+.highlight-green  { color: var(--violet); font-weight: 700; }
+
+/* ═══════════════════════════════════════════════
+   BADGES MODAL
+═══════════════════════════════════════════════ */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(5,5,16,0.82);
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn .2s ease;
+  display: none;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 28px;
+  width: 90%; max-width: 440px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  animation: fadeIn .2s ease;
+}
+.modal h2 { font-size: 18px; font-weight: 800; margin-bottom: 18px; }
+.modal-close {
+  float: right; background: none; border: none; color: var(--muted);
+  font-size: 20px; cursor: pointer; padding: 0; margin-top: -4px;
+  transition: color .15s;
+}
+.modal-close:hover { color: var(--text); transform: none; box-shadow: none; }
+
+.badges-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.badge-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  opacity: 0.35;
+  transition: all .3s;
+}
+.badge-item.unlocked {
+  opacity: 1;
+  border-color: rgba(255,107,53,0.3);
+  background: rgba(255,107,53,0.06);
+}
+.badge-ico { font-size: 28px; flex-shrink: 0; }
+.badge-info .badge-name { font-size: 14px; font-weight: 700; }
+.badge-info .badge-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ═══════════════════════════════════════════════
+   TOAST DE NOTIFICATION
+═══════════════════════════════════════════════ */
+#toast-container {
+  position: fixed; bottom: 24px; right: 24px; z-index: 300;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.toast {
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 18px;
+  display: flex; align-items: center; gap: 12px;
+  font-size: 14px; font-weight: 600;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  animation: toastIn .3s ease;
+  max-width: 300px;
+}
+@keyframes toastIn {
+  from { opacity:0; transform: translateX(20px); }
+  to   { opacity:1; transform: translateX(0); }
+}
+.toast-ico { font-size: 22px; }
+.toast-text .toast-title { font-size: 13px; color: var(--electric); }
+.toast-text .toast-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+/* ═══════════════════════════════════════════════
+   SCROLLBAR
+═══════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,107,53,0.3); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- FOND ÉTOILÉ -->
+<canvas id="stars"></canvas>
+
+<!-- ═══════════════════════════════════════════════
+     TOPBAR
+═══════════════════════════════════════════════ -->
+<header class="topbar">
+  <div class="logo">
+    <div class="bolt">🧪</div>
+    <div>
+      CalLab
+      <br>
+      <small>THERMODYNAMIQUE</small>
+    </div>
+  </div>
+
+  <div class="topbar-right">
+    <!-- Son -->
+    <button class="btn-sound" id="btnSound" title="Activer/Désactiver les sons">🔊</button>
+
+    <!-- Badges -->
+    <div class="badges-counter" id="badgesCounter" title="Voir mes badges">
+      🏆 <span id="badgeCount">0</span>/5
+    </div>
+
+    <!-- App-switcher -->
+    <div class="app-switcher">
+      <button class="app-switcher-btn" id="appSwitcherBtn" title="Changer d'app">+</button>
+      <div class="app-menu" id="appMenu">
+        <div class="app-menu-header">Laboratoires d'Evan</div>
+        <a class="app-menu-item" href="index.html">
+          <div class="ico">⚡</div>
+          <div><div class="title">Electrolab</div><div class="sub">Circuits électriques</div></div>
+        </a>
+        <a class="app-menu-item" href="mecanique.html">
+          <div class="ico">🚀</div>
+          <div><div class="title">Mécanik</div><div class="sub">Physique du mouvement</div></div>
+        </a>
+        <a class="app-menu-item" href="solaire.html">
+          <div class="ico">🪐</div>
+          <div><div class="title">Système Solaire</div><div class="sub">Exploration spatiale</div></div>
+        </a>
+        <a class="app-menu-item" href="laser.html">
+          <div class="ico">🔴</div>
+          <div><div class="title">Laser Maze</div><div class="sub">Optique géométrique</div></div>
+        </a>
+        <a class="app-menu-item" href="reflex.html">
+          <div class="ico">🏃</div>
+          <div><div class="title">Reflex</div><div class="sub">Temps de réaction</div></div>
+        </a>
+        <a class="app-menu-item" href="volcan.html">
+          <div class="ico">🌋</div>
+          <div><div class="title">Volcan</div><div class="sub">Géologie &amp; éruptions</div></div>
+        </a>
+        <a class="app-menu-item current" href="callab.html">
+          <div class="ico">🧪</div>
+          <div><div class="title">CalLab</div><div class="sub">Thermodynamique</div></div>
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════════ -->
+<main>
+
+  <!-- PANNEAU DE CONTRÔLE -->
+  <div class="card">
+    <div class="card-title">🎛️ Panneau de contrôle</div>
+
+    <div class="controls-grid">
+
+      <!-- Verre 1 : chaud -->
+      <div class="glass-panel">
+        <div class="glass-title">
+          <div class="dot dot-hot"></div>
+          Verre 1 — Eau chaude
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-label">
+            Température
+            <span id="t1Val">75</span>°C
+          </div>
+          <input type="range" id="slT1" min="0" max="100" value="75" />
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-label">
+            Volume
+            <span id="v1Val">300</span> mL
+          </div>
+          <input type="range" id="slV1" min="100" max="500" value="300" step="10" />
+        </div>
+      </div>
+
+      <!-- Verre 2 : froid -->
+      <div class="glass-panel">
+        <div class="glass-title">
+          <div class="dot dot-cold"></div>
+          Verre 2 — Eau froide
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-label">
+            Température
+            <span id="t2Val">10</span>°C
+          </div>
+          <input type="range" id="slT2" min="0" max="100" value="10" class="cold-slider" />
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-label">
+            Volume
+            <span id="v2Val">200</span> mL
+          </div>
+          <input type="range" id="slV2" min="100" max="500" value="200" step="10" class="cold-slider" />
+        </div>
+
+        <!-- Option glaçon -->
+        <div class="ice-section">
+          <label class="ice-toggle">
+            <input type="checkbox" id="chkIce" />
+            🧊 Ajouter un glaçon
+          </label>
+          <div class="ice-slider-wrap" id="iceWrap">
+            <div class="slider-row" style="margin-top:0;">
+              <div class="slider-label">
+                Masse du glaçon
+                <span id="mIceVal">50</span> g
+              </div>
+              <input type="range" id="slIce" min="0" max="200" value="50" class="cold-slider" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANVAS ANIMATION -->
+  <div class="card" style="padding: 16px;">
+    <div class="canvas-wrap">
+      <canvas id="simCanvas" width="640" height="320"></canvas>
+    </div>
+  </div>
+
+  <!-- BOUTON MÉLANGER -->
+  <div class="mix-wrap">
+    <button class="btn-primary" id="btnMix">🌊 Mélanger !</button>
+  </div>
+
+  <!-- RÉSULTAT -->
+  <div class="card result-card" id="resultCard">
+    <div class="result-temp cold" id="resultTemp">--.-</div>
+    <div class="result-label">Température finale après mélange</div>
+    <div class="result-formula" id="resultFormula">
+      Lance un mélange pour voir le calcul…
+    </div>
+  </div>
+
+  <!-- SECTION PÉDAGOGIE -->
+  <div class="card">
+    <div class="card-title">💡 Comprendre la Calorimétrie</div>
+    <div class="pedago-grid">
+
+      <div class="pedago-block">
+        <h3>La formule du mélange</h3>
+        <div class="pedago-formula">
+          T = (V₁ × T₁ + V₂ × T₂) / (V₁ + V₂)
+        </div>
+        <p>
+          L'eau chaude <span class="highlight-orange">cède sa chaleur</span> à l'eau froide
+          jusqu'à ce qu'elles atteignent la même température : l'<strong>équilibre thermique</strong>.
+          La température finale dépend des deux volumes ET des deux températures.
+        </p>
+      </div>
+
+      <div class="pedago-block">
+        <h3>Pourquoi la glace refroidit-elle TANT ?</h3>
+        <div class="pedago-formula">
+          Q_fusion = m × 334 000 J/kg
+        </div>
+        <p>
+          L'énergie de fusion de la glace est <span class="highlight-blue">334 kJ/kg</span> — l'une
+          des plus grandes énergies du quotidien ! Pour fondre 1 kg de glace, il faut autant
+          d'énergie que pour chauffer la même eau de <span class="highlight-green">0 à 80°C</span>.
+        </p>
+      </div>
+
+      <div class="pedago-block">
+        <h3>Chaleur massique de l'eau</h3>
+        <div class="pedago-formula">
+          c_eau = 4 186 J / (kg·°C)
+        </div>
+        <p>
+          L'eau a une <span class="highlight-orange">chaleur massique très élevée</span>.
+          C'est pour ça que les océans régulent le climat de la Terre : ils absorbent
+          beaucoup de chaleur sans se réchauffer trop vite.
+        </p>
+      </div>
+
+      <div class="pedago-block">
+        <h3>Dans ta vie de tous les jours</h3>
+        <p>
+          Quand tu mets des glaçons dans un soda, la fonte de la glace absorbe
+          une énergie <span class="highlight-blue">énorme</span> → le soda se refroidit
+          bien plus qu'avec de l'eau froide au même volume !<br><br>
+          C'est aussi le principe des <strong>sacs de glace médicaux</strong> et du
+          <strong>refroidissement des serveurs informatiques</strong>.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL BADGES -->
+<div class="modal-backdrop" id="badgesModal">
+  <div class="modal">
+    <button class="modal-close" id="modalClose">✕</button>
+    <h2>🏆 Mes Badges</h2>
+    <div class="badges-list" id="badgesList"></div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<!-- ═══════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════ -->
+<script>
+/* ═══════════════════════════════════════
+   1. FOND ÉTOILÉ
+═══════════════════════════════════════ */
+(function initStars() {
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    // Recréer les étoiles si besoin
+    if (stars.length === 0) {
+      for (let i = 0; i < 220; i++) {
+        stars.push({
+          x: Math.random(),
+          y: Math.random(),
+          r: Math.random() * 1.4 + 0.3,
+          a: Math.random(),
+          speed: Math.random() * 0.006 + 0.002,
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+    }
+  }
+
+  function drawStars(t) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const W = canvas.width, H = canvas.height;
+    for (const s of stars) {
+      const alpha = s.a * (0.5 + 0.5 * Math.sin(t * s.speed + s.phase));
+      ctx.beginPath();
+      ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.fill();
+    }
+    requestAnimationFrame(drawStars);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(drawStars);
+})();
+
+/* ═══════════════════════════════════════
+   2. APP-SWITCHER
+═══════════════════════════════════════ */
+(function initSwitcher() {
+  const btn = document.getElementById('appSwitcherBtn');
+  const menu = document.getElementById('appMenu');
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menu.classList.toggle('open');
+  });
+  document.addEventListener('click', () => menu.classList.remove('open'));
+  menu.addEventListener('click', (e) => e.stopPropagation());
+})();
+
+/* ═══════════════════════════════════════
+   3. WEB AUDIO : sons
+═══════════════════════════════════════ */
+let audioCtx = null;
+let isMuted = localStorage.getItem('callab_muted') === '1';
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+// Son "glou-glou" pour le versement
+function playPouring(duration = 1.2) {
+  if (isMuted) return;
+  const ctx = getAudioCtx();
+  // Bruit blanc filtré pour imiter le glou-glou
+  const bufSize = Math.floor(ctx.sampleRate * duration);
+  const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) {
+    // Bruit modulé en amplitude → glou-glou
+    const env = Math.sin(i / bufSize * Math.PI); // fondu in/out
+    const glug = Math.sin(i / ctx.sampleRate * 2 * Math.PI * 8); // 8 Hz = bulles
+    data[i] = (Math.random() * 2 - 1) * 0.3 * env * (0.5 + 0.5 * glug);
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  // Filtre passe-bas pour adoucir
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 800;
+  src.connect(filter);
+  filter.connect(ctx.destination);
+  src.start();
+}
+
+// Son cristallin (résultat froid)
+function playCrystal() {
+  if (isMuted) return;
+  const ctx = getAudioCtx();
+  const freqs = [1047, 1319, 1568]; // C6, E6, G6
+  freqs.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.12);
+    gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + i * 0.12 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.8);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime + i * 0.12);
+    osc.stop(ctx.currentTime + i * 0.12 + 0.9);
+  });
+}
+
+// Son grave/sourd (résultat chaud)
+function playWarm() {
+  if (isMuted) return;
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(120, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.6);
+  gain.gain.setValueAtTime(0.2, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 0.8);
+}
+
+// Bouton mute
+const btnSound = document.getElementById('btnSound');
+btnSound.textContent = isMuted ? '🔇' : '🔊';
+btnSound.addEventListener('click', () => {
+  isMuted = !isMuted;
+  localStorage.setItem('callab_muted', isMuted ? '1' : '0');
+  btnSound.textContent = isMuted ? '🔇' : '🔊';
+});
+
+/* ═══════════════════════════════════════
+   4. SLIDERS — lecture des valeurs
+═══════════════════════════════════════ */
+const slT1 = document.getElementById('slT1');
+const slT2 = document.getElementById('slT2');
+const slV1 = document.getElementById('slV1');
+const slV2 = document.getElementById('slV2');
+const slIce = document.getElementById('slIce');
+const chkIce = document.getElementById('chkIce');
+const iceWrap = document.getElementById('iceWrap');
+
+function getValues() {
+  return {
+    T1: parseFloat(slT1.value),
+    T2: parseFloat(slT2.value),
+    V1: parseFloat(slV1.value),
+    V2: parseFloat(slV2.value),
+    iceOn: chkIce.checked,
+    mIce: parseFloat(slIce.value)
+  };
+}
+
+function updateLabels() {
+  document.getElementById('t1Val').textContent = slT1.value;
+  document.getElementById('t2Val').textContent = slT2.value;
+  document.getElementById('v1Val').textContent = slV1.value;
+  document.getElementById('v2Val').textContent = slV2.value;
+  document.getElementById('mIceVal').textContent = slIce.value;
+}
+
+// Mise à jour des labels à chaque changement
+[slT1, slT2, slV1, slV2, slIce].forEach(s => {
+  s.addEventListener('input', () => {
+    updateLabels();
+    if (!isAnimating) drawStatic(getValues()); // prévisualisation en temps réel
+  });
+});
+
+chkIce.addEventListener('change', () => {
+  iceWrap.classList.toggle('visible', chkIce.checked);
+  if (!isAnimating) drawStatic(getValues());
+});
+
+updateLabels();
+
+/* ═══════════════════════════════════════
+   5. CALCUL PHYSIQUE
+═══════════════════════════════════════ */
+/**
+ * Calcule la température finale du mélange avec ou sans glaçon.
+ * Retourne { Tf, steps }
+ */
+function calcMix({ T1, T2, V1, V2, iceOn, mIce }) {
+  // Chaleur massique eau : c = 4186 J/(kg·°C), densité ≈ 1 kg/L
+  const c = 4.186; // kJ/(kg·°C) = J/(g·°C)
+  const m1 = V1; // masse en grammes (densité eau = 1 g/mL)
+  const m2 = V2;
+
+  // Température sans glaçon (formule calorimétrique)
+  const Tf_sans = (m1 * T1 + m2 * T2) / (m1 + m2);
+
+  let Tf = Tf_sans;
+  let steps = [];
+  steps.push(`T_mélange = (${V1}×${T1} + ${V2}×${T2}) / (${V1}+${V2}) = ${Tf_sans.toFixed(1)}°C`);
+
+  if (iceOn && mIce > 0) {
+    // Énergie de fusion de la glace : Lf = 334 J/g
+    const Lf = 334; // J/g
+    const Q_fusion = mIce * Lf; // énergie totale pour fondre tout le glaçon [J]
+
+    // Énergie disponible dans l'eau mélangée (avant glaçon) pour descendre à 0°C
+    const mTot = m1 + m2;
+    const Q_eau = mTot * c * Tf_sans; // énergie pour refroidir jusqu'à 0°C [J]
+
+    if (Tf_sans <= 0) {
+      // Eau déjà à 0°C ou en dessous → rien ne fond
+      Tf = Math.max(0, Tf_sans);
+      steps.push(`L'eau est déjà à ${Tf.toFixed(1)}°C ≤ 0°C → glaçon ne fond pas.`);
+    } else if (Q_eau >= Q_fusion) {
+      // Assez d'énergie → glaçon fond complètement
+      // L'eau refroidit de ΔT = Q_fusion / (mTot × c)
+      const deltaT = Q_fusion / (mTot * c);
+      Tf = Math.max(0, Tf_sans - deltaT);
+      steps.push(`Q_fusion = ${mIce}×334 = ${Q_fusion.toFixed(0)} J`);
+      steps.push(`ΔT = ${Q_fusion.toFixed(0)}/(${mTot}×4,186) = ${deltaT.toFixed(1)}°C`);
+      steps.push(`T_finale = ${Tf_sans.toFixed(1)} − ${deltaT.toFixed(1)} = ${Tf.toFixed(1)}°C`);
+    } else {
+      // Pas assez d'énergie → glaçon ne fond qu'en partie, T = 0°C
+      Tf = 0;
+      steps.push(`Q_eau = ${mTot}×4,186×${Tf_sans.toFixed(1)} = ${Q_eau.toFixed(0)} J`);
+      steps.push(`Q_fusion = ${Q_fusion.toFixed(0)} J > Q_eau → fonte partielle`);
+      steps.push(`T_finale = 0°C (équilibre avec glace)`);
+    }
+  }
+
+  Tf = Math.max(0, Math.min(100, Tf));
+  return { Tf, steps };
+}
+
+/* ═══════════════════════════════════════
+   6. CANVAS — dessin des verres
+═══════════════════════════════════════ */
+const simCanvas = document.getElementById('simCanvas');
+const ctx2d = simCanvas.getContext('2d');
+
+// Utilitaire : coin arrondi en bas
+function roundedRectBottom(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// Couleur du liquide selon température
+function liquidColor(T) {
+  if (T <= 0) return { top: '#a8d8ea', bot: '#7ec8e3' };      // glace
+  if (T <= 15) return { top: '#00c9ff', bot: '#0066ff' };     // très froid
+  if (T <= 25) return { top: '#56d6ff', bot: '#00a8cc' };     // frais
+  if (T <= 40) return { top: '#78e08f', bot: '#38ada9' };     // tiède
+  if (T <= 60) return { top: '#ffc864', bot: '#ff8c42' };     // chaud
+  if (T <= 80) return { top: '#ff6b35', bot: '#ff2600' };     // très chaud
+  return { top: '#ff4757', bot: '#c40000' };                  // brûlant
+}
+
+// Dessiner un verre avec son liquide
+function drawGlass(ctx, x, y, w, h, fillRatio, temp, label, alpha = 1, tilt = 0, iceRatio = 0) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  // Pivotement autour du bas du verre (pour l'animation de versement)
+  if (tilt !== 0) {
+    ctx.translate(x + w / 2, y + h);
+    ctx.rotate(tilt);
+    ctx.translate(-(x + w / 2), -(y + h));
+  }
+
+  const fillH = h * Math.max(0, Math.min(1, fillRatio));
+  const fillY = y + h - fillH;
+
+  // Fond du verre (verre transparent)
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 2;
+  roundedRectBottom(ctx, x, y, w, h, 10);
+  ctx.stroke();
+
+  // Liquide
+  if (fillH > 2) {
+    const { top, bot } = liquidColor(temp);
+    const grad = ctx.createLinearGradient(x, fillY, x, y + h);
+    grad.addColorStop(0, top);
+    grad.addColorStop(1, bot);
+
+    ctx.save();
+    roundedRectBottom(ctx, x, y, w, h, 10);
+    ctx.clip();
+    ctx.fillStyle = grad;
+    ctx.fillRect(x, fillY, w, fillH);
+    // Reflet brillant
+    ctx.fillStyle = 'rgba(255,255,255,0.07)';
+    ctx.fillRect(x + 4, fillY, 6, fillH * 0.8);
+    ctx.restore();
+
+    // Petit cercle de bulles en surface (animation idle)
+    for (let i = 0; i < 3; i++) {
+      const bx = x + 10 + i * (w / 3);
+      const by = fillY + 6;
+      ctx.beginPath();
+      ctx.arc(bx, by, 2, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+
+  // Cube de glace
+  if (iceRatio > 0.05) {
+    const iceSize = Math.min(w * 0.4, fillH * 0.6) * iceRatio;
+    const ix = x + w / 2 - iceSize / 2;
+    const iy = y + h - fillH * 0.3 - iceSize;
+    ctx.save();
+    roundedRectBottom(ctx, x, y, w, h, 10);
+    ctx.clip();
+    // Cube
+    ctx.fillStyle = 'rgba(200,235,255,0.75)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(ix, iy, iceSize, iceSize);
+    ctx.strokeRect(ix, iy, iceSize, iceSize);
+    // Reflet glace
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillRect(ix + 3, iy + 3, iceSize * 0.35, iceSize * 0.35);
+    ctx.restore();
+  }
+
+  // Label sous le verre
+  ctx.fillStyle = 'rgba(232,238,249,0.65)';
+  ctx.font = '12px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(label, x + w / 2, y + h + 18);
+
+  // Température affichée
+  const tempStr = temp.toFixed(1) + '°C';
+  ctx.fillStyle = liquidColor(temp).top;
+  ctx.font = 'bold 13px Inter, sans-serif';
+  ctx.fillText(tempStr, x + w / 2, y + h + 33);
+
+  ctx.restore();
+}
+
+// Flèche de versement
+function drawArrow(ctx, fromX, fromY, toX, toY, alpha = 1) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = 'rgba(255,200,100,0.7)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.moveTo(fromX, fromY);
+  ctx.bezierCurveTo(fromX + 30, fromY - 40, toX - 30, toY - 40, toX, toY);
+  ctx.stroke();
+  // Pointe de flèche
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(255,200,100,0.7)';
+  ctx.beginPath();
+  ctx.moveTo(toX, toY);
+  ctx.lineTo(toX - 8, toY - 12);
+  ctx.lineTo(toX + 8, toY - 12);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+/* Dessin statique (prévisualisation en temps réel) */
+function drawStatic(vals) {
+  const W = simCanvas.width, H = simCanvas.height;
+  ctx2d.clearRect(0, 0, W, H);
+
+  const { T1, T2, V1, V2, iceOn, mIce } = vals;
+  const maxV = 500;
+  const fill1 = V1 / maxV;
+  const fill2 = V2 / maxV;
+
+  const glassW = Math.min(W * 0.24, 120);
+  const glassH = Math.min(H * 0.65, 200);
+  const glassY = H / 2 - glassH / 2;
+
+  // Verre 1 (gauche)
+  const g1x = W * 0.15 - glassW / 2;
+  drawGlass(ctx2d, g1x, glassY, glassW, glassH, fill1, T1, `Verre 1 · ${V1} mL`);
+
+  // Verre 2 (droite)
+  const g2x = W * 0.85 - glassW / 2;
+  drawGlass(ctx2d, g2x, glassY, glassW, glassH, fill2, T2, `Verre 2 · ${V2} mL`, 1, 0, iceOn && mIce > 0 ? 1 : 0);
+
+  // Verre résultat (centre) — fantôme
+  const gRx = W / 2 - glassW * 0.6;
+  ctx2d.save();
+  ctx2d.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx2d.lineWidth = 2;
+  roundedRectBottom(ctx2d, gRx, glassY, glassW * 1.2, glassH, 10);
+  ctx2d.stroke();
+  ctx2d.fillStyle = 'rgba(255,255,255,0.02)';
+  ctx2d.fill();
+  ctx2d.fillStyle = 'rgba(136,146,176,0.4)';
+  ctx2d.font = '11px Inter, sans-serif';
+  ctx2d.textAlign = 'center';
+  ctx2d.fillText('résultat', gRx + glassW * 0.6, glassY + glassH + 18);
+  ctx2d.restore();
+}
+
+/* ═══════════════════════════════════════
+   7. ANIMATION DU MÉLANGE
+═══════════════════════════════════════ */
+let isAnimating = false;
+let animFrame = null;
+
+function runMixAnimation(vals, onComplete) {
+  if (isAnimating) return;
+  isAnimating = true;
+
+  const { T1, T2, V1, V2, iceOn, mIce } = vals;
+  const { Tf } = calcMix(vals);
+  const maxV = 500;
+  const fill1 = V1 / maxV;
+  const fill2 = V2 / maxV;
+  const fillR = (V1 + V2) / (maxV * 1.4); // verre résultat légèrement plus large
+
+  const W = simCanvas.width, H = simCanvas.height;
+  const glassW = Math.min(W * 0.24, 120);
+  const glassH = Math.min(H * 0.65, 200);
+  const glassY = H / 2 - glassH / 2;
+
+  const g1x = W * 0.15 - glassW / 2;
+  const g2x = W * 0.85 - glassW / 2;
+  const gRx = W / 2 - glassW * 0.6;
+  const gRw = glassW * 1.2;
+
+  // Animation en 4 phases :
+  // Phase 0 (0→0.3) : verre 1 se penche
+  // Phase 1 (0.3→0.6) : liquide se transvase vers le centre
+  // Phase 2 (0.6→0.8) : verre 2 se penche, liquide se transvase
+  // Phase 3 (0.8→1.0) : résultat apparaît
+  const totalDuration = 2000; // ms
+  const startTime = performance.now();
+
+  // Fonte progressive du glaçon (0 → 0 si tout fond, 0 → partiel)
+  const { Tf: TfCheck } = calcMix(vals);
+  const iceFondsComplet = iceOn && mIce > 0 && TfCheck > 0;
+
+  function frame(now) {
+    const elapsed = now - startTime;
+    const p = Math.min(elapsed / totalDuration, 1); // 0 → 1
+    const W = simCanvas.width, H = simCanvas.height;
+    ctx2d.clearRect(0, 0, W, H);
+
+    const eased = easeInOut(p);
+
+    // --- Phase 0-0.3 : verre 1 penche (vers la droite) ---
+    const tilt1Phase = Math.min(p / 0.3, 1); // 0→1 sur phase 0-0.3
+    const tiltAngle1 = easeInOut(tilt1Phase) * (Math.PI * 0.55); // jusqu'à ~100°
+
+    // Verre 1 : disparaît progressivement après tilt complet
+    const fill1Curr = fill1 * (1 - Math.max(0, (p - 0.2) / 0.3));
+    const alpha1 = p < 0.55 ? 1 : 1 - (p - 0.55) / 0.15;
+    drawGlass(ctx2d, g1x, glassY, glassW, glassH, Math.max(0, fill1Curr), T1, `Verre 1 · ${V1} mL`, Math.max(0, alpha1), tiltAngle1);
+
+    // --- Flèche versement 1 → centre ---
+    if (p > 0.15 && p < 0.65) {
+      const arrowA = Math.min((p - 0.15) / 0.15, 1) * (1 - Math.max(0, (p - 0.55) / 0.1));
+      drawArrow(ctx2d, g1x + glassW, glassY + 30, gRx, glassY + 20, arrowA);
+    }
+
+    // --- Verre résultat (centre) : se remplit ---
+    const fillRCurr = fillR * Math.min(eased * 1.4, 1);
+    const alphaR = Math.min(p / 0.3, 1);
+    // Température du résultat : interpolation progressive
+    const Tf_display = T1 + (Tf - T1) * Math.min(eased * 1.6, 1);
+    // Glaçon fond progressivement
+    const iceRatioAnim = (iceOn && mIce > 0) ? Math.max(0, 1 - eased * 1.5) : 0;
+    drawGlass(ctx2d, gRx, glassY, gRw, glassH, Math.max(0, fillRCurr), Tf_display, 'Mélange', alphaR, 0, iceRatioAnim);
+
+    // --- Phase 0.4-0.7 : verre 2 penche (vers la gauche) ---
+    const tilt2Phase = Math.max(0, Math.min((p - 0.4) / 0.3, 1));
+    const tiltAngle2 = -easeInOut(tilt2Phase) * (Math.PI * 0.45); // penche vers gauche
+
+    // Verre 2 : se vide progressivement
+    const fill2Curr = fill2 * (1 - Math.max(0, (p - 0.45) / 0.3));
+    const alpha2 = p > 0.8 ? 1 - (p - 0.8) / 0.15 : 1;
+    const iceRatio2 = (iceOn && mIce > 0) ? Math.max(0, 1 - Math.max(0, (p - 0.4) / 0.3) * 2) : 0;
+    drawGlass(ctx2d, g2x, glassY, glassW, glassH, Math.max(0, fill2Curr), T2, `Verre 2 · ${V2} mL`, Math.max(0, alpha2), tiltAngle2, iceRatio2);
+
+    // --- Flèche versement 2 → centre ---
+    if (p > 0.45 && p < 0.85) {
+      const arrowA2 = Math.min((p - 0.45) / 0.15, 1) * (1 - Math.max(0, (p - 0.75) / 0.1));
+      drawArrow(ctx2d, g2x, glassY + 30, gRx + gRw, glassY + 20, arrowA2);
+    }
+
+    if (p < 1) {
+      animFrame = requestAnimationFrame(frame);
+    } else {
+      // Dessin final figé
+      ctx2d.clearRect(0, 0, W, H);
+      drawGlass(ctx2d, gRx, glassY, gRw, glassH, fillR, Tf, 'Mélange final', 1, 0, 0);
+      isAnimating = false;
+      onComplete();
+    }
+  }
+
+  animFrame = requestAnimationFrame(frame);
+}
+
+function easeInOut(t) {
+  return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+}
+
+/* ═══════════════════════════════════════
+   8. BADGES
+═══════════════════════════════════════ */
+const BADGE_DEFS = [
+  { id: 'first',    ico: '🧪', name: 'Chimiste Débutant',  desc: 'Réalise ton premier mélange.' },
+  { id: 'hot',      ico: '🔥', name: 'Bouillant !',         desc: 'Mélange deux liquides > 70°C.' },
+  { id: 'bigice',   ico: '🧊', name: 'Iceberg',             desc: 'Utilise 200 g de glaçon.' },
+  { id: 'freezing', ico: '⚗️', name: 'Maître du Froid',    desc: 'Obtiens T_finale = 0°C.' },
+  { id: 'master',   ico: '🎓', name: 'Thermodynamicien',   desc: 'Réalise 10 mélanges différents.' },
+];
+
+let unlockedBadges = JSON.parse(localStorage.getItem('callab_badges') || '{}');
+let mixCount = parseInt(localStorage.getItem('callab_mixCount') || '0');
+let mixHashes = JSON.parse(localStorage.getItem('callab_mixHashes') || '[]');
+
+function saveBadges() {
+  localStorage.setItem('callab_badges', JSON.stringify(unlockedBadges));
+  localStorage.setItem('callab_mixCount', mixCount.toString());
+  localStorage.setItem('callab_mixHashes', JSON.stringify(mixHashes));
+}
+
+function unlockBadge(id) {
+  if (unlockedBadges[id]) return; // déjà débloqué
+  unlockedBadges[id] = true;
+  saveBadges();
+  const def = BADGE_DEFS.find(b => b.id === id);
+  if (def) showToast(def.ico, 'Badge débloqué : ' + def.name, def.desc);
+  updateBadgeUI();
+}
+
+function updateBadgeUI() {
+  const count = Object.keys(unlockedBadges).length;
+  document.getElementById('badgeCount').textContent = count;
+  // Mettre à jour la liste dans la modale
+  const list = document.getElementById('badgesList');
+  list.innerHTML = '';
+  BADGE_DEFS.forEach(b => {
+    const el = document.createElement('div');
+    el.className = 'badge-item' + (unlockedBadges[b.id] ? ' unlocked' : '');
+    el.innerHTML = `<div class="badge-ico">${b.ico}</div>
+      <div class="badge-info">
+        <div class="badge-name">${b.name}</div>
+        <div class="badge-desc">${b.desc}</div>
+      </div>`;
+    list.appendChild(el);
+  });
+}
+
+function checkBadges(vals, Tf) {
+  const { T1, T2, V1, V2, iceOn, mIce } = vals;
+
+  // Badge : premier mélange
+  unlockBadge('first');
+
+  // Badge : deux liquides > 70°C
+  if (T1 > 70 && T2 > 70) unlockBadge('hot');
+
+  // Badge : 200g de glaçon
+  if (iceOn && mIce >= 200) unlockBadge('bigice');
+
+  // Badge : T_finale = 0°C
+  if (Math.abs(Tf) < 0.5) unlockBadge('freezing');
+
+  // Badge : 10 mélanges différents
+  const hash = `${T1}_${T2}_${V1}_${V2}_${iceOn}_${mIce}`;
+  if (!mixHashes.includes(hash)) {
+    mixHashes.push(hash);
+    if (mixHashes.length > 50) mixHashes = mixHashes.slice(-50);
+    mixCount++;
+    saveBadges();
+  }
+  if (mixCount >= 10) unlockBadge('master');
+}
+
+// Modal badges
+document.getElementById('badgesCounter').addEventListener('click', () => {
+  document.getElementById('badgesModal').classList.add('open');
+});
+document.getElementById('modalClose').addEventListener('click', () => {
+  document.getElementById('badgesModal').classList.remove('open');
+});
+document.getElementById('badgesModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('badgesModal'))
+    document.getElementById('badgesModal').classList.remove('open');
+});
+
+updateBadgeUI();
+
+/* ═══════════════════════════════════════
+   9. TOASTS
+═══════════════════════════════════════ */
+function showToast(ico, title, sub) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `<div class="toast-ico">${ico}</div>
+    <div class="toast-text">
+      <div class="toast-title">${title}</div>
+      <div class="toast-sub">${sub}</div>
+    </div>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.transition = 'opacity .4s, transform .4s';
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(20px)';
+    setTimeout(() => toast.remove(), 400);
+  }, 3000);
+}
+
+/* ═══════════════════════════════════════
+   10. AFFICHAGE DU RÉSULTAT
+═══════════════════════════════════════ */
+function displayResult(vals) {
+  const { T1, T2, V1, V2, iceOn, mIce } = vals;
+  const { Tf, steps } = calcMix(vals);
+
+  const tempEl = document.getElementById('resultTemp');
+  const formulaEl = document.getElementById('resultFormula');
+
+  tempEl.textContent = Tf.toFixed(1) + '°C';
+
+  // Classe couleur
+  tempEl.className = 'result-temp';
+  if (Tf <= 5)       tempEl.classList.add('cold');
+  else if (Tf <= 25) tempEl.classList.add('cool');
+  else if (Tf <= 50) tempEl.classList.add('warm');
+  else if (Tf <= 75) tempEl.classList.add('hot');
+  else               tempEl.classList.add('boil');
+
+  // Détail du calcul
+  formulaEl.innerHTML = steps.map((s, i) =>
+    `<strong class="accent">${i === 0 ? '📐 ' : '❄️ '}</strong> ${s}`
+  ).join('<br>');
+
+  // Son selon température
+  if (!isMuted) {
+    if (Tf < 20) playCrystal();
+    else if (Tf > 60) playWarm();
+  }
+}
+
+/* ═══════════════════════════════════════
+   11. BOUTON MÉLANGER
+═══════════════════════════════════════ */
+document.getElementById('btnMix').addEventListener('click', () => {
+  if (isAnimating) return;
+  const vals = getValues();
+
+  // Son de versement
+  playPouring(1.8);
+
+  const btnMix = document.getElementById('btnMix');
+  btnMix.disabled = true;
+  btnMix.textContent = '⏳ Mélange en cours…';
+
+  runMixAnimation(vals, () => {
+    // Calcul et affichage du résultat
+    displayResult(vals);
+    checkBadges(vals, calcMix(vals).Tf);
+    btnMix.disabled = false;
+    btnMix.textContent = '🌊 Mélanger !';
+  });
+});
+
+/* ═══════════════════════════════════════
+   12. REDIMENSIONNEMENT DU CANVAS
+═══════════════════════════════════════ */
+function resizeCanvas() {
+  const wrap = simCanvas.parentElement;
+  const maxW = Math.min(640, wrap.clientWidth - 4);
+  const ratio = 320 / 640;
+  simCanvas.style.width = maxW + 'px';
+  simCanvas.style.height = (maxW * ratio) + 'px';
+  // On ne change pas les dimensions intrinsèques (640×320) pour garder la qualité
+  if (!isAnimating) drawStatic(getValues());
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+/* ═══════════════════════════════════════
+   13. INITIALISATION
+═══════════════════════════════════════ */
+drawStatic(getValues());
+</script>
+</body>
+</html>

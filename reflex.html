@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🏃 Reflex – Evan</title>
+<style>
+/* ============================================================
+   VARIABLES COSMIQUES – thème imposé
+   ============================================================ */
+:root {
+  --bg:          #0a0a1a;
+  --bg-deep:     #050510;
+  --panel:       rgba(20, 28, 56, 0.72);
+  --panel-solid: #131a33;
+  --border:      rgba(255, 107, 53, 0.25);
+  --electric:    #FF6B35;
+  --neon:        #00C9FF;
+  --violet:      #39FF14;   /* vert neon – couleur GO */
+  --red:         #ff4757;
+  --green:       #2ed573;
+  --text:        #e8eef9;
+  --muted:       #8892b0;
+
+  --shadow-elec:   0 0 18px rgba(255, 107, 53, 0.45);
+  --shadow-neon:   0 0 18px rgba(0, 201, 255, 0.55);
+  --shadow-violet: 0 0 24px rgba(57, 255, 20, 0.65);
+}
+
+/* ============================================================
+   RESET / BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Fond étoilé fixé en arrière-plan */
+#stars {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  display: block;
+}
+
+a, button { font-family: inherit; }
+
+/* ============================================================
+   BOUTONS GLOBAUX
+   ============================================================ */
+button {
+  background: linear-gradient(135deg, rgba(255,107,53,0.15), rgba(0,201,255,0.15));
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  transition: all .2s ease;
+}
+button:hover {
+  border-color: var(--electric);
+  box-shadow: var(--shadow-elec);
+  transform: translateY(-1px);
+}
+button:active { transform: translateY(0); }
+button:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--electric), #c94a00);
+  border-color: transparent;
+  color: #fff;
+}
+.btn-primary:hover { box-shadow: var(--shadow-elec); border-color: transparent; }
+
+.btn-neon {
+  background: linear-gradient(135deg, var(--neon), #0090bb);
+  color: #0a0a1a;
+  border-color: transparent;
+  font-weight: 800;
+}
+.btn-neon:hover { box-shadow: var(--shadow-neon); }
+
+/* ============================================================
+   TOPBAR
+   ============================================================ */
+header.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  background: linear-gradient(180deg, rgba(10,10,26,0.92), rgba(10,10,26,0.55));
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+
+.logo {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 20px; font-weight: 800; letter-spacing: 0.5px;
+}
+.logo .bolt {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 10px;
+  background: radial-gradient(circle at 30% 30%, var(--violet), #1a8a00);
+  box-shadow: var(--shadow-violet);
+  font-size: 22px;
+  animation: boltPulse 2.4s ease-in-out infinite;
+}
+@keyframes boltPulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(57,255,20,0.5); }
+  50%       { box-shadow: 0 0 30px rgba(57,255,20,0.95); }
+}
+.logo small {
+  font-weight: 500; font-size: 12px; color: var(--muted); letter-spacing: 1px;
+  display: block; line-height: 1;
+}
+
+/* Contrôles à droite dans la topbar */
+.topbar-right {
+  display: flex; align-items: center; gap: 10px;
+}
+
+/* Bouton son */
+.sound-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  transition: all .2s;
+}
+.sound-btn:hover { border-color: var(--neon); box-shadow: var(--shadow-neon); transform: none; }
+
+/* App switcher */
+.app-switcher { position: relative; }
+.app-switcher-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 20px; font-weight: 300; line-height: 1;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0;
+  transition: all .2s;
+}
+.app-switcher-btn:hover { border-color: var(--electric); box-shadow: var(--shadow-elec); transform: rotate(90deg); }
+
+.app-menu {
+  position: absolute; top: calc(100% + 10px); right: 0;
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px;
+  min-width: 260px;
+  display: none;
+  z-index: 100;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,107,53,0.1);
+}
+.app-menu.open { display: block; animation: fadeIn .2s ease; }
+.app-menu-header {
+  font-size: 10px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1.5px;
+  padding: 8px 12px 6px;
+}
+.app-menu-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text); text-decoration: none;
+  cursor: pointer;
+  transition: background .15s;
+}
+.app-menu-item:hover { background: rgba(255,107,53,0.08); }
+.app-menu-item .ico {
+  width: 34px; height: 34px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.app-menu-item .title  { font-weight: 700; font-size: 14px; }
+.app-menu-item .sub    { font-size: 11px; color: var(--muted); }
+.app-menu-item.current { background: rgba(57,255,20,0.06); cursor: default; }
+.app-menu-item.current::after {
+  content: '✓'; margin-left: auto; color: var(--violet); font-weight: 700;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   LAYOUT PRINCIPAL
+   ============================================================ */
+main {
+  padding: 32px 16px 80px;
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+/* Titre pédagogique */
+.page-title {
+  text-align: center;
+}
+.page-title h1 {
+  font-size: clamp(22px, 5vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--violet), var(--neon));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.page-title p {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 6px;
+}
+
+/* ============================================================
+   GRAND CARRÉ DE JEU
+   ============================================================ */
+.game-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+}
+
+#game-square {
+  width: min(300px, 80vw);
+  height: min(300px, 80vw);
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.1s ease, box-shadow 0.1s ease, transform 0.08s ease;
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Effet ripple au clic */
+#game-square::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  transform: scale(0);
+  opacity: 0;
+  pointer-events: none;
+  width: 200%;
+  height: 200%;
+  top: -50%; left: -50%;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+#game-square.ripple::after {
+  transform: scale(1);
+  opacity: 0;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+
+/* État IDLE – attente avant de démarrer */
+#game-square.state-idle {
+  background: var(--panel-solid);
+  border-color: rgba(255,107,53,0.3);
+  box-shadow: 0 0 40px rgba(0,0,0,0.4);
+  cursor: default;
+}
+
+/* État WAITING – délai en cours, ne pas cliquer */
+#game-square.state-waiting {
+  background: #1a1f3a;
+  border-color: rgba(255,107,53,0.2);
+  box-shadow: 0 0 30px rgba(0,0,0,0.5);
+  cursor: wait;
+  animation: squarePulse 1.2s ease-in-out infinite;
+}
+@keyframes squarePulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.75; }
+}
+
+/* État TOO EARLY – clic trop tôt */
+#game-square.state-too-early {
+  background: rgba(255, 71, 87, 0.25);
+  border-color: var(--red);
+  box-shadow: 0 0 40px rgba(255,71,87,0.5), inset 0 0 30px rgba(255,71,87,0.1);
+  cursor: default;
+  animation: shake 0.4s ease;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-10px); }
+  40%       { transform: translateX(10px); }
+  60%       { transform: translateX(-6px); }
+  80%       { transform: translateX(6px); }
+}
+
+/* État GO – cliquer maintenant ! */
+#game-square.state-go {
+  background: rgba(57, 255, 20, 0.15);
+  border-color: var(--violet);
+  box-shadow: 0 0 60px rgba(57,255,20,0.6), inset 0 0 40px rgba(57,255,20,0.08);
+  cursor: pointer;
+  animation: goPulse 0.5s ease-in-out infinite alternate;
+}
+@keyframes goPulse {
+  from { box-shadow: 0 0 40px rgba(57,255,20,0.5), inset 0 0 20px rgba(57,255,20,0.05); }
+  to   { box-shadow: 0 0 80px rgba(57,255,20,0.85), inset 0 0 50px rgba(57,255,20,0.12); }
+}
+
+/* État RESULT – après un clic réussi */
+#game-square.state-result {
+  background: rgba(0, 201, 255, 0.1);
+  border-color: var(--neon);
+  box-shadow: 0 0 40px rgba(0,201,255,0.35);
+  cursor: default;
+}
+
+/* Texte dans le carré */
+.square-emoji {
+  font-size: clamp(40px, 10vw, 64px);
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+.square-label {
+  font-size: clamp(16px, 4vw, 22px);
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+.square-sub {
+  font-size: clamp(11px, 2.5vw, 14px);
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ============================================================
+   AFFICHAGE DU DERNIER TEMPS
+   ============================================================ */
+.time-display {
+  text-align: center;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.time-ms {
+  font-size: clamp(36px, 10vw, 56px);
+  font-weight: 900;
+  letter-spacing: -1px;
+  background: linear-gradient(135deg, var(--neon), var(--violet));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.time-ms.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.time-label {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-top: 2px;
+}
+
+/* ============================================================
+   BARRE DE COMPARAISON INFLUX NERVEUX
+   ============================================================ */
+.compare-bar {
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 20px;
+}
+.compare-bar-title {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.compare-track {
+  position: relative;
+  height: 10px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 99px;
+  margin-bottom: 6px;
+  overflow: visible;
+}
+/* Zone "normale" : 150ms → 300ms = 15% → 30% d'une échelle 0–1000ms */
+.compare-zone {
+  position: absolute;
+  top: 0; height: 100%;
+  left: 15%; width: 15%;     /* 150ms–300ms sur 1000ms */
+  background: rgba(46,213,115,0.25);
+  border-radius: 99px;
+}
+/* Marqueur fixe de 250ms */
+.compare-marker-250 {
+  position: absolute;
+  top: -4px; height: 18px;
+  left: 25%;                  /* 250ms sur 1000ms */
+  width: 2px;
+  background: var(--neon);
+  border-radius: 1px;
+}
+.compare-marker-250::after {
+  content: '250 ms';
+  position: absolute;
+  top: 22px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--neon);
+  white-space: nowrap;
+}
+/* Marqueur du temps du joueur */
+.compare-marker-player {
+  position: absolute;
+  top: -5px; height: 20px;
+  width: 3px;
+  background: var(--violet);
+  border-radius: 2px;
+  transition: left 0.5s cubic-bezier(.34,1.56,.64,1);
+  display: none;
+}
+.compare-marker-player::after {
+  content: attr(data-ms);
+  position: absolute;
+  top: -20px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--violet);
+  white-space: nowrap;
+}
+.compare-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 22px;
+}
+
+/* ============================================================
+   HISTORIQUE DES 5 ESSAIS
+   ============================================================ */
+.history {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.history-dot {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  font-size: 10px;
+  font-weight: 700;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.08);
+  color: var(--muted);
+}
+.history-dot span {
+  font-size: 8px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.history-dot.good {
+  background: rgba(46,213,115,0.15);
+  border-color: var(--green);
+  color: var(--green);
+}
+.history-dot.ok {
+  background: rgba(0,201,255,0.12);
+  border-color: var(--neon);
+  color: var(--neon);
+}
+.history-dot.slow {
+  background: rgba(255,107,53,0.12);
+  border-color: var(--electric);
+  color: var(--electric);
+}
+.history-dot.error {
+  background: rgba(255,71,87,0.12);
+  border-color: var(--red);
+  color: var(--red);
+}
+
+/* ============================================================
+   RÉSUMÉ FINAL
+   ============================================================ */
+.summary {
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+  text-align: center;
+  display: none;
+  animation: fadeIn .4s ease;
+}
+.summary.visible { display: block; }
+.summary-avg {
+  font-size: clamp(44px, 12vw, 68px);
+  font-weight: 900;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+.summary-avg.excellent { color: var(--violet); text-shadow: 0 0 20px rgba(57,255,20,0.6); }
+.summary-avg.normal    { color: var(--neon);   text-shadow: 0 0 20px rgba(0,201,255,0.5); }
+.summary-avg.slow      { color: var(--electric); text-shadow: 0 0 20px rgba(255,107,53,0.5); }
+.summary-verdict {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 10px 0 6px;
+}
+.summary-detail { font-size: 14px; color: var(--muted); }
+
+/* ============================================================
+   BOUTONS D'ACTION
+   ============================================================ */
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.actions button {
+  padding: 13px 28px;
+  font-size: 15px;
+  border-radius: 14px;
+}
+
+/* ============================================================
+   SECTION PÉDAGOGIQUE
+   ============================================================ */
+.science {
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+}
+.science-title {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.science-path {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+.science-path .step {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-weight: 600;
+}
+.science-path .arrow {
+  color: var(--electric);
+  font-size: 16px;
+}
+.science-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.science-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+.science-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.science-dot.excellent { background: var(--violet); box-shadow: 0 0 8px rgba(57,255,20,0.7); }
+.science-dot.normal    { background: var(--neon); }
+.science-dot.slow      { background: var(--electric); }
+.science-caption { color: var(--muted); }
+
+/* ============================================================
+   BADGES TOAST
+   ============================================================ */
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 16px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+}
+.toast {
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  animation: toastIn .3s ease, toastOut .3s ease 2.7s forwards;
+  max-width: 280px;
+}
+.toast-ico { font-size: 22px; }
+.toast-text { flex: 1; }
+.toast-text strong { display: block; font-size: 13px; }
+.toast-text span   { font-size: 11px; color: var(--muted); font-weight: 400; }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(40px); }
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 400px) {
+  .topbar { padding: 12px 14px; }
+  main { gap: 20px; padding: 20px 10px 60px; }
+  .history-dot { width: 44px; height: 44px; font-size: 9px; }
+}
+</style>
+</head>
+<body>
+
+<!-- =========================================================
+     FOND ÉTOILÉ ANIMÉ
+     ========================================================= -->
+<canvas id="stars"></canvas>
+
+<!-- =========================================================
+     TOPBAR
+     ========================================================= -->
+<header class="topbar">
+  <div class="logo">
+    <div class="bolt">⚡</div>
+    <div>
+      Reflex
+      <small>Système nerveux</small>
+    </div>
+  </div>
+
+  <div class="topbar-right">
+    <!-- Bouton son -->
+    <button class="sound-btn" id="sound-btn" title="Son on/off">🔊</button>
+
+    <!-- App switcher -->
+    <div class="app-switcher">
+      <button class="app-switcher-btn" id="app-switcher-btn" title="Applications">＋</button>
+      <div class="app-menu" id="app-menu">
+        <div class="app-menu-header">Applications</div>
+        <a class="app-menu-item" href="index.html">
+          <span class="ico">⚡</span>
+          <div><div class="title">Electrolab</div><div class="sub">Électricité interactive</div></div>
+        </a>
+        <a class="app-menu-item" href="mecanique.html">
+          <span class="ico">🚀</span>
+          <div><div class="title">Mécanik</div><div class="sub">Lanceur de projectiles</div></div>
+        </a>
+        <a class="app-menu-item" href="solaire.html">
+          <span class="ico">🪐</span>
+          <div><div class="title">Système Solaire</div><div class="sub">Planètes en orbite</div></div>
+        </a>
+        <a class="app-menu-item" href="laser.html">
+          <span class="ico">🔴</span>
+          <div><div class="title">Laser Maze</div><div class="sub">Labyrinthe à miroirs</div></div>
+        </a>
+        <a class="app-menu-item current" href="reflex.html">
+          <span class="ico">🏃</span>
+          <div><div class="title">Reflex</div><div class="sub">Teste tes réflexes</div></div>
+        </a>
+        <a class="app-menu-item" href="volcan.html">
+          <span class="ico">🌋</span>
+          <div><div class="title">Volcan</div><div class="sub">Éruption simulée</div></div>
+        </a>
+        <a class="app-menu-item" href="callab.html">
+          <span class="ico">🧪</span>
+          <div><div class="title">CalLab</div><div class="sub">Calculs de chimie</div></div>
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- =========================================================
+     CONTENU PRINCIPAL
+     ========================================================= -->
+<main>
+
+  <!-- Titre -->
+  <div class="page-title">
+    <h1>Teste tes réflexes !</h1>
+    <p>Attends que le carré devienne vert, puis clique le plus vite possible.</p>
+  </div>
+
+  <!-- Zone de jeu -->
+  <div class="game-area">
+
+    <!-- Grand carré central -->
+    <div id="game-square" class="state-idle" role="button" aria-label="Carré de jeu – cliquer quand vert">
+      <div class="square-emoji" id="square-emoji">🏃</div>
+      <div class="square-label" id="square-label">Prêt à jouer ?</div>
+      <div class="square-sub"  id="square-sub">Clique Démarrer</div>
+    </div>
+
+    <!-- Affichage du dernier temps -->
+    <div class="time-display">
+      <div class="time-ms" id="time-ms">—</div>
+      <div class="time-label">Temps de réaction</div>
+    </div>
+
+  </div>
+
+  <!-- Boutons action -->
+  <div class="actions" id="actions">
+    <button class="btn-primary" id="btn-start" onclick="startRound()">▶ Démarrer</button>
+  </div>
+
+  <!-- Barre de comparaison influx nerveux -->
+  <div class="compare-bar">
+    <div class="compare-bar-title">⚡ Comparaison – influx nerveux humain</div>
+    <div class="compare-track">
+      <div class="compare-zone"></div>
+      <div class="compare-marker-250"></div>
+      <div class="compare-marker-player" id="compare-player"></div>
+    </div>
+    <div class="compare-labels">
+      <span>0 ms</span>
+      <span>250 ms</span>
+      <span>500 ms</span>
+      <span>750 ms</span>
+      <span>1000+ ms</span>
+    </div>
+  </div>
+
+  <!-- Historique des 5 essais -->
+  <div class="history" id="history">
+    <!-- rempli par JS -->
+  </div>
+
+  <!-- Résumé final (affiché après 5 essais) -->
+  <div class="summary" id="summary">
+    <div class="summary-avg" id="summary-avg">—</div>
+    <div class="summary-verdict" id="summary-verdict"></div>
+    <div class="summary-detail" id="summary-detail"></div>
+  </div>
+
+  <!-- Bouton rejouer (affiché après 5 essais) -->
+  <div class="actions" id="actions-replay" style="display:none;">
+    <button class="btn-neon" onclick="resetGame()">🔄 Rejouer</button>
+  </div>
+
+  <!-- Section pédagogique -->
+  <div class="science">
+    <div class="science-title">💡 La science derrière</div>
+
+    <!-- Chemin du signal nerveux -->
+    <div class="science-path">
+      <span class="step">👁️ Œil</span>
+      <span class="arrow">→</span>
+      <span class="step">🧠 Nerf optique</span>
+      <span class="arrow">→</span>
+      <span class="step">🧠 Cerveau</span>
+      <span class="arrow">→</span>
+      <span class="step">⚡ Nerf moteur</span>
+      <span class="arrow">→</span>
+      <span class="step">✋ Main</span>
+    </div>
+
+    <!-- Légende des vitesses -->
+    <div class="science-legend">
+      <div class="science-row">
+        <div class="science-dot excellent"></div>
+        <span><strong>&lt; 200 ms</strong></span>
+        <span class="science-caption">– Excellent ! Niveau sportif de haut niveau.</span>
+      </div>
+      <div class="science-row">
+        <div class="science-dot normal"></div>
+        <span><strong>200 – 300 ms</strong></span>
+        <span class="science-caption">– Normal. C'est la vitesse humaine typique.</span>
+      </div>
+      <div class="science-row">
+        <div class="science-dot slow"></div>
+        <span><strong>&gt; 300 ms</strong></span>
+        <span class="science-caption">– Tu étais peut-être distrait… ou fatigué !</span>
+      </div>
+    </div>
+
+    <p style="margin-top:14px; font-size:12px; color:var(--muted); line-height:1.6;">
+      L'influx nerveux est un signal électrique qui voyage le long des neurones à <strong style="color:var(--neon)">100 m/s</strong>. De ton œil à ta main, il parcourt environ 1,5 m, soit ~15 ms de trajet pur. Le reste du délai vient du <em>traitement par le cerveau</em>.
+    </p>
+  </div>
+
+</main>
+
+<!-- Conteneur des toasts (badges) -->
+<div id="toast-container"></div>
+
+<!-- =========================================================
+     JAVASCRIPT
+     ========================================================= -->
+<script>
+/* ============================================================
+   ÉTOILES – 150 étoiles scintillantes sur canvas
+   ============================================================ */
+(function initStars() {
+  const canvas = document.getElementById('stars');
+  const ctx    = canvas.getContext('2d');
+  const STAR_COUNT = 150;
+  let stars = [];
+
+  // Créer les étoiles
+  function createStars(w, h) {
+    stars = [];
+    for (let i = 0; i < STAR_COUNT; i++) {
+      stars.push({
+        x:     Math.random() * w,
+        y:     Math.random() * h,
+        r:     Math.random() * 1.4 + 0.3,       // rayon 0.3–1.7
+        alpha: Math.random(),                      // opacité initiale aléatoire
+        speed: (Math.random() * 0.008) + 0.003,  // vitesse de scintillement
+        phase: Math.random() * Math.PI * 2,       // phase aléatoire
+      });
+    }
+  }
+
+  // Redimensionner
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    createStars(canvas.width, canvas.height);
+  }
+
+  // Dessiner une frame
+  let t = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    t += 0.016;
+    for (const s of stars) {
+      // Scintillement sinusoïdal doux
+      const alpha = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(t * s.speed * 60 + s.phase));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(180, 200, 255, ${alpha})`;
+      ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  draw();
+})();
+
+/* ============================================================
+   APP SWITCHER
+   ============================================================ */
+const appSwitcherBtn = document.getElementById('app-switcher-btn');
+const appMenu        = document.getElementById('app-menu');
+
+appSwitcherBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  appMenu.classList.toggle('open');
+});
+document.addEventListener('click', () => appMenu.classList.remove('open'));
+
+/* ============================================================
+   SON – Web Audio API (pas de fichier externe)
+   ============================================================ */
+let audioCtx  = null;
+let isMuted   = localStorage.getItem('reflex_muted') === '1';
+const soundBtn = document.getElementById('sound-btn');
+soundBtn.textContent = isMuted ? '🔇' : '🔊';
+
+soundBtn.addEventListener('click', () => {
+  isMuted = !isMuted;
+  localStorage.setItem('reflex_muted', isMuted ? '1' : '0');
+  soundBtn.textContent = isMuted ? '🔇' : '🔊';
+});
+
+// Initialise le contexte audio si besoin (doit être déclenché par un geste utilisateur)
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+// Joue une note simple
+function playTone(freq, duration, type = 'sine', gainVal = 0.25, delay = 0) {
+  if (isMuted) return;
+  const ac  = getAudio();
+  const osc = ac.createOscillator();
+  const g   = ac.createGain();
+  osc.connect(g);
+  g.connect(ac.destination);
+  osc.type      = type;
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(gainVal, ac.currentTime + delay);
+  g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + delay + duration);
+  osc.start(ac.currentTime + delay);
+  osc.stop(ac.currentTime + delay + duration + 0.05);
+}
+
+// Bip grave – trop tôt
+function soundTooEarly() { playTone(220, 0.15, 'sawtooth', 0.2); }
+
+// Ding aigu – carré vert
+function soundGo() { playTone(880, 0.1, 'sine', 0.18); }
+
+// Ding satisfaisant – clic réussi (deux notes)
+function soundSuccess() {
+  playTone(660, 0.15, 'sine', 0.2, 0);
+  playTone(880, 0.2,  'sine', 0.2, 0.1);
+}
+
+/* ============================================================
+   ÉTAT DU JEU
+   ============================================================ */
+const MAX_ROUNDS = 5;
+
+let state        = 'idle';  // idle | waiting | go | result | too-early | done
+let goTimer      = null;    // setTimeout du délai aléatoire
+let startTime    = null;    // Date.now() quand le carré devient vert
+let attempts     = [];      // tableau des ms valides
+let currentRound = 0;       // numéro du round en cours (1–5)
+let waitingOver  = false;   // true quand le carré est déjà vert
+
+const square      = document.getElementById('game-square');
+const squareEmoji = document.getElementById('square-emoji');
+const squareLabel = document.getElementById('square-label');
+const squareSub   = document.getElementById('square-sub');
+const timeMsEl    = document.getElementById('time-ms');
+const btnStart    = document.getElementById('btn-start');
+const actionsEl   = document.getElementById('actions');
+const actionsReplay = document.getElementById('actions-replay');
+const historyEl   = document.getElementById('history');
+const summaryEl   = document.getElementById('summary');
+const summaryAvg  = document.getElementById('summary-avg');
+const summaryVerdict = document.getElementById('summary-verdict');
+const summaryDetail  = document.getElementById('summary-detail');
+const comparePlayer  = document.getElementById('compare-player');
+
+/* ============================================================
+   INITIALISATION DE L'HISTORIQUE VISUEL
+   ============================================================ */
+function buildHistoryDots() {
+  historyEl.innerHTML = '';
+  for (let i = 0; i < MAX_ROUNDS; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'history-dot';
+    dot.id = `dot-${i}`;
+    dot.innerHTML = `<span>${i + 1}</span>`;
+    historyEl.appendChild(dot);
+  }
+}
+buildHistoryDots();
+
+/* ============================================================
+   APPLIQUER UN ÉTAT AU CARRÉ
+   ============================================================ */
+function setSquareState(newState) {
+  state = newState;
+  square.className = `state-${newState}`;
+
+  switch (newState) {
+    case 'idle':
+      squareEmoji.textContent = '🏃';
+      squareLabel.textContent  = 'Prêt à jouer ?';
+      squareSub.textContent    = 'Clique Démarrer';
+      break;
+
+    case 'waiting':
+      squareEmoji.textContent = '⏳';
+      squareLabel.textContent  = 'Attends…';
+      squareSub.textContent    = 'Ne clique pas encore !';
+      break;
+
+    case 'too-early':
+      squareEmoji.textContent = '✋';
+      squareLabel.textContent  = 'Trop tôt !';
+      squareSub.textContent    = 'Recommence dans un instant…';
+      soundTooEarly();
+      break;
+
+    case 'go':
+      squareEmoji.textContent = '⚡';
+      squareLabel.textContent  = 'MAINTENANT !';
+      squareSub.textContent    = 'Clique vite !';
+      soundGo();
+      break;
+
+    case 'result':
+      squareEmoji.textContent = '✅';
+      squareLabel.textContent  = 'Bien joué !';
+      squareSub.textContent    = '';
+      break;
+  }
+}
+
+/* ============================================================
+   DÉMARRER UN ROUND
+   ============================================================ */
+function startRound() {
+  if (state === 'done') return;
+
+  // Masquer le bouton start pendant le round
+  actionsEl.style.display = 'none';
+
+  // Réinitialiser le carré en état waiting
+  setSquareState('waiting');
+  waitingOver = false;
+  startTime   = null;
+
+  // Délai aléatoire entre 1500ms et 4000ms
+  const delay = 1500 + Math.random() * 2500;
+
+  goTimer = setTimeout(() => {
+    waitingOver = true;
+    setSquareState('go');
+    startTime = Date.now();
+  }, delay);
+}
+
+/* ============================================================
+   GESTION DU CLIC / TAP SUR LE CARRÉ (pointerdown)
+   ============================================================ */
+square.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+
+  // Effet visuel ripple
+  square.classList.remove('ripple');
+  void square.offsetWidth; // force reflow
+  square.classList.add('ripple');
+
+  if (state === 'idle' || state === 'result' || state === 'done') {
+    // Pas d'action
+    return;
+  }
+
+  if (state === 'waiting') {
+    // Clic trop tôt
+    clearTimeout(goTimer);
+    setSquareState('too-early');
+    // Retour en waiting après 1200ms, puis relancer
+    setTimeout(() => {
+      setSquareState('waiting');
+      waitingOver = false;
+      const delay = 1500 + Math.random() * 2500;
+      goTimer = setTimeout(() => {
+        waitingOver = true;
+        setSquareState('go');
+        startTime = Date.now();
+      }, delay);
+    }, 1200);
+    return;
+  }
+
+  if (state === 'go') {
+    // Clic réussi !
+    const reactionTime = Date.now() - startTime;
+    recordResult(reactionTime);
+    return;
+  }
+});
+
+/* ============================================================
+   ENREGISTRER UN RÉSULTAT VALIDE
+   ============================================================ */
+function recordResult(ms) {
+  soundSuccess();
+  setSquareState('result');
+  squareLabel.textContent = `${ms} ms`;
+  squareSub.textContent   = '';
+
+  // Afficher le temps en grand
+  timeMsEl.textContent = `${ms} ms`;
+  timeMsEl.classList.add('visible');
+
+  // Mettre à jour la barre de comparaison (plafond à 1000ms)
+  const pct = Math.min(ms / 1000, 1) * 100;
+  comparePlayer.style.left   = `${pct}%`;
+  comparePlayer.style.display = 'block';
+  comparePlayer.setAttribute('data-ms', `${ms} ms`);
+
+  // Stocker le résultat
+  attempts.push(ms);
+  updateHistoryDot(attempts.length - 1, ms, false);
+
+  // Vérifier badges
+  checkBadges(ms);
+
+  if (attempts.length >= MAX_ROUNDS) {
+    // Jeu terminé
+    setTimeout(() => showSummary(), 800);
+  } else {
+    // Prochain round après 1.2s
+    setTimeout(() => {
+      setSquareState('idle');
+      squareEmoji.textContent = '🏃';
+      squareLabel.textContent  = `Round ${attempts.length + 1} / ${MAX_ROUNDS}`;
+      squareSub.textContent    = 'Clique Démarrer';
+      actionsEl.style.display  = 'flex';
+    }, 1200);
+  }
+}
+
+/* ============================================================
+   HISTORIQUE VISUEL – COLORIER UN DOT
+   ============================================================ */
+function updateHistoryDot(index, ms, isError) {
+  const dot = document.getElementById(`dot-${index}`);
+  if (!dot) return;
+
+  if (isError) {
+    dot.className = 'history-dot error';
+    dot.innerHTML = `<span>✗</span>`;
+    return;
+  }
+
+  let cls = 'slow';
+  if (ms < 200)       cls = 'good';
+  else if (ms < 300)  cls = 'ok';
+
+  dot.className = `history-dot ${cls}`;
+  dot.innerHTML = `${ms}<span>ms</span>`;
+}
+
+/* ============================================================
+   RÉSUMÉ FINAL APRÈS 5 ESSAIS
+   ============================================================ */
+function showSummary() {
+  const avg = Math.round(attempts.reduce((a, b) => a + b, 0) / attempts.length);
+
+  summaryAvg.textContent = `${avg} ms`;
+
+  let verdict, detail, cls;
+  if (avg < 200) {
+    verdict = '⚡ Incroyable ! Tu as des réflexes de champion !';
+    detail  = 'Moins de 200 ms — niveau sportif de haut niveau. Ton cerveau est ultra-rapide !';
+    cls     = 'excellent';
+  } else if (avg < 300) {
+    verdict = '🧠 Super ! Tu es dans la moyenne humaine.';
+    detail  = `${avg} ms, c'est parfaitement normal. L'influx nerveux humain est de 150–300 ms.`;
+    cls     = 'normal';
+  } else {
+    verdict = '😴 Tu étais peut-être distrait !';
+    detail  = 'Essaie encore : une bonne concentration et tu feras mieux !';
+    cls     = 'slow';
+  }
+
+  summaryAvg.className     = `summary-avg ${cls}`;
+  summaryVerdict.textContent = verdict;
+  summaryDetail.textContent  = detail;
+
+  summaryEl.classList.add('visible');
+  actionsReplay.style.display = 'flex';
+  actionsEl.style.display     = 'none';
+  state = 'done';
+
+  // Badge "Nerf de l'acier" si moyenne < 250ms
+  if (avg < 250) unlockBadge('nerf');
+  checkSessionBadge();
+}
+
+/* ============================================================
+   RESET
+   ============================================================ */
+function resetGame() {
+  clearTimeout(goTimer);
+  attempts      = [];
+  currentRound  = 0;
+  state         = 'idle';
+  startTime     = null;
+  waitingOver   = false;
+
+  timeMsEl.textContent = '—';
+  timeMsEl.classList.remove('visible');
+
+  comparePlayer.style.display = 'none';
+
+  summaryEl.classList.remove('visible');
+  actionsReplay.style.display = 'none';
+  actionsEl.style.display     = 'flex';
+
+  btnStart.disabled = false;
+
+  buildHistoryDots();
+
+  setSquareState('idle');
+  squareEmoji.textContent = '🏃';
+  squareLabel.textContent  = 'Prêt à jouer ?';
+  squareSub.textContent    = 'Clique Démarrer';
+}
+
+/* ============================================================
+   BADGES
+   ============================================================ */
+// Définition des badges
+const BADGE_DEFS = {
+  first:  { ico: '🏅', name: 'Premier Reflex',   desc: 'Premier essai valide réalisé !' },
+  eclair: { ico: '⚡', name: 'Éclair',            desc: 'Temps de réaction < 200 ms !' },
+  nerf:   { ico: '🧠', name: 'Nerf de l\'acier',  desc: 'Moyenne < 250 ms sur 5 essais !' },
+  tour:   { ico: '🌍', name: 'Tour complet',       desc: '5 sessions différentes réalisées !' },
+};
+
+// Charger les badges depuis localStorage
+function loadBadges() {
+  try {
+    return JSON.parse(localStorage.getItem('reflex_badges') || '{}');
+  } catch (e) {
+    return {};
+  }
+}
+
+// Sauvegarder les badges
+function saveBadges(badges) {
+  localStorage.setItem('reflex_badges', JSON.stringify(badges));
+}
+
+// Débloquer un badge si pas encore obtenu
+function unlockBadge(key) {
+  const badges = loadBadges();
+  if (!badges[key]) {
+    badges[key] = Date.now();
+    saveBadges(badges);
+    showToast(BADGE_DEFS[key]);
+  }
+}
+
+// Vérification en cours de partie
+function checkBadges(ms) {
+  // Premier essai valide
+  if (attempts.length === 1) unlockBadge('first');
+  // Temps < 200ms
+  if (ms < 200) unlockBadge('eclair');
+}
+
+// Badge "Tour complet" – 5 sessions différentes
+function checkSessionBadge() {
+  const sessions = JSON.parse(localStorage.getItem('reflex_sessions') || '[]');
+  const today    = new Date().toDateString();
+  if (!sessions.includes(today)) {
+    sessions.push(today);
+    localStorage.setItem('reflex_sessions', JSON.stringify(sessions));
+  }
+  if (sessions.length >= 5) unlockBadge('tour');
+}
+
+/* ============================================================
+   TOAST NOTIFICATION
+   ============================================================ */
+function showToast({ ico, name, desc }) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `
+    <div class="toast-ico">${ico}</div>
+    <div class="toast-text">
+      <strong>Badge débloqué : ${name}</strong>
+      <span>${desc}</span>
+    </div>
+  `;
+  container.appendChild(toast);
+  // Supprimer le toast après 3s
+  setTimeout(() => {
+    toast.remove();
+  }, 3100);
+}
+
+/* ============================================================
+   FERMER LE MENU APP-SWITCHER AU CLIC DEHORS
+   ============================================================ */
+// déjà géré ci-dessus
+
+/* ============================================================
+   INIT – état initial
+   ============================================================ */
+setSquareState('idle');
+</script>
+
+</body>
+</html>

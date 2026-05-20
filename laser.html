@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🔴 Laser Maze – Evan</title>
+<style>
+/* ============================================================
+   VARIABLES & RESET
+   ============================================================ */
+:root {
+  --bg: #0a0a1a;
+  --bg-deep: #050510;
+  --panel: rgba(20, 28, 56, 0.72);
+  --panel-solid: #131a33;
+  --border: rgba(255, 107, 53, 0.25);
+  --electric: #FF6B35;
+  --neon: #00C9FF;
+  --violet: #39FF14;
+  --red: #ff4757;
+  --green: #2ed573;
+  --text: #e8eef9;
+  --muted: #8892b0;
+  --shadow-elec: 0 0 18px rgba(255, 107, 53, 0.45);
+  --shadow-neon: 0 0 18px rgba(0, 201, 255, 0.55);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Fond étoilé */
+#stars {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  display: block;
+}
+
+a, button { font-family: inherit; }
+
+button {
+  background: linear-gradient(135deg, rgba(255,107,53,0.15), rgba(57,255,20,0.10));
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  transition: all .2s ease;
+}
+button:hover {
+  border-color: var(--electric);
+  box-shadow: var(--shadow-elec);
+  transform: translateY(-1px);
+}
+button:active { transform: translateY(0); }
+button:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ============================================================
+   TOPBAR
+   ============================================================ */
+header.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: linear-gradient(180deg, rgba(10,10,26,0.96), rgba(10,10,26,0.60));
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+}
+
+.logo {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 19px; font-weight: 800; letter-spacing: 0.4px;
+}
+.logo .laser-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 10px;
+  background: radial-gradient(circle at 30% 30%, #ff6b35, #b82200);
+  box-shadow: 0 0 18px rgba(255,107,53,0.6);
+  font-size: 20px;
+  animation: laserPulse 1.8s ease-in-out infinite;
+}
+@keyframes laserPulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(255,107,53,0.5); }
+  50%       { box-shadow: 0 0 30px rgba(255,107,53,0.95); }
+}
+.logo small {
+  display: block;
+  font-weight: 500; font-size: 11px; color: var(--muted); letter-spacing: 1px;
+}
+
+.topbar-right {
+  display: flex; align-items: center; gap: 10px;
+}
+
+/* Bouton mute */
+#btn-mute {
+  width: 34px; height: 34px; border-radius: 50%; padding: 0;
+  font-size: 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--panel); border: 1px solid var(--border);
+}
+#btn-mute:hover { border-color: var(--neon); box-shadow: var(--shadow-neon); transform: none; }
+
+/* App switcher */
+.app-switcher { position: relative; }
+.app-switcher-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 20px; font-weight: 300; line-height: 1;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0;
+  transition: all .2s;
+}
+.app-switcher-btn:hover { border-color: var(--electric); box-shadow: var(--shadow-elec); transform: rotate(90deg); }
+.app-menu {
+  position: absolute; top: calc(100% + 10px); right: 0;
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px;
+  min-width: 240px;
+  display: none;
+  z-index: 100;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,107,53,0.1);
+}
+.app-menu.open { display: block; animation: fadeIn .18s ease; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+
+.app-menu-header {
+  font-size: 10px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1.5px;
+  padding: 8px 12px 6px;
+}
+.app-menu-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 8px;
+  color: var(--text); text-decoration: none;
+  cursor: pointer; transition: background .15s;
+}
+.app-menu-item:hover { background: rgba(255,107,53,0.08); }
+.app-menu-item .ico {
+  width: 32px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px; background: rgba(255,255,255,0.05);
+  font-size: 17px; flex-shrink: 0;
+}
+.app-menu-item .title { font-weight: 700; font-size: 13px; }
+.app-menu-item .sub { font-size: 10px; color: var(--muted); }
+.app-menu-item.current { background: rgba(255,107,53,0.07); cursor: default; }
+.app-menu-item.current::after {
+  content: '✓'; margin-left: auto; color: var(--electric); font-weight: 800;
+}
+
+/* ============================================================
+   HEADER NIVEAU
+   ============================================================ */
+.level-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px 10px;
+  max-width: 520px; margin: 0 auto;
+}
+.level-info {
+  font-size: 15px; font-weight: 700; color: var(--text);
+}
+.level-info span { color: var(--electric); }
+.level-actions { display: flex; gap: 8px; }
+.level-actions button {
+  padding: 7px 13px; font-size: 13px;
+  background: var(--panel); border: 1px solid var(--border);
+}
+
+/* ============================================================
+   ZONE DE JEU
+   ============================================================ */
+.game-area {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 0 16px;
+  gap: 16px;
+}
+
+#canvas-wrap {
+  position: relative;
+  width: min(90vw, 480px);
+  height: min(90vw, 480px);
+}
+#game-canvas {
+  display: block;
+  width: 100%; height: 100%;
+  border-radius: 14px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-deep);
+  cursor: pointer;
+  touch-action: none;
+  box-shadow: 0 0 40px rgba(255,107,53,0.08);
+}
+
+/* ============================================================
+   STATUS + NAVIGATION
+   ============================================================ */
+.status-msg {
+  font-size: 15px; font-weight: 600; text-align: center;
+  min-height: 28px; padding: 0 16px;
+  transition: color .3s;
+}
+.status-msg.win { color: var(--green); }
+.status-msg.hint { color: var(--neon); }
+
+.nav-btns {
+  display: flex; gap: 12px; justify-content: center;
+  padding-bottom: 10px;
+}
+.nav-btns button {
+  padding: 11px 22px; font-size: 14px;
+  background: linear-gradient(135deg, rgba(255,107,53,0.15), rgba(0,201,255,0.10));
+}
+.btn-next {
+  background: linear-gradient(135deg, var(--electric), #c84800) !important;
+  border-color: transparent !important; color: #fff !important;
+}
+.btn-next:hover { box-shadow: var(--shadow-elec) !important; }
+
+/* Compteur de miroirs */
+.mirror-counter {
+  font-size: 12px; color: var(--muted); text-align: center;
+  margin-top: -8px;
+}
+
+/* ============================================================
+   SECTION PÉDAGO
+   ============================================================ */
+.pedago {
+  max-width: 520px; margin: 8px auto 80px;
+  padding: 0 16px;
+}
+.pedago-toggle {
+  width: 100%;
+  background: var(--panel); border: 1px solid var(--border);
+  text-align: left; font-size: 14px; font-weight: 700;
+  padding: 13px 16px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: border-color .2s;
+}
+.pedago-toggle:hover { border-color: var(--neon); transform: none; box-shadow: var(--shadow-neon); }
+.pedago-toggle .chevron { transition: transform .3s; }
+.pedago-toggle.open .chevron { transform: rotate(180deg); }
+.pedago-body {
+  display: none;
+  background: var(--panel); border: 1px solid var(--border);
+  border-top: none; border-radius: 0 0 12px 12px;
+  padding: 16px; font-size: 13px; line-height: 1.7; color: var(--text);
+}
+.pedago-body.open { display: block; }
+.pedago-body h3 { color: var(--neon); font-size: 13px; margin: 10px 0 4px; }
+.pedago-body h3:first-child { margin-top: 0; }
+.pedago-body ul { padding-left: 18px; }
+.pedago-body li { margin-bottom: 4px; }
+.pedago-body .formula {
+  font-family: 'Courier New', monospace;
+  background: rgba(0,201,255,0.08);
+  border: 1px solid rgba(0,201,255,0.2);
+  border-radius: 6px; padding: 8px 12px;
+  margin: 8px 0; font-size: 13px; color: var(--neon);
+}
+
+/* ============================================================
+   TOAST BADGES
+   ============================================================ */
+.toast-container {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+  z-index: 999; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  background: var(--panel-solid);
+  border: 1px solid rgba(255,107,53,0.4);
+  border-radius: 12px; padding: 12px 20px;
+  font-size: 14px; font-weight: 700; color: var(--text);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 20px rgba(255,107,53,0.2);
+  animation: toastIn .3s ease, toastOut .3s ease 2.7s forwards;
+  white-space: nowrap;
+}
+@keyframes toastIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+@keyframes toastOut { to { opacity:0; transform:translateY(-10px); } }
+
+/* ============================================================
+   HINT OVERLAY (miroir fantôme)
+   ============================================================ */
+.hint-badge {
+  display: inline-block;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 999px; padding: 3px 12px;
+  font-size: 12px; color: var(--neon);
+  margin-left: 8px; vertical-align: middle;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 360px) {
+  .level-header { padding: 10px 12px 8px; }
+  .logo { font-size: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Fond étoilé animé -->
+<canvas id="stars"></canvas>
+
+<!-- ============================================================
+     TOPBAR
+     ============================================================ -->
+<header class="topbar">
+  <div class="logo">
+    <div class="laser-icon">🔴</div>
+    <div>
+      Laser Maze
+      <small>OPTIQUE · PUZZLE</small>
+    </div>
+  </div>
+
+  <div class="topbar-right">
+    <button id="btn-mute" title="Muet / Son" aria-label="Activer/désactiver le son">🔊</button>
+
+    <div class="app-switcher">
+      <button class="app-switcher-btn" id="app-btn" aria-label="Changer d'app">+</button>
+      <div class="app-menu" id="app-menu">
+        <div class="app-menu-header">🚀 Electrolab — Apps</div>
+        <a href="index.html" class="app-menu-item">
+          <span class="ico">⚡</span>
+          <div><div class="title">Electrolab</div><div class="sub">Circuits électriques</div></div>
+        </a>
+        <a href="mecanique.html" class="app-menu-item">
+          <span class="ico">🚀</span>
+          <div><div class="title">Mécanik</div><div class="sub">Lanceur & trajectoires</div></div>
+        </a>
+        <a href="solaire.html" class="app-menu-item">
+          <span class="ico">🪐</span>
+          <div><div class="title">Système Solaire</div><div class="sub">Planètes & orbites</div></div>
+        </a>
+        <a href="laser.html" class="app-menu-item current">
+          <span class="ico">🔴</span>
+          <div><div class="title">Laser Maze</div><div class="sub">Optique & miroirs</div></div>
+        </a>
+        <a href="reflex.html" class="app-menu-item">
+          <span class="ico">🏃</span>
+          <div><div class="title">Reflex</div><div class="sub">Temps de réaction</div></div>
+        </a>
+        <a href="volcan.html" class="app-menu-item">
+          <span class="ico">🌋</span>
+          <div><div class="title">Volcan</div><div class="sub">Géologie explosive</div></div>
+        </a>
+        <a href="callab.html" class="app-menu-item">
+          <span class="ico">🧪</span>
+          <div><div class="title">CalLab</div><div class="sub">Calculateur scientifique</div></div>
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     HEADER NIVEAU
+     ============================================================ -->
+<div class="level-header">
+  <div class="level-info">
+    Niveau <span id="lvl-num">1</span> / 30
+  </div>
+  <div class="level-actions">
+    <button id="btn-reset" title="Recommencer le niveau">🔄 Reset</button>
+    <button id="btn-hint" title="Afficher un indice">💡 Indice</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     ZONE DE JEU
+     ============================================================ -->
+<div class="game-area">
+  <div id="canvas-wrap">
+    <canvas id="game-canvas"></canvas>
+  </div>
+
+  <div class="mirror-counter" id="mirror-counter">Miroirs placés : 0</div>
+
+  <div class="status-msg" id="status-msg">Guide le laser jusqu'à la cible !</div>
+
+  <div class="nav-btns">
+    <button id="btn-prev" disabled>← Précédent</button>
+    <button id="btn-next" class="btn-next" disabled>→ Niveau suivant</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     SECTION PÉDAGO
+     ============================================================ -->
+<div class="pedago">
+  <button class="pedago-toggle" id="pedago-toggle">
+    💡 La réflexion de la lumière
+    <span class="chevron">▼</span>
+  </button>
+  <div class="pedago-body" id="pedago-body">
+    <h3>Loi de la réflexion</h3>
+    <p>Quand la lumière frappe un miroir, l'angle d'incidence est égal à l'angle de réflexion,
+       mesurés par rapport à la <em>normale</em> (la perpendiculaire au miroir).</p>
+    <div class="formula">θ_incidence = θ_réflexion</div>
+
+    <h3>Miroir à 45° → déviation de 90°</h3>
+    <p>Un miroir incliné à 45° dévie un rayon horizontal vers le haut (ou le bas) et vice-versa.
+       C'est exactement le principe utilisé dans ce jeu !</p>
+
+    <h3>Applications réelles</h3>
+    <ul>
+      <li><strong>Télescope de Newton :</strong> un miroir parabolique concentre la lumière, un second petit miroir à 45° la renvoie vers l'oculaire.</li>
+      <li><strong>Scanner de supermarché :</strong> un laser balaye le code-barres grâce à une série de miroirs rotatifs.</li>
+      <li><strong>Périscope de sous-marin :</strong> deux miroirs à 45° permettent de voir au-dessus de la surface.</li>
+      <li><strong>Fibre optique :</strong> la lumière rebondit à l'intérieur de la fibre par réflexion totale interne.</li>
+    </ul>
+
+    <h3>Pour aller plus loin</h3>
+    <p>La lumière peut aussi se <strong>réfracter</strong> (changer de direction en changeant de milieu, comme dans un prisme).
+       C'est ce phénomène qui crée les arcs-en-ciel et décompose la lumière blanche en couleurs !</p>
+  </div>
+</div>
+
+<!-- Conteneur de toasts -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+/* ============================================================
+   ÉTOILES ANIMÉES
+   ============================================================ */
+(function() {
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  let W, H, stars = [];
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    stars = [];
+    const n = Math.floor(W * H / 5000);
+    for (let i = 0; i < n; i++) {
+      stars.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 1.2 + 0.2,
+        a: Math.random(),
+        s: (Math.random() - 0.5) * 0.3
+      });
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    for (const s of stars) {
+      s.a += s.s * 0.02;
+      if (s.a < 0.1 || s.a > 1) s.s *= -1;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200,220,255,${s.a.toFixed(2)})`;
+      ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  draw();
+})();
+
+/* ============================================================
+   SON (Web Audio API)
+   ============================================================ */
+const Audio = (function() {
+  let ctx = null, muted = localStorage.getItem('laser_muted') === '1';
+
+  function getCtx() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    return ctx;
+  }
+
+  function updateMuteBtn() {
+    document.getElementById('btn-mute').textContent = muted ? '🔇' : '🔊';
+  }
+  updateMuteBtn();
+
+  function playClick() {
+    if (muted) return;
+    try {
+      const ac = getCtx();
+      const buf = ac.createBuffer(1, ac.sampleRate * 0.04, ac.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+      const src = ac.createBufferSource();
+      src.buffer = buf;
+      const gain = ac.createGain();
+      gain.gain.value = 0.25;
+      src.connect(gain); gain.connect(ac.destination);
+      src.start();
+    } catch(e) {}
+  }
+
+  function playWin() {
+    if (muted) return;
+    try {
+      const ac = getCtx();
+      const notes = [523, 659, 784, 1047]; // Do Mi Sol Do
+      notes.forEach((freq, i) => {
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.frequency.value = freq;
+        osc.type = 'triangle';
+        gain.gain.setValueAtTime(0, ac.currentTime + i * 0.12);
+        gain.gain.linearRampToValueAtTime(0.3, ac.currentTime + i * 0.12 + 0.04);
+        gain.gain.linearRampToValueAtTime(0, ac.currentTime + i * 0.12 + 0.18);
+        osc.connect(gain); gain.connect(ac.destination);
+        osc.start(ac.currentTime + i * 0.12);
+        osc.stop(ac.currentTime + i * 0.12 + 0.2);
+      });
+    } catch(e) {}
+  }
+
+  function playError() {
+    if (muted) return;
+    try {
+      const ac = getCtx();
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.frequency.value = 180;
+      osc.type = 'sawtooth';
+      gain.gain.setValueAtTime(0.2, ac.currentTime);
+      gain.gain.linearRampToValueAtTime(0, ac.currentTime + 0.25);
+      osc.connect(gain); gain.connect(ac.destination);
+      osc.start(); osc.stop(ac.currentTime + 0.25);
+    } catch(e) {}
+  }
+
+  function toggleMute() {
+    muted = !muted;
+    localStorage.setItem('laser_muted', muted ? '1' : '0');
+    updateMuteBtn();
+  }
+
+  return { playClick, playWin, playError, toggleMute };
+})();
+
+/* ============================================================
+   DÉFINITION DES 30 NIVEAUX
+   Format : { size, source:{r,c,dir}, target:{r,c}, fixedMirrors:[{r,c,type:'SLASH'|'BACK'}] }
+   dir = 'RIGHT'|'DOWN'|'LEFT'|'UP'
+   SLASH = miroir /      BACK = miroir \
+   ============================================================ */
+const LEVELS = [
+  /* --- Niveaux 1-5 : 4×4, 1 miroir à placer --- */
+  // N1 : source haut-gauche → droite, cible bas-droite (col 1, row 3)
+  { size:4, source:{r:0,c:0,dir:'RIGHT'}, target:{r:3,c:1} },
+  // N2 : source haut-droite → bas, cible milieu-gauche
+  { size:4, source:{r:0,c:3,dir:'DOWN'}, target:{r:2,c:0} },
+  // N3 : source bas-droite → haut, cible haut (row 0 col 1)
+  { size:4, source:{r:3,c:3,dir:'UP'}, target:{r:0,c:1} },
+  // N4 : source gauche milieu → droite, cible bas-droite
+  { size:4, source:{r:1,c:0,dir:'RIGHT'}, target:{r:3,c:3} },
+  // N5 : source haut milieu → bas, cible bas-gauche
+  { size:4, source:{r:0,c:2,dir:'DOWN'}, target:{r:3,c:0} },
+
+  /* --- Niveaux 6-10 : 5×5, 2 miroirs à placer --- */
+  // N6 : haut-gauche → droite, cible bas-droite
+  { size:5, source:{r:0,c:0,dir:'RIGHT'}, target:{r:4,c:4} },
+  // N7 : haut-droite → bas, cible bas-gauche
+  { size:5, source:{r:0,c:4,dir:'DOWN'}, target:{r:4,c:0} },
+  // N8 : milieu-gauche → droite, cible haut milieu
+  { size:5, source:{r:2,c:0,dir:'RIGHT'}, target:{r:0,c:2} },
+  // N9 : bas-milieu → haut, cible milieu-droite
+  { size:5, source:{r:4,c:2,dir:'UP'}, target:{r:1,c:4} },
+  // N10 : haut gauche+1 → bas, cible milieu-droite
+  { size:5, source:{r:0,c:1,dir:'DOWN'}, target:{r:3,c:4} },
+
+  /* --- Niveaux 11-15 : 6×6, 2-3 miroirs --- */
+  // N11
+  { size:6, source:{r:0,c:0,dir:'RIGHT'}, target:{r:5,c:5} },
+  // N12 : diagonale inverse
+  { size:6, source:{r:0,c:5,dir:'DOWN'}, target:{r:5,c:0} },
+  // N13
+  { size:6, source:{r:3,c:0,dir:'RIGHT'}, target:{r:0,c:3} },
+  // N14
+  { size:6, source:{r:5,c:3,dir:'UP'}, target:{r:2,c:5} },
+  // N15
+  { size:6, source:{r:0,c:2,dir:'DOWN'}, target:{r:4,c:5} },
+
+  /* --- Niveaux 16-20 : 6×6 avec miroirs fixes --- */
+  // N16 : 1 miroir fixe SLASH en (2,2), joueur doit ajouter 2 miroirs
+  { size:6, source:{r:0,c:0,dir:'RIGHT'}, target:{r:5,c:5},
+    fixedMirrors:[{r:2,c:2,type:'SLASH'}] },
+  // N17 : miroir fixe BACK en (1,4)
+  { size:6, source:{r:0,c:4,dir:'DOWN'}, target:{r:5,c:0},
+    fixedMirrors:[{r:1,c:4,type:'BACK'}] },
+  // N18 : miroir fixe SLASH en (3,3)
+  { size:6, source:{r:3,c:0,dir:'RIGHT'}, target:{r:0,c:5},
+    fixedMirrors:[{r:3,c:3,type:'SLASH'}] },
+  // N19 : deux miroirs fixes
+  { size:6, source:{r:0,c:0,dir:'RIGHT'}, target:{r:4,c:3},
+    fixedMirrors:[{r:0,c:3,type:'BACK'},{r:2,c:3,type:'SLASH'}] },
+  // N20
+  { size:6, source:{r:5,c:0,dir:'UP'}, target:{r:0,c:5},
+    fixedMirrors:[{r:2,c:0,type:'SLASH'},{r:2,c:5,type:'BACK'}] },
+
+  /* --- Niveaux 21-25 : 7×7, 3-4 miroirs --- */
+  // N21
+  { size:7, source:{r:0,c:0,dir:'RIGHT'}, target:{r:6,c:6} },
+  // N22
+  { size:7, source:{r:0,c:6,dir:'DOWN'}, target:{r:6,c:0} },
+  // N23 : source milieu-gauche
+  { size:7, source:{r:3,c:0,dir:'RIGHT'}, target:{r:0,c:6} },
+  // N24
+  { size:7, source:{r:6,c:3,dir:'UP'}, target:{r:0,c:6} },
+  // N25 : avec miroir fixe
+  { size:7, source:{r:0,c:0,dir:'RIGHT'}, target:{r:6,c:4},
+    fixedMirrors:[{r:0,c:4,type:'BACK'},{r:4,c:4,type:'SLASH'}] },
+
+  /* --- Niveaux 26-30 : 8×8, 4-5 miroirs --- */
+  // N26
+  { size:8, source:{r:0,c:0,dir:'RIGHT'}, target:{r:7,c:7} },
+  // N27
+  { size:8, source:{r:0,c:7,dir:'DOWN'}, target:{r:7,c:0} },
+  // N28 : chemin en zigzag
+  { size:8, source:{r:4,c:0,dir:'RIGHT'}, target:{r:0,c:7} },
+  // N29 : miroir fixe + chemin complexe
+  { size:8, source:{r:0,c:0,dir:'RIGHT'}, target:{r:7,c:5},
+    fixedMirrors:[{r:0,c:4,type:'BACK'},{r:4,c:4,type:'SLASH'},{r:4,c:7,type:'BACK'}] },
+  // N30 : niveau ultime
+  { size:8, source:{r:0,c:0,dir:'RIGHT'}, target:{r:7,c:7},
+    fixedMirrors:[{r:0,c:3,type:'BACK'},{r:3,c:3,type:'SLASH'},{r:3,c:6,type:'BACK'},{r:6,c:6,type:'SLASH'}] },
+];
+
+/* ============================================================
+   ÉTAT DU JEU
+   ============================================================ */
+let currentLevel = 0; // index (0-based)
+let grid = [];        // grille : 'EMPTY' | 'SLASH' | 'BACK' | 'SOURCE' | 'TARGET' | 'FIXED_SLASH' | 'FIXED_BACK'
+let won = false;
+let startTime = null;
+let hintStep = 0;     // 0=pas d'indice, 1=indice affiché
+let maxProgress = parseInt(localStorage.getItem('laser_progress') || '0');
+
+/* Badges */
+const BADGES = {
+  FIRST_RAY:       { id:'FIRST_RAY',    icon:'🔴', name:'Premier Rayon',    desc:'Compléter le niveau 1' },
+  MIRROR_MASTER:   { id:'MIRROR_MASTER',icon:'🪞', name:'Maître Miroir',    desc:'Compléter 10 niveaux' },
+  SPEED_RUNNER:    { id:'SPEED_RUNNER', icon:'⚡', name:'Speed Runner',     desc:'Compléter en moins de 5s' },
+  OPTICIAN:        { id:'OPTICIAN',     icon:'🎓', name:'Opticien',         desc:'Compléter les 30 niveaux' },
+  PERFECTIONIST:   { id:'PERFECTIONIST',icon:'🔄', name:'Perfectionniste',  desc:'Minimum de miroirs exact' },
+};
+let unlockedBadges = new Set(JSON.parse(localStorage.getItem('laser_badges') || '[]'));
+
+/* ============================================================
+   CANVAS
+   ============================================================ */
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+let cellSize = 60; // recalculé
+
+function resizeCanvas() {
+  const wrap = document.getElementById('canvas-wrap');
+  const sz = wrap.getBoundingClientRect().width;
+  canvas.width = sz * window.devicePixelRatio;
+  canvas.height = sz * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  canvas.style.width = sz + 'px';
+  canvas.style.height = sz + 'px';
+  const lvl = LEVELS[currentLevel];
+  cellSize = sz / lvl.size;
+  render();
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+/* ============================================================
+   INITIALISATION D'UN NIVEAU
+   ============================================================ */
+function initLevel(idx) {
+  currentLevel = idx;
+  won = false;
+  hintStep = 0;
+  startTime = Date.now();
+
+  const lvl = LEVELS[idx];
+  const N = lvl.size;
+
+  // Initialiser la grille vide
+  grid = [];
+  for (let r = 0; r < N; r++) {
+    grid.push([]);
+    for (let c = 0; c < N; c++) {
+      grid[r].push('EMPTY');
+    }
+  }
+
+  // Placer source et cible
+  grid[lvl.source.r][lvl.source.c] = 'SOURCE';
+  grid[lvl.target.r][lvl.target.c] = 'TARGET';
+
+  // Placer miroirs fixes
+  if (lvl.fixedMirrors) {
+    for (const m of lvl.fixedMirrors) {
+      grid[m.r][m.c] = 'FIXED_' + m.type; // 'FIXED_SLASH' ou 'FIXED_BACK'
+    }
+  }
+
+  // UI
+  document.getElementById('lvl-num').textContent = idx + 1;
+  document.getElementById('btn-prev').disabled = idx === 0;
+  document.getElementById('btn-next').disabled = true;
+  setStatus('Guide le laser jusqu\'à la cible !', '');
+  updateMirrorCounter();
+
+  resizeCanvas();
+}
+
+/* ============================================================
+   MISE À JOUR DU COMPTEUR DE MIROIRS
+   ============================================================ */
+function updateMirrorCounter() {
+  let count = 0;
+  const N = LEVELS[currentLevel].size;
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++)
+      if (grid[r][c] === 'SLASH' || grid[r][c] === 'BACK') count++;
+  document.getElementById('mirror-counter').textContent = `Miroirs placés : ${count}`;
+  return count;
+}
+
+/* ============================================================
+   ALGORITHME DE RAY-TRACING
+   Retourne la liste des segments du rayon : [{r,c,dir}]
+   et si la cible a été touchée.
+   ============================================================ */
+function traceRay() {
+  const lvl = LEVELS[currentLevel];
+  const N = lvl.size;
+  const dr = {RIGHT:0, LEFT:0, UP:-1, DOWN:1};
+  const dc = {RIGHT:1, LEFT:-1, UP:0, DOWN:0};
+  const mirrorSlash  = {RIGHT:'UP', UP:'RIGHT', LEFT:'DOWN', DOWN:'LEFT'};
+  const mirrorBack   = {RIGHT:'DOWN', DOWN:'RIGHT', LEFT:'UP', UP:'LEFT'};
+
+  let r = lvl.source.r;
+  let c = lvl.source.c;
+  let dir = lvl.source.dir;
+  const path = []; // [{r,c}] cases traversées
+  let targetHit = false;
+  const MAX = 200;
+  let steps = 0;
+
+  while (steps++ < MAX) {
+    // Avancer d'une cellule
+    r += dr[dir];
+    c += dc[dir];
+
+    // Hors grille → stopper
+    if (r < 0 || r >= N || c < 0 || c >= N) break;
+
+    path.push({r, c});
+
+    const cell = grid[r][c];
+
+    // Cible atteinte
+    if (cell === 'TARGET') { targetHit = true; break; }
+
+    // Miroirs
+    if (cell === 'SLASH' || cell === 'FIXED_SLASH') {
+      dir = mirrorSlash[dir];
+    } else if (cell === 'BACK' || cell === 'FIXED_BACK') {
+      dir = mirrorBack[dir];
+    }
+    // SOURCE sur le chemin (boucle) → stopper
+    else if (cell === 'SOURCE') { break; }
+  }
+
+  return { path, targetHit, loop: steps >= MAX };
+}
+
+/* ============================================================
+   RENDU CANVAS
+   ============================================================ */
+function render() {
+  const lvl = LEVELS[currentLevel];
+  const N = lvl.size;
+  const cs = cellSize;
+  const w = cs * N;
+  ctx.clearRect(0, 0, w, w);
+
+  // Tracer le rayon en premier (dessous)
+  const { path, targetHit, loop } = traceRay();
+
+  // --- Fond global ---
+  ctx.fillStyle = '#050510';
+  ctx.fillRect(0, 0, w, w);
+
+  // --- Grille ---
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const x = c * cs;
+      const y = r * cs;
+
+      // Fond cellule
+      ctx.fillStyle = (r + c) % 2 === 0 ? 'rgba(20,28,56,0.6)' : 'rgba(10,14,32,0.6)';
+      ctx.fillRect(x + 0.5, y + 0.5, cs - 1, cs - 1);
+
+      // Lignes de grille
+      ctx.strokeStyle = 'rgba(255,107,53,0.10)';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(x + 0.5, y + 0.5, cs - 1, cs - 1);
+    }
+  }
+
+  // --- Rayon laser ---
+  if (path.length > 0) {
+    ctx.save();
+    ctx.strokeStyle = '#FF2222';
+    ctx.lineWidth = loop ? 3 : 3;
+    ctx.shadowColor = '#FF0000';
+    ctx.shadowBlur = 12;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+
+    // Point de départ = centre de la source
+    const src = lvl.source;
+    ctx.moveTo(src.c * cs + cs / 2, src.r * cs + cs / 2);
+
+    for (const p of path) {
+      ctx.lineTo(p.c * cs + cs / 2, p.r * cs + cs / 2);
+    }
+    ctx.stroke();
+
+    // Seconde passe plus fine / brillante
+    ctx.shadowBlur = 4;
+    ctx.strokeStyle = '#FF8888';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // --- Cellules (dessus du rayon) ---
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const x = c * cs;
+      const y = r * cs;
+      const cell = grid[r][c];
+      const cx = x + cs / 2;
+      const cy = y + cs / 2;
+      const pad = cs * 0.14;
+
+      if (cell === 'SOURCE') {
+        drawSource(ctx, cx, cy, cs, lvl.source.dir);
+      } else if (cell === 'TARGET') {
+        drawTarget(ctx, cx, cy, cs, targetHit);
+      } else if (cell === 'SLASH' || cell === 'FIXED_SLASH') {
+        drawMirror(ctx, x, y, cs, 'SLASH', cell === 'FIXED_SLASH');
+      } else if (cell === 'BACK' || cell === 'FIXED_BACK') {
+        drawMirror(ctx, x, y, cs, 'BACK', cell === 'FIXED_BACK');
+      }
+    }
+  }
+}
+
+/* --- Dessin source laser --- */
+function drawSource(ctx, cx, cy, cs, dir) {
+  const r = cs * 0.28;
+  ctx.save();
+  // Halo
+  const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.8);
+  grd.addColorStop(0, 'rgba(255,50,0,0.55)');
+  grd.addColorStop(1, 'rgba(255,50,0,0)');
+  ctx.fillStyle = grd;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 1.8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Cercle principal
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = '#cc2200';
+  ctx.shadowColor = '#ff4400';
+  ctx.shadowBlur = 14;
+  ctx.fill();
+  ctx.strokeStyle = '#ff6633';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Flèche de direction
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#ffddcc';
+  const aw = cs * 0.12;
+  const al = cs * 0.18;
+  ctx.save();
+  ctx.translate(cx, cy);
+  const angles = {RIGHT:0, DOWN:Math.PI/2, LEFT:Math.PI, UP:-Math.PI/2};
+  ctx.rotate(angles[dir]);
+  ctx.beginPath();
+  ctx.moveTo(r * 0.3, 0);
+  ctx.lineTo(r * 0.3 + al, 0);
+  ctx.lineTo(r * 0.3 + al - aw, -aw);
+  ctx.lineTo(r * 0.3 + al, 0);
+  ctx.lineTo(r * 0.3 + al - aw, aw);
+  ctx.stroke();
+  ctx.restore();
+  ctx.restore();
+}
+
+/* --- Dessin cible --- */
+let targetPhase = 0;
+function drawTarget(ctx, cx, cy, cs, hit) {
+  const r = cs * 0.26;
+  ctx.save();
+  if (hit) {
+    // Vert brillant
+    const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 2);
+    grd.addColorStop(0, 'rgba(46,213,115,0.7)');
+    grd.addColorStop(1, 'rgba(46,213,115,0)');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = '#2ed573';
+    ctx.shadowColor = '#00ff77';
+    ctx.shadowBlur = 20;
+    ctx.fill();
+    ctx.strokeStyle = '#aaffcc';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // Croix cible
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.5, cy); ctx.lineTo(cx + r * 0.5, cy);
+    ctx.moveTo(cx, cy - r * 0.5); ctx.lineTo(cx, cy + r * 0.5);
+    ctx.stroke();
+  } else {
+    // Or clignotant
+    const pulse = (Math.sin(targetPhase) * 0.3 + 0.7);
+    const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.6);
+    grd.addColorStop(0, `rgba(255,215,0,${(0.4 * pulse).toFixed(2)})`);
+    grd.addColorStop(1, 'rgba(255,180,0,0)');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 1.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(200,140,0,${(0.6 + pulse * 0.4).toFixed(2)})`;
+    ctx.shadowColor = '#FFD700';
+    ctx.shadowBlur = 10 + pulse * 8;
+    ctx.fill();
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Cercle intérieur
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.45, 0, Math.PI * 2);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.shadowBlur = 0;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* --- Dessin miroir --- */
+function drawMirror(ctx, x, y, cs, type, isFixed) {
+  const pad = cs * 0.15;
+  const x1 = x + pad, y1 = y + pad;
+  const x2 = x + cs - pad, y2 = y + cs - pad;
+
+  ctx.save();
+  // Fond miroir
+  ctx.fillStyle = isFixed
+    ? 'rgba(0,201,255,0.10)'
+    : 'rgba(255,255,255,0.06)';
+  ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2);
+
+  ctx.shadowColor = isFixed ? '#00C9FF' : '#ffffff';
+  ctx.shadowBlur = isFixed ? 10 : 7;
+  ctx.strokeStyle = isFixed ? '#00C9FF' : '#ddddee';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+
+  if (type === 'SLASH') {
+    // Miroir / : bas-gauche → haut-droite
+    ctx.moveTo(x1, y2);
+    ctx.lineTo(x2, y1);
+  } else {
+    // Miroir \ : haut-gauche → bas-droite
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+  }
+  ctx.stroke();
+
+  // Petite étiquette texte
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = isFixed ? '#00C9FF' : 'rgba(255,255,255,0.5)';
+  ctx.font = `${Math.max(10, cs * 0.18)}px monospace`;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText(type === 'SLASH' ? '/' : '\\', x + cs - 4, y + cs - 2);
+
+  if (isFixed) {
+    // Badge "fixe"
+    ctx.fillStyle = 'rgba(0,201,255,0.18)';
+    ctx.beginPath();
+    ctx.arc(x + cs - 8, y + 8, 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ============================================================
+   ANIMATION (boucle pour la cible clignotante)
+   ============================================================ */
+let animFrame;
+function animLoop() {
+  targetPhase += 0.06;
+  render();
+  animFrame = requestAnimationFrame(animLoop);
+}
+animLoop();
+
+/* ============================================================
+   INTERACTION : CLIC / TAP SUR LE CANVAS
+   ============================================================ */
+canvas.addEventListener('pointerdown', function(e) {
+  if (won) return;
+  e.preventDefault();
+
+  const rect = canvas.getBoundingClientRect();
+  const px = (e.clientX - rect.left);
+  const py = (e.clientY - rect.top);
+
+  const lvl = LEVELS[currentLevel];
+  const N = lvl.size;
+  // Taille logique du canvas (px CSS)
+  const canvasCSSSize = rect.width;
+  const cs = canvasCSSSize / N;
+
+  const col = Math.floor(px / cs);
+  const row = Math.floor(py / cs);
+
+  if (row < 0 || row >= N || col < 0 || col >= N) return;
+
+  const cell = grid[row][col];
+
+  // Cas des miroirs fixes → ignorer
+  if (cell === 'FIXED_SLASH' || cell === 'FIXED_BACK') return;
+  // Source et cible → ignorer
+  if (cell === 'SOURCE' || cell === 'TARGET') return;
+
+  // Cycle : EMPTY → SLASH → BACK → EMPTY
+  if (cell === 'EMPTY') {
+    grid[row][col] = 'SLASH';
+  } else if (cell === 'SLASH') {
+    grid[row][col] = 'BACK';
+  } else if (cell === 'BACK') {
+    grid[row][col] = 'EMPTY';
+  }
+
+  Audio.playClick();
+  hintStep = 0; // réinitialiser l'indice
+  setStatus('Guide le laser jusqu\'à la cible !', '');
+  updateMirrorCounter();
+  checkWin();
+});
+
+/* ============================================================
+   VÉRIFICATION VICTOIRE
+   ============================================================ */
+function checkWin() {
+  const { targetHit, loop } = traceRay();
+
+  if (loop) {
+    Audio.playError();
+    setStatus('⚠️ Boucle infinie détectée !', 'hint');
+    return;
+  }
+
+  if (targetHit) {
+    won = true;
+    const elapsed = (Date.now() - startTime) / 1000;
+    const mirrorCount = updateMirrorCounter();
+
+    Audio.playWin();
+    setStatus('🎉 Niveau réussi ! Bravo !', 'win');
+    document.getElementById('btn-next').disabled = currentLevel >= LEVELS.length - 1;
+
+    // Mise à jour progression
+    if (currentLevel + 1 > maxProgress) {
+      maxProgress = currentLevel + 1;
+      localStorage.setItem('laser_progress', maxProgress);
+    }
+
+    // Badges
+    if (currentLevel === 0) unlockBadge('FIRST_RAY');
+    if (maxProgress >= 10) unlockBadge('MIRROR_MASTER');
+    if (elapsed < 5) unlockBadge('SPEED_RUNNER');
+    if (maxProgress >= 30) unlockBadge('OPTICIAN');
+
+    // Perfectionniste : miroirs placés = miroirs minimum théorique
+    // Pour les niveaux 1-5 : 1 miroir ; 6-15 : 2 ; 16-25 : 2 ; 26-30 : 4
+    const minMirrors = getMinMirrors(currentLevel);
+    if (mirrorCount <= minMirrors && mirrorCount > 0) {
+      unlockBadge('PERFECTIONIST');
+    }
+  }
+}
+
+function getMinMirrors(idx) {
+  if (idx < 5)  return 1;
+  if (idx < 15) return 2;
+  if (idx < 20) return 2; // certains miroirs déjà fixes
+  if (idx < 25) return 3;
+  return 4;
+}
+
+/* ============================================================
+   STATUS MESSAGE
+   ============================================================ */
+function setStatus(msg, cls) {
+  const el = document.getElementById('status-msg');
+  el.textContent = msg;
+  el.className = 'status-msg' + (cls ? ' ' + cls : '');
+}
+
+/* ============================================================
+   BADGES
+   ============================================================ */
+function unlockBadge(id) {
+  if (unlockedBadges.has(id)) return;
+  unlockedBadges.add(id);
+  localStorage.setItem('laser_badges', JSON.stringify([...unlockedBadges]));
+  const b = BADGES[id];
+  showToast(`${b.icon} Badge débloqué : ${b.name} — ${b.desc}`);
+}
+
+function showToast(msg) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3200);
+}
+
+/* ============================================================
+   BOUTONS
+   ============================================================ */
+document.getElementById('btn-reset').addEventListener('click', () => {
+  initLevel(currentLevel);
+});
+
+document.getElementById('btn-prev').addEventListener('click', () => {
+  if (currentLevel > 0) initLevel(currentLevel - 1);
+});
+
+document.getElementById('btn-next').addEventListener('click', () => {
+  if (currentLevel < LEVELS.length - 1) initLevel(currentLevel + 1);
+});
+
+document.getElementById('btn-mute').addEventListener('click', () => {
+  Audio.toggleMute();
+});
+
+/* --- Indice --- */
+document.getElementById('btn-hint').addEventListener('click', () => {
+  if (won) return;
+  hintStep++;
+  const lvl = LEVELS[currentLevel];
+  const hints = getHints(currentLevel);
+  if (hintStep <= hints.length) {
+    setStatus('💡 Indice : ' + hints[hintStep - 1], 'hint');
+  } else {
+    setStatus('💡 Essaie de suivre le rayon pas à pas avec les yeux !', 'hint');
+  }
+});
+
+function getHints(idx) {
+  const lvl = LEVELS[idx];
+  const hints = [
+    `La source émet vers ${dirFr(lvl.source.dir)}. Place un miroir sur son chemin.`,
+  ];
+  if (idx >= 5)  hints.push('Il te faut 2 miroirs pour faire 2 virages.');
+  if (idx >= 15) hints.push('Les miroirs cyan sont fixes, tu ne peux pas les enlever.');
+  if (idx >= 20) hints.push('Essaie de décomposer le chemin : d\'abord rejoindre la même colonne OU la même ligne que la cible.');
+  return hints;
+}
+
+function dirFr(d) {
+  return {RIGHT:'la droite', LEFT:'la gauche', UP:'le haut', DOWN:'le bas'}[d];
+}
+
+/* --- App switcher --- */
+const appBtn = document.getElementById('app-btn');
+const appMenu = document.getElementById('app-menu');
+appBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  appMenu.classList.toggle('open');
+});
+document.addEventListener('click', () => appMenu.classList.remove('open'));
+
+/* --- Pédago toggle --- */
+const pedaBtn = document.getElementById('pedago-toggle');
+const pedaBody = document.getElementById('pedago-body');
+pedaBtn.addEventListener('click', () => {
+  const open = pedaBody.classList.toggle('open');
+  pedaBtn.classList.toggle('open', open);
+});
+
+/* ============================================================
+   LANCEMENT
+   ============================================================ */
+// Reprendre au niveau max atteint (ou 0)
+const savedLevel = Math.min(maxProgress, LEVELS.length - 1);
+initLevel(savedLevel);
+</script>
+</body>
+</html>

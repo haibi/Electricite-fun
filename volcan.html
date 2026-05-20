@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌋 Volcan — Electrolab</title>
+<style>
+/* ==================== VARIABLES & BASE ==================== */
+:root {
+  --bg: #0a0a1a;
+  --bg-deep: #050510;
+  --panel: rgba(20, 28, 56, 0.72);
+  --panel-solid: #131a33;
+  --border: rgba(255, 107, 53, 0.25);
+  --electric: #FF6B35;
+  --neon: #00C9FF;
+  --violet: #39FF14;
+  --red: #ff4757;
+  --green: #2ed573;
+  --text: #e8eef9;
+  --muted: #8892b0;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Fond étoilé fixe */
+#stars {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ==================== TOPBAR ==================== */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.2rem;
+  height: 56px;
+  background: rgba(5, 5, 16, 0.92);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0.01em;
+}
+
+.logo-icon {
+  font-size: 1.4rem;
+}
+
+.logo-text {
+  background: linear-gradient(135deg, #FF6B35, #ff4757);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Bouton muet */
+#btn-mute {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0.3rem 0.7rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+#btn-mute:hover { background: rgba(255,107,53,0.15); }
+
+/* App-switcher */
+.app-switcher { position: relative; }
+
+#btn-apps {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, border-color 0.2s;
+}
+#btn-apps:hover { background: rgba(255,107,53,0.15); border-color: var(--electric); }
+
+.apps-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.5rem;
+  min-width: 200px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  z-index: 200;
+}
+.apps-menu.open { display: block; }
+
+.apps-menu a {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.92rem;
+  transition: background 0.15s;
+}
+.apps-menu a:hover { background: rgba(255,107,53,0.12); }
+.apps-menu a.current {
+  background: rgba(255,107,53,0.18);
+  color: var(--electric);
+  font-weight: 600;
+}
+
+/* ==================== LAYOUT PRINCIPAL ==================== */
+.main-content {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* ==================== CANVAS VOLCAN ==================== */
+.canvas-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 0 40px rgba(255,71,87,0.15), 0 0 80px rgba(255,71,87,0.05);
+}
+
+#canvas-volcan {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #0d0016;
+}
+
+/* Label type éruption sur le canvas */
+.eruption-label {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(5,5,16,0.75);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.3rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--electric);
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  transition: color 0.4s;
+  pointer-events: none;
+}
+
+/* ==================== PANNEAU CONTROLES ==================== */
+.controls-panel {
+  width: 100%;
+  max-width: 640px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.4rem 1.6rem;
+  backdrop-filter: blur(12px);
+}
+
+.controls-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1.2rem;
+}
+
+.sliders-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.2rem;
+}
+
+.slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.slider-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.slider-value {
+  font-size: 0.85rem;
+  color: var(--electric);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 100px;
+  text-align: right;
+}
+
+.slider-limits {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 0.1rem;
+}
+
+/* Slider custom */
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,107,53,0.18);
+  outline: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--electric);
+  cursor: pointer;
+  border: 2px solid rgba(255,255,255,0.25);
+  box-shadow: 0 0 8px rgba(255,107,53,0.6);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 14px rgba(255,107,53,0.9);
+}
+input[type=range]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--electric);
+  cursor: pointer;
+  border: 2px solid rgba(255,255,255,0.25);
+  box-shadow: 0 0 8px rgba(255,107,53,0.6);
+}
+
+/* ==================== BOUTONS ACTION ==================== */
+.buttons-row {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 640px;
+}
+
+.btn-eruption {
+  background: linear-gradient(135deg, #ff4757, #FF6B35);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 1rem 2.4rem;
+  font-size: 1.2rem;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  box-shadow: 0 0 20px rgba(255,71,87,0.4), 0 4px 16px rgba(0,0,0,0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+  flex: 1;
+  min-width: 180px;
+}
+.btn-eruption:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 35px rgba(255,71,87,0.6), 0 6px 20px rgba(0,0,0,0.5);
+}
+.btn-eruption:active { transform: scale(0.97); }
+.btn-eruption.pulsing {
+  animation: eruption-pulse 0.6s ease-in-out infinite alternate;
+}
+@keyframes eruption-pulse {
+  from { box-shadow: 0 0 20px rgba(255,71,87,0.4), 0 4px 16px rgba(0,0,0,0.4); }
+  to   { box-shadow: 0 0 50px rgba(255,71,87,0.9), 0 0 80px rgba(255,107,53,0.3); }
+}
+
+.btn-stop {
+  background: var(--panel);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem 1.8rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  min-width: 130px;
+}
+.btn-stop:hover { background: rgba(255,71,87,0.12); color: var(--red); border-color: var(--red); }
+
+/* ==================== DISPLAY TYPE ERUPTION ==================== */
+.eruption-display {
+  width: 100%;
+  max-width: 640px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  backdrop-filter: blur(8px);
+}
+
+.eruption-type-icon { font-size: 2rem; transition: transform 0.3s; }
+.eruption-type-icon.shake { animation: shake 0.5s ease; }
+@keyframes shake {
+  0%,100% { transform: translateX(0) rotate(0); }
+  20% { transform: translateX(-4px) rotate(-3deg); }
+  40% { transform: translateX(4px) rotate(3deg); }
+  60% { transform: translateX(-3px) rotate(-2deg); }
+  80% { transform: translateX(3px) rotate(2deg); }
+}
+
+.eruption-type-info { flex: 1; }
+.eruption-type-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--electric);
+  margin-bottom: 0.2rem;
+}
+.eruption-type-desc {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* Indicateurs visuels */
+.eruption-indicators {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.indicator {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  font-weight: 600;
+  border: 1px solid currentColor;
+}
+.ind-danger { color: var(--red); }
+.ind-safe   { color: var(--green); }
+.ind-warn   { color: #ffa502; }
+
+/* ==================== BADGES ==================== */
+.badges-section {
+  width: 100%;
+  max-width: 640px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.2rem 1.4rem;
+  backdrop-filter: blur(8px);
+}
+
+.badges-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+
+.badges-grid {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255,107,53,0.2);
+  background: rgba(255,107,53,0.05);
+  min-width: 80px;
+  text-align: center;
+  transition: all 0.3s;
+  filter: grayscale(1) opacity(0.4);
+}
+.badge.unlocked {
+  filter: none;
+  border-color: var(--electric);
+  background: rgba(255,107,53,0.12);
+  box-shadow: 0 0 12px rgba(255,107,53,0.2);
+}
+.badge-icon { font-size: 1.5rem; }
+.badge-name { font-size: 0.68rem; font-weight: 600; color: var(--muted); line-height: 1.2; }
+.badge.unlocked .badge-name { color: var(--text); }
+
+/* Toast de badge */
+.toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  pointer-events: none;
+}
+.toast {
+  background: var(--panel-solid);
+  border: 1px solid var(--electric);
+  border-radius: 12px;
+  padding: 0.8rem 1.2rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  box-shadow: 0 4px 20px rgba(255,107,53,0.3);
+  animation: toast-in 0.3s ease, toast-out 0.3s ease 2.7s forwards;
+  max-width: 260px;
+}
+@keyframes toast-in  { from { opacity: 0; transform: translateY(20px); } to { opacity:1; transform:none; } }
+@keyframes toast-out { to   { opacity: 0; transform: translateY(-10px); } }
+
+/* ==================== SECTION PÉDAGO ==================== */
+.pedago {
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pedago h2 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--electric);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pedago-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.2rem 1.4rem;
+  backdrop-filter: blur(8px);
+}
+
+.pedago-card h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--neon);
+  margin-bottom: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pedago-card p {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+.pedago-card p:last-child { margin-bottom: 0; }
+
+.pedago-card strong { color: var(--text); }
+
+/* Tableau types éruption */
+.eruption-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+.eruption-table th, .eruption-table td {
+  padding: 0.5rem 0.7rem;
+  border: 1px solid rgba(255,107,53,0.15);
+  text-align: center;
+}
+.eruption-table th {
+  background: rgba(255,107,53,0.1);
+  color: var(--electric);
+  font-weight: 700;
+  text-align: left;
+}
+.eruption-table tr:nth-child(even) { background: rgba(255,107,53,0.04); }
+.eruption-table td:first-child { text-align: left; font-weight: 600; color: var(--text); }
+
+.highlight-text { color: var(--electric); font-weight: 700; }
+.highlight-blue  { color: var(--neon); font-weight: 700; }
+.highlight-green { color: var(--green); font-weight: 700; }
+
+/* ==================== RESPONSIVE ==================== */
+@media (min-width: 600px) {
+  .sliders-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Canvas fond étoilé -->
+<canvas id="stars"></canvas>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="logo">
+    <span class="logo-icon">🌋</span>
+    <span class="logo-text">Volcan</span>
+  </div>
+  <div class="topbar-right">
+    <button id="btn-mute" title="Activer/couper le son">🔊</button>
+    <div class="app-switcher">
+      <button id="btn-apps" title="Changer d'application">+</button>
+      <div class="apps-menu" id="apps-menu">
+        <a href="index.html">⚡ Electrolab</a>
+        <a href="mecanique.html">🚀 Mécanik</a>
+        <a href="solaire.html">🪐 Système Solaire</a>
+        <a href="laser.html">🔴 Laser Maze</a>
+        <a href="reflex.html">🏃 Reflex</a>
+        <a href="volcan.html" class="current">🌋 Volcan</a>
+        <a href="callab.html">🧪 CalLab</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- CONTENU PRINCIPAL -->
+<div class="main-content">
+
+  <!-- Canvas volcan -->
+  <div class="canvas-wrap">
+    <canvas id="canvas-volcan" width="640" height="420"></canvas>
+    <div class="eruption-label" id="eruption-label">🌋 Volcan au repos</div>
+  </div>
+
+  <!-- Panneau de contrôle -->
+  <div class="controls-panel">
+    <div class="controls-title">⚙️ Paramètres du magma</div>
+    <div class="sliders-grid">
+
+      <!-- Température -->
+      <div class="slider-row">
+        <div class="slider-header">
+          <span class="slider-label">🌡️ Température du magma</span>
+          <span class="slider-value" id="val-temp">1050 °C</span>
+        </div>
+        <input type="range" id="slider-temp" min="700" max="1400" value="1050" step="10">
+        <div class="slider-limits"><span>700 °C — Froid</span><span>Intense — 1400 °C</span></div>
+      </div>
+
+      <!-- Viscosité -->
+      <div class="slider-row">
+        <div class="slider-header">
+          <span class="slider-label">🍯 Viscosité</span>
+          <span class="slider-value" id="val-visc">Moyenne</span>
+        </div>
+        <input type="range" id="slider-visc" min="0" max="100" value="50" step="1">
+        <div class="slider-limits"><span>Liquide (basalte)</span><span>(rhyolite) Pâteux</span></div>
+      </div>
+
+      <!-- Gaz dissous -->
+      <div class="slider-row">
+        <div class="slider-header">
+          <span class="slider-label">💨 Gaz dissous</span>
+          <span class="slider-value" id="val-gaz">Moyen</span>
+        </div>
+        <input type="range" id="slider-gaz" min="0" max="100" value="50" step="1">
+        <div class="slider-limits"><span>Faible</span><span>Élevé</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Boutons action -->
+  <div class="buttons-row">
+    <button class="btn-eruption" id="btn-eruption">🌋 ÉRUPTION !</button>
+    <button class="btn-stop" id="btn-stop">⏹ Arrêter</button>
+  </div>
+
+  <!-- Display type éruption -->
+  <div class="eruption-display">
+    <div class="eruption-type-icon" id="eruption-icon">🏔️</div>
+    <div class="eruption-type-info">
+      <div class="eruption-type-name" id="eruption-name">Volcan dormant</div>
+      <div class="eruption-type-desc" id="eruption-desc">Règle les paramètres et déclenche une éruption</div>
+    </div>
+    <div class="eruption-indicators" id="eruption-indicators"></div>
+  </div>
+
+  <!-- Badges -->
+  <div class="badges-section">
+    <div class="badges-title">🏅 Badges débloqués</div>
+    <div class="badges-grid" id="badges-grid">
+      <div class="badge" id="badge-first">
+        <div class="badge-icon">🌋</div>
+        <div class="badge-name">Première Éruption</div>
+      </div>
+      <div class="badge" id="badge-explosive">
+        <div class="badge-icon">💥</div>
+        <div class="badge-name">L'Explosive</div>
+      </div>
+      <div class="badge" id="badge-douce">
+        <div class="badge-icon">🌊</div>
+        <div class="badge-name">La Douce</div>
+      </div>
+      <div class="badge" id="badge-superchaude">
+        <div class="badge-icon">🌡️</div>
+        <div class="badge-name">Superchaude</div>
+      </div>
+      <div class="badge" id="badge-expert">
+        <div class="badge-icon">🧫</div>
+        <div class="badge-name">Géologue Expert</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION PÉDAGO -->
+  <div class="pedago">
+    <h2>🧪 La Science</h2>
+
+    <div class="pedago-card">
+      <h3>🍯 Pourquoi la viscosité change tout</h3>
+      <p>La <strong>viscosité</strong> mesure la résistance d'un fluide à l'écoulement. Une huile est plus visqueuse que l'eau.</p>
+      <p>Dans le magma, c'est la <span class="highlight-text">silice (SiO₂)</span> qui contrôle la viscosité : plus il y en a, plus le magma est épais et collant.</p>
+      <p>Quand le magma est très visqueux, les <span class="highlight-blue">gaz dissous</span> (vapeur d'eau, CO₂, SO₂) ne peuvent pas s'échapper lentement. Ils s'accumulent jusqu'à ce que la pression devienne gigantesque — puis <strong>BOOM</strong> : éruption explosive !</p>
+      <p>Avec un magma fluide, les gaz s'échappent doucement comme les bulles dans l'eau gazeuse ouverte doucement — l'éruption est tranquille.</p>
+    </div>
+
+    <div class="pedago-card">
+      <h3>🌋 Les 4 types d'éruption</h3>
+      <table class="eruption-table">
+        <tr>
+          <th>Type</th>
+          <th>Viscosité</th>
+          <th>Gaz</th>
+          <th>Danger</th>
+        </tr>
+        <tr>
+          <td>🌺 Hawaïenne</td>
+          <td>Très faible</td>
+          <td>Faible</td>
+          <td>Faible</td>
+        </tr>
+        <tr>
+          <td>🔥 Strombolienne</td>
+          <td>Modérée</td>
+          <td>Moyen</td>
+          <td>Moyen</td>
+        </tr>
+        <tr>
+          <td>💣 Vulcanienne</td>
+          <td>Élevée</td>
+          <td>Élevé</td>
+          <td>Élevé</td>
+        </tr>
+        <tr>
+          <td>💥 Plinnienne</td>
+          <td>Très élevée</td>
+          <td>Très élevé</td>
+          <td>Extrême</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="pedago-card">
+      <h3>🪨 Basalte vs Rhyolite</h3>
+      <p>Le <span class="highlight-green">basalte</span> contient environ <strong>50% de SiO₂</strong> → magma fluide → volcans de Hawaii, Islande, fonds océaniques. Laves qui coulent sur des dizaines de kilomètres !</p>
+      <p>La <span class="highlight-text">rhyolite</span> contient jusqu'à <strong>75% de SiO₂</strong> → magma très visqueux → éruptions violentes comme le Vésuve (qui a détruit Pompéi) ou le Pinatubo.</p>
+      <p>La température joue aussi : un magma plus chaud est naturellement moins visqueux, comme une bougie qui fond.</p>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+/* ============================================================
+   ELECTROLAB — VOLCAN SIMULATOR
+   Simulation volcanique interactive pour Evan (13 ans)
+   Code commenté en français
+   ============================================================ */
+
+// ===================== CANVAS ÉTOILES (fond fixe) =====================
+(function initStars() {
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    // Regénérer les étoiles quand on redimensionne
+    stars = [];
+    const count = Math.floor((canvas.width * canvas.height) / 6000);
+    for (let i = 0; i < count; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.2 + 0.3,
+        alpha: Math.random() * 0.7 + 0.2,
+        twinkle: Math.random() * Math.PI * 2 // phase pour scintillement
+      });
+    }
+  }
+
+  function drawStars(t) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      // Scintillement léger
+      const a = s.alpha * (0.7 + 0.3 * Math.sin(t * 0.001 + s.twinkle));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(drawStars);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(drawStars);
+})();
+
+// ===================== APP SWITCHER =====================
+document.getElementById('btn-apps').addEventListener('click', (e) => {
+  e.stopPropagation();
+  document.getElementById('apps-menu').classList.toggle('open');
+});
+document.addEventListener('click', () => {
+  document.getElementById('apps-menu').classList.remove('open');
+});
+
+// ===================== SON (Web Audio API) =====================
+let audioCtx = null;
+let isMuted = localStorage.getItem('volcan_muted') === '1';
+document.getElementById('btn-mute').textContent = isMuted ? '🔇' : '🔊';
+
+function getAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// Son d'éruption effusive : grondement sourd basse fréquence
+function playEffusive() {
+  if (isMuted) return;
+  const ctx = getAudioCtx();
+
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  const filter = ctx.createBiquadFilter();
+
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(38, ctx.currentTime);
+  osc.frequency.linearRampToValueAtTime(45, ctx.currentTime + 1.5);
+  osc.frequency.linearRampToValueAtTime(35, ctx.currentTime + 3);
+
+  filter.type = 'lowpass';
+  filter.frequency.value = 120;
+
+  gain.gain.setValueAtTime(0, ctx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 0.5);
+  gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 2);
+  gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 3.5);
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 3.5);
+}
+
+// Son d'éruption explosive : bang + crépitement
+function playExplosive() {
+  if (isMuted) return;
+  const ctx = getAudioCtx();
+
+  // Bang initial — bruit blanc court
+  const bufferSize = ctx.sampleRate * 0.15;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+  const gainNoise = ctx.createGain();
+  gainNoise.gain.setValueAtTime(0.8, ctx.currentTime);
+  gainNoise.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+  const filterNoise = ctx.createBiquadFilter();
+  filterNoise.type = 'bandpass';
+  filterNoise.frequency.value = 400;
+  filterNoise.Q.value = 0.5;
+  noise.connect(filterNoise);
+  filterNoise.connect(gainNoise);
+  gainNoise.connect(ctx.destination);
+  noise.start(ctx.currentTime);
+
+  // Oscillateur montant puis descendant (grondement d'explosion)
+  const osc = ctx.createOscillator();
+  const gainOsc = ctx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(80, ctx.currentTime + 0.1);
+  osc.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 2);
+  gainOsc.gain.setValueAtTime(0, ctx.currentTime);
+  gainOsc.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.2);
+  gainOsc.gain.linearRampToValueAtTime(0, ctx.currentTime + 2.5);
+  osc.connect(gainOsc);
+  gainOsc.connect(ctx.destination);
+  osc.start(ctx.currentTime + 0.05);
+  osc.stop(ctx.currentTime + 2.5);
+
+  // Crépitements (bruit blanc long avec modulation)
+  const bufCrackle = ctx.createBuffer(1, ctx.sampleRate * 3, ctx.sampleRate);
+  const dataCrackle = bufCrackle.getChannelData(0);
+  for (let i = 0; i < dataCrackle.length; i++) {
+    dataCrackle[i] = Math.random() < 0.01 ? (Math.random() * 2 - 1) * 0.4 : 0;
+  }
+  const crackle = ctx.createBufferSource();
+  crackle.buffer = bufCrackle;
+  const gainCrackle = ctx.createGain();
+  gainCrackle.gain.setValueAtTime(0, ctx.currentTime + 0.1);
+  gainCrackle.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.5);
+  gainCrackle.gain.linearRampToValueAtTime(0, ctx.currentTime + 3);
+  crackle.connect(gainCrackle);
+  gainCrackle.connect(ctx.destination);
+  crackle.start(ctx.currentTime + 0.1);
+}
+
+// Son intermédiaire : strombolien
+function playStrombolian() {
+  if (isMuted) return;
+  const ctx = getAudioCtx();
+  for (let i = 0; i < 3; i++) {
+    const delay = i * 0.7;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(60 + Math.random() * 20, ctx.currentTime + delay);
+    osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + delay + 0.4);
+    gain.gain.setValueAtTime(0, ctx.currentTime + delay);
+    gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + delay + 0.05);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + delay + 0.5);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime + delay);
+    osc.stop(ctx.currentTime + delay + 0.5);
+  }
+}
+
+document.getElementById('btn-mute').addEventListener('click', () => {
+  isMuted = !isMuted;
+  localStorage.setItem('volcan_muted', isMuted ? '1' : '0');
+  document.getElementById('btn-mute').textContent = isMuted ? '🔇' : '🔊';
+});
+
+// ===================== SLIDERS =====================
+const sliderTemp = document.getElementById('slider-temp');
+const sliderVisc = document.getElementById('slider-visc');
+const sliderGaz  = document.getElementById('slider-gaz');
+const valTemp    = document.getElementById('val-temp');
+const valVisc    = document.getElementById('val-visc');
+const valGaz     = document.getElementById('val-gaz');
+
+// Labels viscosité
+function viscLabel(v) {
+  if (v < 20) return 'Très liquide';
+  if (v < 40) return 'Liquide';
+  if (v < 60) return 'Moyenne';
+  if (v < 80) return 'Épaisse';
+  return 'Très pâteuse';
+}
+// Labels gaz
+function gazLabel(v) {
+  if (v < 20) return 'Très faible';
+  if (v < 40) return 'Faible';
+  if (v < 60) return 'Moyen';
+  if (v < 80) return 'Élevé';
+  return 'Très élevé';
+}
+
+function updateSliderDisplays() {
+  valTemp.textContent = sliderTemp.value + ' °C';
+  valVisc.textContent = viscLabel(+sliderVisc.value);
+  valGaz.textContent  = gazLabel(+sliderGaz.value);
+  updateEruptionType();
+}
+
+sliderTemp.addEventListener('input', updateSliderDisplays);
+sliderVisc.addEventListener('input', updateSliderDisplays);
+sliderGaz.addEventListener('input',  updateSliderDisplays);
+
+// ===================== TYPE D'ÉRUPTION =====================
+/*
+  Logique de décision basée sur viscosité et gaz :
+  explosivité = (visc * 0.6 + gaz * 0.4) / 100
+  0.0-0.25 → Hawaïenne (effusive douce)
+  0.25-0.5 → Strombolienne (modérée)
+  0.5-0.75 → Vulcanienne (explosive modérée)
+  0.75-1.0 → Plinnienne (explosive extrême)
+*/
+function getEruptionData(visc, gaz) {
+  const score = (visc * 0.6 + gaz * 0.4) / 100;
+
+  if (score < 0.25) return {
+    icon: '🌺', name: 'Éruption Hawaïenne (effusive)',
+    desc: 'Lave fluide qui coule sur les flancs. Très peu dangereuse. Caractéristique des volcans de Hawaii.',
+    type: 'effusive', score,
+    indicators: [{ label: 'Danger faible', cls: 'ind-safe' }, { label: 'Coulées de lave', cls: 'ind-warn' }]
+  };
+  if (score < 0.5) return {
+    icon: '🔥', name: 'Éruption Strombolienne',
+    desc: 'Explosions rythmiques. Projections de bombes volcaniques à quelques centaines de mètres. Assez spectaculaire !',
+    type: 'strombolian', score,
+    indicators: [{ label: 'Danger modéré', cls: 'ind-warn' }, { label: 'Projections', cls: 'ind-warn' }]
+  };
+  if (score < 0.75) return {
+    icon: '💣', name: 'Éruption Vulcanienne',
+    desc: 'Explosions violentes. Panache important. Pyroclastes éjectés à grande distance.',
+    type: 'vulcanian', score,
+    indicators: [{ label: 'Danger élevé', cls: 'ind-danger' }, { label: 'Panache', cls: 'ind-danger' }]
+  };
+  return {
+    icon: '💥', name: 'Éruption Plinnienne (explosive)',
+    desc: 'La plus destructrice ! Panache atteignant la stratosphère. Le Vésuve (79 ap. J.-C.) était de ce type.',
+    type: 'plinian', score,
+    indicators: [{ label: 'EXTRÊME', cls: 'ind-danger' }, { label: 'Catastrophique', cls: 'ind-danger' }]
+  };
+}
+
+function updateEruptionType() {
+  const data = getEruptionData(+sliderVisc.value, +sliderGaz.value);
+  document.getElementById('eruption-icon').textContent = data.icon;
+  document.getElementById('eruption-name').textContent = data.name;
+  document.getElementById('eruption-desc').textContent = data.desc;
+
+  const indDiv = document.getElementById('eruption-indicators');
+  indDiv.innerHTML = data.indicators.map(i =>
+    `<span class="indicator ${i.cls}">${i.label}</span>`
+  ).join('');
+
+  // Mettre à jour le label du canvas
+  const label = document.getElementById('eruption-label');
+  if (!isErupting) {
+    label.textContent = '🌋 Volcan au repos';
+  }
+}
+
+// ===================== CANVAS VOLCAN =====================
+const cv    = document.getElementById('canvas-volcan');
+const ctx   = cv.getContext('2d');
+const CW    = 640;
+const CH    = 420;
+
+// Particules actives
+let particles = [];
+// État de l'éruption
+let isErupting   = false;
+let eruptionData = null;
+let flashAlpha   = 0;     // flash d'explosion
+let lavaRivers   = [];    // rivières de lave pour l'effusif
+let animFrame    = null;
+
+// --- Couleur de lave selon la température ---
+function lavaColor(temp, alpha = 1) {
+  // 700°C → rouge sombre, 1050°C → orange, 1400°C → jaune/blanc
+  const t = (temp - 700) / 700; // 0 → 1
+  const r = 255;
+  const g = Math.floor(t * t * 220);
+  const b = Math.floor(t > 0.7 ? (t - 0.7) * 3 * 180 : 0);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// --- Dessiner le fond du canvas ---
+function drawBackground() {
+  // Gradient ciel : violet nuit en haut, brun volcanique en bas
+  const sky = ctx.createLinearGradient(0, 0, 0, CH);
+  sky.addColorStop(0, '#06001a');
+  sky.addColorStop(0.5, '#0d0828');
+  sky.addColorStop(0.8, '#180a10');
+  sky.addColorStop(1, '#2a1200');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, CW, CH);
+
+  // Petites étoiles fixes dans le ciel (haut du canvas)
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  const starSeed = [
+    [40,20], [90,35], [140,12], [200,28], [260,15], [320,8], [380,22],
+    [440,30], [500,10], [560,25], [610,40], [70,50], [170,48], [310,55],
+    [480,52], [570,45], [20,60], [620,18]
+  ];
+  starSeed.forEach(([sx, sy]) => {
+    ctx.beginPath();
+    ctx.arc(sx, sy, 0.8, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+// --- Dessiner la montagne volcanique ---
+function drawMountain(temp) {
+  const baseY  = CH;
+  const peakX  = CW / 2;
+  const peakY  = 100;
+  const leftX  = -30;
+  const rightX = CW + 30;
+
+  // Flancs de montagne avec gradient rocheuse
+  const grad = ctx.createLinearGradient(peakX, peakY, peakX, baseY);
+  grad.addColorStop(0,   '#2a1a0a');
+  grad.addColorStop(0.4, '#1a1008');
+  grad.addColorStop(1,   '#0d0808');
+
+  ctx.beginPath();
+  ctx.moveTo(leftX, baseY);
+  ctx.lineTo(peakX, peakY);
+  ctx.lineTo(rightX, baseY);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Lueur de lave dans les fissures si température élevée
+  if (temp > 1000) {
+    const glow = ctx.createLinearGradient(peakX, peakY, peakX, baseY);
+    const intensity = (temp - 1000) / 400;
+    glow.addColorStop(0, `rgba(255,60,0,${0.15 * intensity})`);
+    glow.addColorStop(0.5, `rgba(255,30,0,${0.05 * intensity})`);
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+
+    // Ligne gauche du volcan
+    ctx.beginPath();
+    ctx.moveTo(peakX, peakY + 10);
+    ctx.lineTo(leftX, baseY);
+    ctx.lineTo(leftX + 80, baseY);
+    ctx.closePath();
+    ctx.fillStyle = glow;
+    ctx.fill();
+
+    // Ligne droite du volcan
+    ctx.beginPath();
+    ctx.moveTo(peakX, peakY + 10);
+    ctx.lineTo(rightX, baseY);
+    ctx.lineTo(rightX - 80, baseY);
+    ctx.closePath();
+    ctx.fillStyle = glow;
+    ctx.fill();
+  }
+
+  // Silhouette sombre pour donner du relief (côté gauche dans l'ombre)
+  const shadow = ctx.createLinearGradient(leftX, 0, peakX, 0);
+  shadow.addColorStop(0, 'rgba(0,0,0,0.4)');
+  shadow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.beginPath();
+  ctx.moveTo(leftX, baseY);
+  ctx.lineTo(peakX, peakY);
+  ctx.lineTo(peakX - 20, peakY);
+  ctx.lineTo(leftX + 20, baseY);
+  ctx.closePath();
+  ctx.fillStyle = shadow;
+  ctx.fill();
+}
+
+// --- Dessiner le cratère ---
+function drawCrater(temp) {
+  const cx = CW / 2;
+  const cy = 100;
+
+  // Ellipse du cratère
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(1, 0.35); // aplatir pour effet perspective
+  ctx.beginPath();
+  ctx.arc(0, 0, 32, 0, Math.PI * 2);
+
+  // Intérieur incandescent selon température
+  const innerGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, 32);
+  const lava = lavaColor(temp);
+  innerGrad.addColorStop(0, lava);
+  innerGrad.addColorStop(0.5, lavaColor(temp, 0.7));
+  innerGrad.addColorStop(1, 'rgba(30,10,0,0.8)');
+  ctx.fillStyle = innerGrad;
+  ctx.fill();
+
+  // Bord du cratère
+  ctx.strokeStyle = 'rgba(80,40,20,0.8)';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.restore();
+
+  // Lueur autour du cratère
+  const glowGrad = ctx.createRadialGradient(cx, cy, 5, cx, cy, 50);
+  const intensity = (temp - 700) / 700;
+  glowGrad.addColorStop(0, lavaColor(temp, 0.4 * intensity));
+  glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.beginPath();
+  ctx.arc(cx, cy, 50, 0, Math.PI * 2);
+  ctx.fillStyle = glowGrad;
+  ctx.fill();
+}
+
+// ===================== SYSTÈME DE PARTICULES =====================
+
+// Créer une particule de lave pour éruption effusive
+function spawnLavaRiverParticle(side, temp, viscosity) {
+  const speed = 0.8 + (1 - viscosity / 100) * 1.5; // plus fluide = plus rapide
+  // Flanc gauche ou droit
+  const angle = side === 'left'
+    ? Math.PI * 0.85 + (Math.random() - 0.5) * 0.2  // vers bas-gauche
+    : Math.PI * 0.15 + (Math.random() - 0.5) * 0.2; // vers bas-droite
+  return {
+    x: CW / 2 + (Math.random() - 0.5) * 20,
+    y: 100,
+    vx: Math.cos(angle) * speed * (0.8 + Math.random() * 0.4),
+    vy: Math.sin(angle) * speed * (0.8 + Math.random() * 0.4) + 0.3,
+    life: 120 + Math.random() * 80,
+    maxLife: 120 + Math.random() * 80,
+    size: 3 + Math.random() * 4,
+    color: lavaColor(temp),
+    type: 'lava'
+  };
+}
+
+// Créer une bulle pour éruption effusive (sortie douce du cratère)
+function spawnBubble(temp) {
+  return {
+    x: CW / 2 + (Math.random() - 0.5) * 40,
+    y: 95,
+    vx: (Math.random() - 0.5) * 0.8,
+    vy: -(0.5 + Math.random() * 1.2),
+    life: 50 + Math.random() * 40,
+    maxLife: 90,
+    size: 4 + Math.random() * 6,
+    color: lavaColor(temp, 0.8),
+    type: 'bubble'
+  };
+}
+
+// Créer un pyroclaste pour éruption explosive
+function spawnPyroclast(temp, intensity) {
+  const angle = -Math.PI / 2 + (Math.random() - 0.5) * (Math.PI * 0.7 * intensity);
+  const speed = 4 + Math.random() * 6 * intensity;
+  return {
+    x: CW / 2 + (Math.random() - 0.5) * 30,
+    y: 100,
+    vx: Math.cos(angle) * speed + (Math.random() - 0.5) * 2,
+    vy: Math.sin(angle) * speed,
+    life: 100 + Math.random() * 80,
+    maxLife: 180,
+    size: 3 + Math.random() * 6 * intensity,
+    color: lavaColor(temp),
+    type: 'pyroclast',
+    gravity: 0.12
+  };
+}
+
+// Créer une particule de panache (cendres/fumée)
+function spawnPlumeParticle(intensity) {
+  return {
+    x: CW / 2 + (Math.random() - 0.5) * 20,
+    y: 90,
+    vx: (Math.random() - 0.5) * 1.5 * intensity,
+    vy: -(2 + Math.random() * 3 * intensity),
+    life: 150 + Math.random() * 100,
+    maxLife: 250,
+    size: 6 + Math.random() * 12 * intensity,
+    color: `rgba(${140 + Math.floor(Math.random()*40)}, ${140 + Math.floor(Math.random()*40)}, ${140 + Math.floor(Math.random()*40)}, 1)`,
+    type: 'plume'
+  };
+}
+
+// Créer des retombées (ash fall)
+function spawnAshfall() {
+  return {
+    x: Math.random() * CW,
+    y: -10,
+    vx: (Math.random() - 0.5) * 2,
+    vy: 1 + Math.random() * 2,
+    life: 200 + Math.random() * 100,
+    maxLife: 300,
+    size: 1.5 + Math.random() * 2,
+    color: 'rgba(180,160,140,1)',
+    type: 'ash'
+  };
+}
+
+// Mettre à jour et dessiner les particules
+function updateParticles() {
+  particles = particles.filter(p => p.life > 0);
+
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+
+    // Gravité pour pyroclastes
+    if (p.type === 'pyroclast' || p.type === 'ash') {
+      p.vy += p.gravity || 0.06;
+    }
+    // Les bulles ralentissent
+    if (p.type === 'bubble') {
+      p.vy *= 0.98;
+      p.vx *= 0.98;
+    }
+    // Expansion des particules de panache
+    if (p.type === 'plume') {
+      p.size *= 1.008;
+      p.vx *= 0.996;
+      p.vy *= 0.994;
+    }
+
+    // Opacité selon la vie restante
+    const lifeRatio = p.life / p.maxLife;
+    let alpha = lifeRatio;
+    // Fondu entrant pour certains types
+    if (lifeRatio > 0.85) alpha = 1 - (lifeRatio - 0.85) / 0.15 * 0.5;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    if (p.type === 'plume') {
+      // Nuage de fumée
+      const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+      grd.addColorStop(0, p.color);
+      grd.addColorStop(1, 'rgba(100,100,100,0)');
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+    } else if (p.type === 'bubble') {
+      // Bulle avec contour
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,200,100,0.5)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    } else {
+      // Lava, pyroclast, ash : simple point lumineux
+      const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+      grd.addColorStop(0, p.color);
+      grd.addColorStop(0.5, p.color.replace('1)', '0.6)').replace(/[\d.]+\)$/, '0.6)'));
+      grd.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+    }
+
+    ctx.restore();
+  });
+}
+
+// ===================== BOUCLE D'ANIMATION =====================
+let frameCount = 0;
+
+function gameLoop() {
+  animFrame = requestAnimationFrame(gameLoop);
+  frameCount++;
+
+  const temp  = +sliderTemp.value;
+  const visc  = +sliderVisc.value;
+  const gaz   = +sliderGaz.value;
+
+  // Fond
+  drawBackground();
+
+  // Flash d'explosion
+  if (flashAlpha > 0) {
+    ctx.save();
+    ctx.globalAlpha = flashAlpha;
+    ctx.fillStyle = '#fff8f0';
+    ctx.fillRect(0, 0, CW, CH);
+    ctx.restore();
+    flashAlpha = Math.max(0, flashAlpha - 0.04);
+  }
+
+  // Spawner des particules selon le type si éruption active
+  if (isErupting && eruptionData) {
+    const score = eruptionData.score;
+
+    if (score < 0.25) {
+      // Hawaïenne : coulées de lave lentes sur les deux flancs
+      if (frameCount % 3 === 0) {
+        particles.push(spawnLavaRiverParticle('left',  temp, visc));
+        particles.push(spawnLavaRiverParticle('right', temp, visc));
+      }
+      if (frameCount % 8 === 0) {
+        particles.push(spawnBubble(temp));
+      }
+    } else if (score < 0.5) {
+      // Strombolienne : alternance bulles + projections
+      if (frameCount % 5 === 0) {
+        particles.push(spawnLavaRiverParticle('left', temp, visc));
+        particles.push(spawnLavaRiverParticle('right', temp, visc));
+      }
+      if (frameCount % 20 === 0) {
+        // Rafale de pyroclastes
+        for (let i = 0; i < 8; i++) particles.push(spawnPyroclast(temp, 0.5));
+        for (let i = 0; i < 5; i++) particles.push(spawnPlumeParticle(0.5));
+      }
+    } else if (score < 0.75) {
+      // Vulcanienne : panache + projections intenses
+      if (frameCount % 2 === 0) particles.push(spawnPlumeParticle(0.8));
+      if (frameCount % 6 === 0) {
+        for (let i = 0; i < 5; i++) particles.push(spawnPyroclast(temp, 0.8));
+      }
+      if (frameCount % 10 === 0) particles.push(spawnAshfall());
+    } else {
+      // Plinnienne : panache massif, pyroclastes partout, pluie de cendres
+      if (frameCount % 1 === 0) particles.push(spawnPlumeParticle(1.2));
+      if (frameCount % 3 === 0) {
+        for (let i = 0; i < 6; i++) particles.push(spawnPyroclast(temp, 1.2));
+      }
+      if (frameCount % 4 === 0) particles.push(spawnAshfall());
+    }
+
+    // Limite max de particules pour la perfo
+    if (particles.length > 1200) particles.splice(0, particles.length - 1200);
+  }
+
+  // Dessiner les particules
+  updateParticles();
+
+  // Dessin montagne (par-dessus les particules qui "coulent")
+  drawMountain(temp);
+  drawCrater(temp);
+
+  // Coulées de lave SOUS la montagne (visuellement sur les flancs)
+  // On re-dessine les particules de type 'lava' après la montagne pour les voir sur les côtés
+  // Note : les particules de lava suivent naturellement la silhouette en descente
+
+  // Lueur générale si éruption intense
+  if (isErupting && eruptionData && eruptionData.score > 0.6) {
+    const grd = ctx.createRadialGradient(CW/2, 100, 10, CW/2, 100, 200);
+    grd.addColorStop(0, `rgba(255,100,0,${0.1 * eruptionData.score})`);
+    grd.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, CW, CH);
+  }
+}
+
+// Démarrer la boucle
+gameLoop();
+
+// ===================== CONTRÔLES ÉRUPTION =====================
+const btnEruption = document.getElementById('btn-eruption');
+const btnStop     = document.getElementById('btn-stop');
+const labelCanvas = document.getElementById('eruption-label');
+
+// Types d'éruption déjà testés (pour badge Géologue Expert)
+let testedTypes = JSON.parse(localStorage.getItem('volcan_tested_types') || '[]');
+
+btnEruption.addEventListener('click', () => {
+  const temp  = +sliderTemp.value;
+  const visc  = +sliderVisc.value;
+  const gaz   = +sliderGaz.value;
+
+  eruptionData = getEruptionData(visc, gaz);
+  isErupting   = true;
+  particles    = []; // Réinitialiser les particules
+
+  // Flash pour éruptions violentes
+  if (eruptionData.score > 0.75) {
+    flashAlpha = 0.7;
+  } else if (eruptionData.score > 0.5) {
+    flashAlpha = 0.3;
+  }
+
+  // Son
+  if (eruptionData.score < 0.25) playEffusive();
+  else if (eruptionData.score < 0.5) playStrombolian();
+  else playExplosive();
+
+  // Label canvas
+  labelCanvas.textContent = eruptionData.icon + ' ' + eruptionData.name;
+
+  // Animation du bouton
+  btnEruption.classList.add('pulsing');
+
+  // Animation de l'icône type
+  const iconEl = document.getElementById('eruption-icon');
+  iconEl.classList.remove('shake');
+  void iconEl.offsetWidth; // reflow pour re-déclencher l'animation
+  iconEl.classList.add('shake');
+
+  // Badges
+  unlockBadge('first');
+  if (visc >= 85 && gaz >= 85)  unlockBadge('explosive');
+  if (visc <= 15 && gaz <= 15)  unlockBadge('douce');
+  if (temp >= 1400)              unlockBadge('superchaude');
+
+  // Badge expert : tester les 4 types
+  if (!testedTypes.includes(eruptionData.type)) {
+    testedTypes.push(eruptionData.type);
+    localStorage.setItem('volcan_tested_types', JSON.stringify(testedTypes));
+  }
+  if (['effusive','strombolian','vulcanian','plinian'].every(t => testedTypes.includes(t))) {
+    unlockBadge('expert');
+  }
+});
+
+btnStop.addEventListener('click', () => {
+  isErupting = false;
+  eruptionData = null;
+  labelCanvas.textContent = '🌋 Volcan au repos';
+  btnEruption.classList.remove('pulsing');
+  // Laisser les particules existantes finir leur vie naturellement
+});
+
+// ===================== BADGES =====================
+let unlockedBadges = JSON.parse(localStorage.getItem('volcan_badges') || '[]');
+
+// Appliquer les badges déjà débloqués au chargement
+unlockedBadges.forEach(id => {
+  const el = document.getElementById('badge-' + id);
+  if (el) el.classList.add('unlocked');
+});
+
+const badgeNames = {
+  first:       '🌋 Première Éruption débloquée !',
+  explosive:   '💥 Badge L\'Explosive obtenu !',
+  douce:       '🌊 Badge La Douce obtenu !',
+  superchaude: '🌡️ Badge Superchaude obtenu !',
+  expert:      '🧫 Badge Géologue Expert obtenu !'
+};
+
+function unlockBadge(id) {
+  if (unlockedBadges.includes(id)) return; // Déjà débloqué
+  unlockedBadges.push(id);
+  localStorage.setItem('volcan_badges', JSON.stringify(unlockedBadges));
+
+  const el = document.getElementById('badge-' + id);
+  if (el) el.classList.add('unlocked');
+
+  showToast(badgeNames[id] || '🏅 Nouveau badge !');
+}
+
+function showToast(msg) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3100);
+}
+
+// ===================== INIT =====================
+updateSliderDisplays();
+
+// Adapter le canvas à la largeur réelle
+function resizeCanvas() {
+  const wrap = document.querySelector('.canvas-wrap');
+  const w = wrap.clientWidth;
+  // Le canvas garde son ratio interne 640x420
+  cv.style.width  = w + 'px';
+  cv.style.height = Math.round(w * 420 / 640) + 'px';
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+</script>
+</body>
+</html>

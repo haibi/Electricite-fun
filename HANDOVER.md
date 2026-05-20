@@ -30,6 +30,10 @@ Dernière mise à jour : 2026-05-20
 | `mecanique.html` | 🚀 Mécanik              | ~2 160 |
 | `solaire.html`   | 🪐 Système Solaire      | ~3 460 |
 | `solaire-quiz.html` | 🪐 Quiz Solaire      | ~1 060 |
+| `laser.html`     | 🔴 Laser Maze           | ~1 250 |
+| `reflex.html`    | ⚡ Reflex               | ~1 350 |
+| `volcan.html`    | 🌋 Volcan               | ~1 520 |
+| `callab.html`    | 🧪 CalLab               | ~1 430 |
 
 ### Identité Git locale (dans le dépôt)
 ```
